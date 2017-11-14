@@ -12,8 +12,6 @@ local Progress = 0;
 
 local AbleToCraft = false;
 
-
-
 local function AddHandlers()
 	message.setHandler("SetSpeed",function(_,_,speed)
 		Speed = speed;
@@ -58,7 +56,7 @@ function update(dt)
 end
 
 function containerCallback()
-	sb.logInfo("Container Changed!");
+	--sb.logInfo("Container Changed!");
 	local InputSlot = world.containerItemAt(EntityID,0);
 	local OutputSlot = world.containerItemAt(EntityID,1);
 	if InputSlot ~= nil and InputSlot.name == "itemconduit" and InputSlot.count >= RequiredConduits and (OutputSlot == nil or (OutputSlot.name == ItemName and OutputSlot.count < 1000)) then
@@ -68,7 +66,7 @@ function containerCallback()
 		Progress = 0;
 		object.setConfigParameter("Progress",Progress);
 	end
-	sb.logInfo("Able To Craft = " .. sb.print(AbleToCraft));
+	--sb.logInfo("Able To Craft = " .. sb.print(AbleToCraft));
 end
 
 function die()

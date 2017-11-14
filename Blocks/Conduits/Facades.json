@@ -32,7 +32,7 @@
       "indicator": "indicatorioconduit",
       "displayName": "IO"
     },
-	{
+    {
       "conduit": "wirelessreceivingconduit",
       "item": "wirelessreceivingconduitfacade",
       "normalBlock": "wirelessreceivingfacadeblock",
@@ -40,7 +40,7 @@
       "indicator": "indicatorwirelessreceivingconduit",
       "displayName": "Wireless Receiver"
     },
-	{
+    {
       "conduit": "wirelesssendingconduit",
       "item": "wirelesssendingconduitfacade",
       "normalBlock": "wirelesssendingfacadeblock",

@@ -105,10 +105,20 @@ local function GetSpacesOf(ID)
 	return world.objectSpaces(ID);
 end
 
+local function TestCondition(Condition,ID)
+	if Condition[4] == true then
+		return Condition[2](ID);
+	else
+		return Condition[2](GetParameterOf(ID,Condition[3]));
+	end
+end
+
 local function SatisfiesConditions(objectID,Index)
+	--sb.logInfo("START");
+	local InCondition = false;
 	for i=1,#Conditions do
 		if objectID ~= nil then
-			if Conditions[i][2](GetParameterOf(objectID,Conditions[i][3])) == true then
+			if TestCondition(Conditions[i],objectID) == true      --[[Conditions[i][2](GetParameterOf(objectID,Conditions[i][3])) == true--]] then
 				local Valid = false;
 				local EntityPosition = entity.position();
 				for o,p in ipairs(object.spaces()) do
@@ -133,7 +143,9 @@ local function SatisfiesConditions(objectID,Index)
 					end
 					local List = CableCore.CableTypes[Conditions[i][1]];
 					List[Index] = objectID;
-					return objectID;
+					--sb.logInfo(sb.print(objectID) .. " is part of " .. sb.print(Conditions[i][1]));
+					--return objectID;
+					InCondition = true;
 				end
 			end
 		else
@@ -144,6 +156,10 @@ local function SatisfiesConditions(objectID,Index)
 				end
 			end
 		end
+	end
+	--sb.logInfo("END");
+	if InCondition == true then
+		return objectID;
 	end
 	return nil;
 end
@@ -322,7 +338,11 @@ function CableCore.Update()
 end
 
 function CableCore.AddCondition(organizingName,configName,func)
-	Conditions[#Conditions + 1] = {organizingName,func,configName};
+	Conditions[#Conditions + 1] = {organizingName,func,configName,false};
+end
+
+function CableCore.AddAdvancedCondition(organizingName,func)
+	Conditions[#Conditions + 1] = {organizingName,func,"NAN",true};
 end
 
 function CableCore.SetAfterFunction(func)

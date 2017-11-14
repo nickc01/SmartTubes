@@ -192,7 +192,8 @@ function init()
 	--script.setUpdateDelta(80);
 	AddHandlers();
 	Cables.AddCondition("Conduits","conduitType",function(value) return value ~= nil end);
-	Cables.AddCondition("Containers","objectType",function(value) return value == "container" end);
+	--Cables.AddCondition("Containers","objectType",function(value) return value == "container" end);
+	Cables.AddAdvancedCondition("Containers",function(ID) return world.getObjectParameter(ID,"objectType") == "container" or world.callScriptedEntity(ID,"IsContainerCore") == true end);
 	AddOperator("#",function(Item,string) return root.itemType(Item.name) == string end);
 	AddOperator("&",function(Item,string) return string.find(string.lower(Item.name),string.lower(string)) ~= nil end);
 	AddOperator("@",function(Item,string) return root.itemConfig(Item).config.category == string end);
@@ -359,7 +360,6 @@ Extract = function()
 		Config = config.getParameter("Configs",{});
 		ConfigStorage = {};
 		ExtractCache = {};
-		--ResetPathCache();
 		UpdateConfig = false;
 	end
 	if #Config > 0 then
@@ -387,6 +387,7 @@ Extract = function()
 			--sb.logInfo("Cache");
 		--	SelectedContainer = ExtractCache.ExportSides[math.random(1,#ExtractCache.ExportSides)];
 		--else
+		--sb.logInfo("Containers = " .. sb.print(Cables.CableTypes.Containers));
 			if Cables.CableTypes.Containers ~= nil then
 				--ExtractCache.ExportSides = {};
 				--sb.logInfo("NotCache");
@@ -422,8 +423,17 @@ Extract = function()
 		if SelectedContainer == nil then return nil end;
 		local SelectedSlot = nil;
 		local FoundItem = nil;
-		local ContainerSize = world.containerSize(SelectedContainer);
+		local ContainerSize;
+		if world.callScriptedEntity(SelectedContainer,"IsContainerCore") == true then
+			ContainerSize = world.callScriptedEntity(SelectedContainer,"ContainerCore.ContainerSize");
+		else
+			ContainerSize = world.containerSize(SelectedContainer);
+		end
+		--sb.logInfo("ContainerSize = " .. sb.print(ContainerSize));
+		--sb.logInfo("A");
+		--local ContainerSize = world.containerSize(SelectedContainer);
 		if ContainerSize == nil then return nil end;
+		--sb.logInfo("AB");
 		if HasValue("TakeFromSlots") == true then
 			local Numbers = Retrieve("TakeFromSlots");
 			for i=1,#Numbers do
@@ -442,7 +452,9 @@ Extract = function()
 			end
 			Store("TakeFromSlots",Numbers);
 		end
+		--sb.logInfo("AC");
 		if SelectedSlot == nil then return nil end;
+		--sb.logInfo("B");
 		if HasValue("InsertIntoSides") == false then
 			local InsertIntoSides = {};
 			for str in string.gmatch(Config[ConfigIndex].insertIntoSide,"[^,]+") do
@@ -457,7 +469,9 @@ Extract = function()
 		end
 		CheckInsertIDs();
 		local InsertionConduit,Path,Occluded = FindInsertionConduit();
+		--sb.logInfo("C");
 		if InsertionConduit ~= nil then
+			--sb.logInfo("D");
 			local InsertIntoSides = Retrieve("InsertIntoSides");
 			local InsertIntoSlots = nil;
 			if HasValue("InsertIntoSlots") == true then
@@ -621,7 +635,13 @@ local function CanBeExtracted(Item,Slot,ContainerID)
 			AmountToLeave[1] = 0;
 		end
 		if #AmountToLeave > 1 then
-			local ContainerSize = world.containerSize(ContainerID);
+			local ContainerSize;
+			if world.callScriptedEntity(ContainerID,"IsContainerCore") == true then
+				ContainerSize = world.callScriptedEntity(ContainerID,"ContainerCore.ContainerSize");
+			else
+				ContainerSize = world.containerSize(ContainerID);
+			end
+			--local ContainerSize = world.containerSize(ContainerID);
 			if #AmountToLeave < ContainerSize then
 				for i=1,ContainerSize - #AmountToLeave do
 					AmountToLeave[#AmountToLeave + 1] = 0;
@@ -633,7 +653,13 @@ local function CanBeExtracted(Item,Slot,ContainerID)
 	if #AmountToLeave == 1 then
 		local StoredCount = Item.count;
 		Item.count = 1;
-		local TotalInInventory = world.containerAvailable(ContainerID,Item);
+		local TotalInInventory;
+		if world.callScriptedEntity(ContainerID,"IsContainerCore") == true then
+			TotalInInventory = world.callScriptedEntity(ContainerID,"ContainerCore.ContainerAvailable",Item);
+		else
+			TotalInInventory = world.containerAvailable(ContainerID,Item);
+		end
+		--local TotalInInventory = world.containerAvailable(ContainerID,Item);
 		Item.count = StoredCount;
 		if TotalInInventory - AmountToExtract < AmountToLeave[1] then
 			AmountToExtract = AmountToExtract - (AmountToLeave[1] - (TotalInInventory - AmountToExtract));
@@ -664,7 +690,13 @@ CheckInventorySlot = function(ContainerID,Slot,ContainerSize)
 	if Slot == "any" then
 		--Any Slot
 		for i=1,ContainerSize do
-			local Item = world.containerItemAt(ContainerID,i - 1);
+			local Item;
+			if world.callScriptedEntity(ContainerID,"IsContainerCore") == true then
+				Item = world.callScriptedEntity(ContainerID,"ContainerCore.ContainerItemAt",i - 1);
+			else
+				Item = world.containerItemAt(ContainerID,i - 1);
+			end
+			--Item = world.containerItemAt(ContainerID,i - 1);
 			if FulFillsConditions(Item) == true then
 				local Count = CanBeExtracted(Item,i,ContainerID);
 				if Count ~= nil then
@@ -675,7 +707,13 @@ CheckInventorySlot = function(ContainerID,Slot,ContainerSize)
 		end
 	else
 		--Defined Slot
-		local Item = world.containerItemAt(ContainerID,Slot - 1);
+		local Item;
+		if world.callScriptedEntity(ContainerID,"IsContainerCore") == true then
+			Item = world.callScriptedEntity(ContainerID,"ContainerCore.ContainerItemAt",Slot - 1);
+		else
+			Item = world.containerItemAt(ContainerID,Slot - 1);
+		end
+		--local Item = world.containerItemAt(ContainerID,Slot - 1);
 		if FulFillsConditions(Item) == true then
 			local Count = CanBeExtracted(Item,Slot,ContainerID);
 			if Count ~= nil then

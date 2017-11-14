@@ -62,6 +62,9 @@ function init()
 	SetupAim();
 	FacadeConfig = root.assetJson("/Blocks/Conduits/Facades.json").Facades;
 	UIConfig = root.assetJson("/Items/Facade Wrench/UI/UI Config.config");
+	--sb.logInfo("Before = " .. sb.print(config.getParameter("test1")));
+	--activeItem.setInstanceValue("test1","thisisatest");
+	--sb.logInfo("After = " .. sb.print(config.getParameter("test1")));
 	UpdateAfterLimit();
 end
 
@@ -171,8 +174,10 @@ end
 
 local function OnClick(shiftHeld)
 	if IsValid == true then
-		if Config.Breaking == false and player.hasItem({name = FacadeConfig[Config.Index].item,count = 1}) == true then
-			player.consumeItem({name = FacadeConfig[Config.Index].item,count = 1});
+		if Config.Breaking == false and (player.isAdmin() or player.hasItem({name = FacadeConfig[Config.Index].item,count = 1}) == true) then
+			if player.isAdmin() == false then
+				player.consumeItem({name = FacadeConfig[Config.Index].item,count = 1});
+			end
 			IsValid = false;
 			SpawnCursor(false);
 			EmbedInBlock(StoredPosition);

@@ -177,8 +177,7 @@ function init()
 		Colors[i[1]] = i[2];
 	end
 	Cables.AddCondition("Conduits","conduitType",function(value) return value ~= nil end);
-	--Cables.AddCondition("Containers","objectType",function(value) return value == "container" end);
-	Cables.AddAdvancedCondition("Containers",function(ID) return world.getObjectParameter(ID,"objectType") == "container" or world.callScriptedEntity(ID,"IsContainerCore") == true end);
+	Cables.AddCondition("Containers","objectType",function(value) return value == "container" end);
 	Cables.AddAfterFunction(UpdateController);
 	InsertID = config.getParameter("insertID");
 	if InsertID == nil then
@@ -238,14 +237,12 @@ function update(dt)
 		T.Clock = T.Clock + (dt * T.Speed);
 		if T.Clock > 1 then
 			T.Index,T.Clock = T.Index - 1,0;
-			if T.Index <= 1 then
+			if T.Index == 1 then
 				AddToInventory(_,_,T.Traversal,T.Container);
 				--sb.logInfo("Adding to Inventory of " .. sb.print(T.Container));
 				table.remove(CrammedTraversals,i);
 			else
-				sb.logInfo("Path = " .. sb.print(T.Path));
-				sb.logInfo("Path Index = " .. sb.print(T.Path[T.Index]));
-				sb.logInfo("Index = " .. sb.print(T.Index));
+				--sb.logInfo("Path Index = " .. sb.print(T.Path[T.Index]));
 				if world.entityExists(T.Path[T.Index]) == false or world.getObjectParameter(T.Path[T.Index],"conduitType") == nil then
 					DropItems(_,_,T.Traversal,T.Container,T.Position);
 				else
@@ -769,19 +766,6 @@ end
 
 local Transferring = false;
 
-local function ConsumeFromContainer(ID,Slot,Count,IsContainerCore)
-	local Value = nil;
-	if IsContainerCore == true then
-		--sb.logInfo("Is Core");
-		Value = world.callScriptedEntity(ID,"ContainerCore.ContainerConsumeAt",Slot,Count);
-	else
-		--sb.logInfo("Is not Core");
-		Value = world.containerConsumeAt(ID,Slot,Count);
-	end
-	--sb.logInfo("Value = " .. sb.print(Value));
-	return Value;
-end
-
 ExtractAndSend = function(_,_,Item,Slot,Container,Path,InsertIntoSides,InsertIntoSlots,InsertContainer,Color,Speed,SourceConduit,ConduitLimits,Occluded)
 	--sb.logInfo("XA");
 	if Ready == false or Transferring == true then return nil end;
@@ -815,40 +799,19 @@ ExtractAndSend = function(_,_,Item,Slot,Container,Path,InsertIntoSides,InsertInt
 		return nil;
 	end
 	--sb.logInfo("Master = " .. sb.print(CurrentController.Master));
-	--sb.logInfo("Coal Can Fit = " .. sb.print(world.containerItemsFitWhere(InsertContainer,{name = "coalore",count = 10})));
-	local IsContainerCore = world.callScriptedEntity(InsertContainer,"IsContainerCore") == true;
-	--sb.logInfo("Is Container CORE = " .. sb.print(IsContainerCore));
 	local ContainerPredictions = GetPredictionGroup(InsertContainer);
-	local ContainerSize;
-	if IsContainerCore == true then
-		ContainerSize = world.callScriptedEntity(InsertContainer,"ContainerCore.ContainerSize");
-	else
-		ContainerSize = world.containerSize(InsertContainer);
-	end
-	--local ContainerSize = world.containerSize(InsertContainer);
-	local Inventory;
-	if IsContainerCore == true then
-		Inventory = world.callScriptedEntity(InsertContainer,"ContainerCore.ContainerItems");
-	else
-		Inventory = world.containerItems(InsertContainer);
-	end
-	--local Inventory = world.containerItems(InsertContainer);
+	local ContainerSize = world.containerSize(InsertContainer);
+	local Inventory = world.containerItems(InsertContainer);
 	if Inventory == nil then return nil end;
-	--sb.logInfo("Inventory BEFORE = " .. sb.printJson(Inventory),1);
-	--sb.logInfo("Predictions = " .. sb.print(ContainerPredictions));
 	CombinePredictions(Inventory,ContainerPredictions,ContainerSize);
-	--sb.logInfo("Inventory AFTER = " .. sb.printJson(Inventory),1);
 	local NewPrediction = {Item = Item,Container = InsertContainer,InsertSlots = InsertIntoSlots,MaxStack = root.itemConfig(Item).config.maxStack or 1000};
 	local NewSlot,Count = FindSlot(NewPrediction,Inventory,ContainerSize,nil,true);
 	--sb.logInfo("Found SLot = " .. sb.print(NewSlot));
-	--sb.logInfo("1");
 	if NewSlot ~= nil then
-		--sb.logInfo("2");
 		NewPrediction.Slot = NewSlot;
 		NewPrediction.Item.count = Count;
 		--sb.logInfo("XS");
 		--world.spawnProjectile("electricbolt",vecAdd(world.entityPosition(Path[#Path]),{0.5,0.5}));
-		--sb.logInfo("Occluded = " .. sb.print(Occluded));
 		if Occluded == false then
 			NewPrediction.TraversalID = world.spawnProjectile("traversal" .. Colors[Color],vecAdd(world.entityPosition(Path[#Path]),{0.5,0.5}),SourceConduit or EntityID);
 		else
@@ -856,12 +819,10 @@ ExtractAndSend = function(_,_,Item,Slot,Container,Path,InsertIntoSides,InsertInt
 		end
 		--sb.logInfo("XT");
 		--sb.logInfo("XT");
-		if (Occluded == true or world.entityExists(NewPrediction.TraversalID) == true) and ConsumeFromContainer(Container,Slot - 1,Count,world.callScriptedEntity(Container,"IsContainerCore")) == true then
+		if (Occluded == true or world.entityExists(NewPrediction.TraversalID) == true) and world.containerConsumeAt(Container,Slot - 1,Count) == true then
 			--sb.logInfo(EntityID .. " Adding Prediction of = " .. sb.printJson(NewPrediction));
-			--sb.logInfo("3");
 			AddPredictionAndSend(NewPrediction);
 			if Occluded == false then
-				--sb.logInfo("4");
 				world.callScriptedEntity(NewPrediction.TraversalID,"StartTraversing",Path,Speed,InsertContainer,nil,nil,CurrentController.Conduits,ConduitLimits,InsertIntoSides);
 			else
 				NewPrediction.Crammed = true;
@@ -918,17 +879,10 @@ function AnySidesHaveContainers(Sides)
 end
 
 local function GetIndexType(t)
-	--[[if #t > 0 then
+	if #t > 0 then
 		for k,i in ipairs(t) do
 			return "number";
 		end
-		return "string";
-	end
-	return "number";--]]
-	for k,i in ipairs(t) do
-		return "number";
-	end
-	for k,i in pairs(t) do
 		return "string";
 	end
 	return "number";
@@ -936,23 +890,11 @@ end
 
 CombinePredictions = function(inventory,predictions,ContainerSize)
 	if inventory == nil then return nil end;
-	--sb.logInfo("Inventory Metatable = " .. sb.print(getmetatable(inventory)));
 	local converter;
-	--[[for k,i in pairs(inventory) do
-		converter = function(v) return tostring(v) end;
-		sb.logInfo("Indexer is String");
-		break;
-	end
-	if converter == nil then
-		converter = function(v) return v end;
-		sb.logInfo("Indexer is Number");
-	end--]]
 	if GetIndexType(inventory) == "string" then
 		converter = function(v) return tostring(v) end;
-		--sb.logInfo("Indexer is String");
 	else
 		converter = function(v) return v end;
-		--sb.logInfo("Indexer is Number");
 	end
 	local Size = #predictions;
 	for i=1,Size do
@@ -1047,25 +989,8 @@ DropItems = function(_,_,TraversalID,ContainerID,Position)
 	--sb.logInfo("XB");
 	--sb.logInfo();
 	local ContainerPredictions = GetPredictionGroup(ContainerID);
-
-	local IsContainerCore = world.callScriptedEntity(ContainerID,"IsContainerCore") == true;
-	local ContainerPredictions = GetPredictionGroup(ContainerID);
-	local ContainerSize;
-	if IsContainerCore == true then
-		ContainerSize = world.callScriptedEntity(ContainerID,"ContainerCore.ContainerSize");
-	else
-		ContainerSize = world.containerSize(ContainerID);
-	end
-	--local ContainerSize = world.containerSize(ContainerID);
-	local Inventory;
-	if IsContainerCore == true then
-		Inventory = world.callScriptedEntity(ContainerID,"ContainerCore.ContainerItems");
-	else
-		Inventory = world.containerItems(ContainerID);
-	end
-
-	--local ContainerSize = world.containerSize(ContainerID);
-	--local Inventory = world.containerItems(ContainerID);
+	local ContainerSize = world.containerSize(ContainerID);
+	local Inventory = world.containerItems(ContainerID);
 	CombinePredictions(Inventory,ContainerPredictions,ContainerSize);
 	for i=#ContainerPredictions,1,-1 do
 		--sb.logInfo("XC");
@@ -1085,7 +1010,7 @@ DropItems = function(_,_,TraversalID,ContainerID,Position)
 		if dump[i].TraversalID == TraversalID then
 			--sb.logInfo("DROPPINGB");
 			world.spawnItem(dump[i].Item,Position,dump[i].Item.count,dump[i].Item.parameters);
-			if dump[i].Crammed ~= true then
+			if ContainerPredictions[i].Crammed ~= true then
 				PredictionCount = PredictionCount - 1;
 			end
 			table.remove(dump,i);
@@ -1175,15 +1100,7 @@ AddAllPredictions = function()
 		local Exists = world.entityExists(Container);
 		for o,p in ipairs(i) do
 			if Exists == true then
-				
-				local Item;
-				if world.callScriptedEntity(Container,"IsContainerCore") == true then
-					Item = world.callScriptedEntity(Container,"ContainerCore.ContainerPutItemsAt",p.Item,p.Slot - 1);
-				else
-					 Item = world.containerPutItemsAt(Container,p.Item,p.Slot - 1);
-				end
-				--sb.logInfo("ItemB = " .. sb.print(Item));
-				--local Item = world.containerPutItemsAt(Container,p.Item,p.Slot - 1);
+				local Item = world.containerPutItemsAt(Container,p.Item,p.Slot - 1);
 				if Item ~= nil and Item.count > 0 then
 					--sb.logInfo("DROPPINGE");
 					--sb.logInfo("DROPPINGC");
@@ -1224,53 +1141,24 @@ AddToInventory = function(_,_,Traversal,Container)
 	end
 	--sb.logInfo("AZ");
 	--local PredictionGroup = Predictions[tostring(Container)];
-	--local ContainerPredictions = GetPredictionGroup(Container);
-
-	local IsContainerCore = world.callScriptedEntity(Container,"IsContainerCore") == true;
 	local ContainerPredictions = GetPredictionGroup(Container);
-	local ContainerSize;
-	if IsContainerCore == true then
-		ContainerSize = world.callScriptedEntity(Container,"ContainerCore.ContainerSize");
-	else
-		ContainerSize = world.containerSize(Container);
-	end
-	--local ContainerSize = world.containerSize(Container);
-	local Inventory;
-	if IsContainerCore == true then
-		Inventory = world.callScriptedEntity(Container,"ContainerCore.ContainerItems");
-	else
-		Inventory = world.containerItems(Container);
-	end
-
-	--local ContainerSize = world.containerSize(Container);
-	--local Inventory = world.containerItems(Container);
+	local ContainerSize = world.containerSize(Container);
+	local Inventory = world.containerItems(Container);
 	local Exists = world.entityExists(Container);
 	--sb.logInfo("Exists = " .. sb.print(Exists));
 	local Position = entity.position();
 	CombinePredictions(Inventory,ContainerPredictions,ContainerSize);
-	--sb.logInfo("Adding 2");
 	if ContainerPredictions ~= nil then
-		--sb.logInfo("Adding 3");
 		--sb.logInfo("BZ");
 		--sb.logInfo("Container Predictions = " .. sb.print(ContainerPredictions));
 		for i=#ContainerPredictions,1,-1 do
-			--sb.logInfo("Adding 4");
 			--sb.logInfo("TraversalID = " .. sb.print(ContainerPredictions[i].TraversalID));
 			--sb.logInfo("Traversal = " .. sb.print(Traversal));
 			if ContainerPredictions[i].TraversalID == Traversal then
-				--sb.logInfo("Adding 5");
 				--sb.logInfo("CZ");
 				if Exists == true then
-					--sb.logInfo("Adding 6");
 					--sb.logInfo("DZ");
-					local Item;
-					if IsContainerCore == true then
-						Item = world.callScriptedEntity(Container,"ContainerCore.ContainerPutItemsAt",ContainerPredictions[i].Item,ContainerPredictions[i].Slot - 1);
-					else
-						Item = world.containerPutItemsAt(Container,ContainerPredictions[i].Item,ContainerPredictions[i].Slot - 1);
-					end
-					--sb.logInfo("ItemA = " .. sb.print(Item));
-					--local Item = world.containerPutItemsAt(Container,ContainerPredictions[i].Item,ContainerPredictions[i].Slot - 1);
+					local Item = world.containerPutItemsAt(Container,ContainerPredictions[i].Item,ContainerPredictions[i].Slot - 1);
 					if Item ~= nil and Item.count > 0 then
 						--sb.logInfo("DROPPINGB");
 						--sb.logInfo("DROPPINGF");
@@ -1286,18 +1174,6 @@ AddToInventory = function(_,_,Traversal,Container)
 				end
 				table.remove(ContainerPredictions,i);
 			end
-		end
-	end
-	local dump = GetDump(Container);
-	--sb.logInfo("Dump = " .. sb.print(dump));
-	for i=#dump,1,-1 do
-		if dump[i].TraversalID == Traversal then
-			--sb.logInfo("DROPPINGB");
-			world.spawnItem(dump[i].Item,Position,dump[i].Item.count,dump[i].Item.parameters);
-			if dump[i].Crammed ~= true then
-				PredictionCount = PredictionCount - 1;
-			end
-			table.remove(dump,i);
 		end
 	end
 end

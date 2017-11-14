@@ -1,8 +1,8 @@
 {
-  "version" : "1.2.0",
-  "author" : "Nickc01",
-  "description" : "A Smart way to transfer items around in Starbound",
-  "name" : "smarttubes",
-  "friendlyname" : "Smart Tubes",
-  "link" : "http://community.playstarbound.com/resources/smart-tubes.4152/"
+	"friendlyname" : "Smart Tubes",
+	"name" : "smarttubes",
+	"author" : "Nickc01",
+	"link" : "http://community.playstarbound.com/resources/smart-tubes.4152/",
+	"description" : "A Smart way to transfer items around in Starbound",
+	"version" : "1.2.0"
 }
