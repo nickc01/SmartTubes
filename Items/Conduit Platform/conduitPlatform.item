@@ -1,0 +1,10 @@
+{
+  "itemName" : "conduitplatform",
+  "price" : 10,
+  "rarity" : "Common",
+  "category" : "craftingMaterial",
+  "inventoryIcon" : "Icon.png",
+  "description" : "Used for making conduits act like platforms",
+  "shortdescription" : "Conduit Platform Casing",
+  "itemTags" : [ "reagent" ]
+}

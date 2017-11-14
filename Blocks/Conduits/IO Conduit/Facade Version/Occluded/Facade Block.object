@@ -1,0 +1,33 @@
+{
+  "objectName": "iofacadeoccluded",
+  "colonyTags": [],
+  "printable": false,
+  "rarity": "Common",
+  "description": "Extracts and Inserts Items",
+  "shortdescription": "IO Conduit",
+  "race": "generic",
+  "category": "transport",
+  "price": 45,
+  "inventoryIcon": "/Blocks/Conduits/IO Conduit/Facade Version/Item/Icon.png",
+  "smashOnBreak": true,
+  "health": 3.0,
+  "orientations": [
+    {
+      "image": "/Blocks/Conduits/IO Conduit/Main/Main.png:<color>",
+      "imagePosition": [ -8, -8 ],
+      "animationPosition": [ -8, -8 ],
+      "frames": 1,
+      "animationCycle": 1.0,
+      "renderLayer": "Platform-10",
+      "direction": "right"
+
+    }
+  ],
+  "frameCooldown": 5,
+  "autoCloseCooldown": 3600,
+  "slotCount": 1,
+  "conduitType": "io",
+  "scriptDelta": 10,
+  "scripts": [ "/Blocks/Conduits/Extraction Conduit/Script.lua", "/Blocks/Conduits/Insertion Conduit/Script.lua", "/Blocks/Conduits/IO Conduit/Script.lua", "/Core/CableCore.lua","/Core/Facade/Facade.lua" ]
+
+}

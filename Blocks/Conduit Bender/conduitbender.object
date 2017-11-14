@@ -1,0 +1,35 @@
+{
+  "objectName": "conduitbender",
+  "colonyTags": [ "pretty" ],
+  "rarity": "Common",
+  "category": "transport",
+  "price": 50,
+  "description": "A Machine for making Curved Conduits",
+  "shortdescription": "Conduit Bender",
+  "race": "generic",
+  "objectType": "container",
+  "inventoryIcon": "Icon.png",
+  "orientations": [
+    {
+      "image": "Conduit Bender.png:<color>",
+      "imagePosition": [ -8, 0 ],
+
+      "spaceScan": 0.1,
+      "anchors": [ "bottom" ],
+      "collision": "platform",
+      "collisionSpaces": [
+        [ 0, 1 ],
+        [ 1, 1 ],
+        [ 2, 1 ],
+        [ -1, 1 ]
+      ]
+
+    }
+  ],
+  "uiConfig": "/Blocks/Conduit Bender/UI Config.config",
+  "frameCooldown": 5,
+  "slotCount": 2,
+  "autoCloseCooldown": 3600,
+  "scripts": [ "Script.lua" ],
+  "scriptDelta": 1
+}

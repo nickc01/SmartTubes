@@ -1,0 +1,10 @@
+{
+  "itemName" : "conduitcasing",
+  "price" : 10,
+  "rarity" : "Common",
+  "category" : "craftingMaterial",
+  "inventoryIcon" : "Icon.png",
+  "description" : "Used for crafting conduits",
+  "shortdescription" : "Conduit Casing",
+  "itemTags" : [ "reagent" ]
+}

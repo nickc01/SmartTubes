@@ -1,0 +1,10 @@
+{
+  "itemName" : "wirelessreceivingconduitfacade",
+  "price" : 10,
+  "rarity" : "Common",
+  "category" : "craftingMaterial",
+  "inventoryIcon" : "Icon.png",
+  "description" : "A Wireless Receiving Conduit that can be embedded in the ground via Facade Wrench",
+  "shortdescription" : "Wireless Receiving Facade",
+  "itemTags" : [ "reagent" ]
+}

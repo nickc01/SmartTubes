@@ -1,0 +1,10 @@
+{
+  "itemName" : "itemconduitfacade",
+  "price" : 10,
+  "rarity" : "Common",
+  "category" : "craftingMaterial",
+  "inventoryIcon" : "Icon.png",
+  "description" : "An Item Conduit that can be embedded in the ground via Facade Wrench",
+  "shortdescription" : "Item Conduit Facade",
+  "itemTags" : [ "reagent" ]
+}

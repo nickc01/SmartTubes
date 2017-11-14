@@ -1,0 +1,11 @@
+{
+  "itemName" : "facadecover",
+  "price" : 10,
+  "rarity" : "Common",
+  "maxStack" : 1000,
+  "category" : "craftingMaterial",
+  "inventoryIcon" : "Icon.png",
+  "description" : "Used to create facade conduits",
+  "shortdescription" : "Facade Cover",
+  "itemTags" : [ "reagent" ]
+}

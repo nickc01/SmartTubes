@@ -1,0 +1,10 @@
+{
+  "itemName" : "ioconduitfacade",
+  "price" : 10,
+  "rarity" : "Common",
+  "category" : "craftingMaterial",
+  "inventoryIcon" : "Icon.png",
+  "description" : "An IO Conduit that can be embedded in the ground via Facade Wrench",
+  "shortdescription" : "IO Conduit Facade",
+  "itemTags" : [ "reagent" ]
+}

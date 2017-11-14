@@ -1,0 +1,12 @@
+{
+  "input" : [
+    { "item" : "itemconduit", "count" : 1 },
+	{ "item" : "facadecover", "count" : 1 }
+  ],
+  "output" : {
+    "item" : "itemconduitfacade",
+    "count" : 5
+  },
+  "duration" : 0.4,
+  "groups" : [ "conduitstation", "conduitfacade", "all" ]
+}

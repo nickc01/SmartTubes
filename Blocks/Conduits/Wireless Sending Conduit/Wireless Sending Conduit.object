@@ -1,0 +1,37 @@
+{
+  "objectName": "wirelesssendingconduit",
+  "colonyTags": [],
+  "printable": false,
+  "rarity": "Common",
+  "description": "Transports Items Wirelessly",
+  "shortdescription": "Wireless Sending Conduit",
+  "race": "generic",
+  "category": "transport",
+  "price": 45,
+  "inventoryIcon": "Icon/Icon.png",
+  "health": 3.0,
+  "orientations": [
+    {
+      "image": "Main/Main.png:<color>",
+      "imagePosition": [ -8, -8 ],
+      "animationPosition": [ -8, -8 ],
+      "frames": 1,
+      "animationCycle": 1.0,
+      "renderLayer": "Platform-10",
+      "direction": "right"
+
+    }
+  ],
+  "frameCooldown": 5,
+  "autoCloseCooldown": 3600,
+  "slotCount": 1,
+  "animation": "/Animations/Cable.animation",
+  "animationParts": {
+    "cables": "Cable/Cable.png"
+  },
+  "conduitType": "sender",
+  "scriptDelta": 1,
+  "outputNodes": [ [ 0.0, 0.0 ] ],
+  "scripts": [ "Script.lua", "/Core/CableCore.lua" ]
+
+}

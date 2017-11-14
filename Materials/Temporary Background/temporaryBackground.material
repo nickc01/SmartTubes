@@ -1,0 +1,20 @@
+{
+  "materialId" : 601,
+  "materialName" : "temporaryBackground",
+  "particleColor" : [255, 255, 255, 255],
+  "description" : "An Invisible Background",
+  "shortdescription" : "Test Block",
+  "footstepSound" : "/sfx/blocks/footstep_glass.ogg",
+  "health" : 4,
+  "category" : "materials",
+
+  "renderTemplate" : "/tiles/classicmaterialtemplate.config",
+  "renderParameters" : {
+    "texture" : "Image.png",
+    "variants" : 5,
+    "lightTransparent" : true,
+    "occludesBelow" : false,
+    "multiColored" : true,
+    "zLevel" : 470
+  }
+}

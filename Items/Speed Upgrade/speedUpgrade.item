@@ -1,0 +1,11 @@
+{
+  "itemName" : "speedupgrade",
+  "price" : 10,
+  "rarity" : "Common",
+  "maxStack" : 1000,
+  "category" : "craftingMaterial",
+  "inventoryIcon" : "speedUpgrade.png",
+  "description" : "Used in Extraction Conduit Upgrade Slots.\nIncreases Extraction speed",
+  "shortdescription" : "Speed Upgrade",
+  "itemTags" : [ "reagent" ]
+}

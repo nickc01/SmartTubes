@@ -1,0 +1,39 @@
+{
+  "objectName": "insertionfacadeblock",
+  "colonyTags": [],
+  "printable": false,
+  "rarity": "Common",
+  "description": "Inserts Items Into Containers",
+  "shortdescription": "Insertion Conduit",
+  "race": "generic",
+  "category": "transport",
+  "price": 45,
+  "inventoryIcon": "/Blocks/Conduits/Insertion Conduit/Facade Version/Item/Icon.png",
+  "smashOnBreak": true,
+  "health": 3.0,
+  "orientations": [
+    {
+      "image": "/Blocks/Conduits/Insertion Conduit/Main/Main.png:<color>",
+      "imagePosition": [ -8, -8 ],
+      "animationPosition": [ -8, -8 ],
+      "frames": 1,
+      "animationCycle": 1.0,
+      "renderLayer": "Platform-10",
+      "direction": "right"
+
+    }
+  ],
+  "interactAction": "ScriptPane",
+  "interactData": "/Blocks/Conduits/Insertion Conduit/UI/UI Config.config",
+  "frameCooldown": 5,
+  "autoCloseCooldown": 3600,
+  "slotCount": 1,
+  "animation": "/Animations/Cable.animation",
+  "animationParts": {
+    "cables": "/Blocks/Conduits/Insertion Conduit/Facade Version/Cable/Cable.png"
+  },
+  "conduitType": "insertion",
+  "scriptDelta": 10,
+  "scripts": [ "/Blocks/Conduits/Insertion Conduit/Script.lua", "/Core/CableCore.lua", "/Core/Facade/Facade.lua" ]
+
+}

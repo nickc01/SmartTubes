@@ -1,0 +1,10 @@
+{
+  "itemName" : "insertionconduitfacade",
+  "price" : 10,
+  "rarity" : "Common",
+  "category" : "craftingMaterial",
+  "inventoryIcon" : "Icon.png",
+  "description" : "An Insertion Conduit that can be embedded in the ground via Facade Wrench",
+  "shortdescription" : "Insertion Conduit Facade",
+  "itemTags" : [ "reagent" ]
+}

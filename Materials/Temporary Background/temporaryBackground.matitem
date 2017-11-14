@@ -1,0 +1,10 @@
+{
+  "itemName" : "temporaryBackground",
+  "price" : 0,
+  "category" : "block",
+  "rarity" : "Common",
+  "inventoryIcon" : "Icon.png",
+  "description" : "ONLY USED FOR FACADE PLACEMENT",
+  "shortdescription" : "Temporary Background",
+  "materialId" : 601
+}

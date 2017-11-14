@@ -1,0 +1,196 @@
+[
+  {
+    "op": "add",
+    "path": "/deploymentConfig/scripts/-",
+    "value": "/Core/Player.lua"
+  },
+  {
+    "op": "add",
+    "path": "/defaultBlueprints/tier1/123",
+    "value": {
+      "item": "conduitcasing"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/defaultBlueprints/tier1/124",
+    "value": {
+      "item": "conduitplatform"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/defaultBlueprints/tier1/125",
+    "value": {
+      "item": "extractionconduit"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/defaultBlueprints/tier1/126",
+    "value": {
+      "item": "insertionconduit"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/defaultBlueprints/tier1/127",
+    "value": {
+      "item": "itemconduit"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/defaultBlueprints/tier1/128",
+    "value": {
+      "item": "platformconduit"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/defaultBlueprints/tier1/129",
+    "value": {
+      "item": "platformextractionconduit"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/defaultBlueprints/tier1/130",
+    "value": {
+      "item": "platforminsertionconduit"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/defaultBlueprints/tier1/131",
+    "value": {
+      "item": "speedupgrade"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/defaultBlueprints/tier1/132",
+    "value": {
+      "item": "stackupgrade"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/defaultBlueprints/tier1/132",
+    "value": {
+      "item": "conduitbender"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/defaultBlueprints/tier1/133",
+    "value": {
+      "item": "facadewrench"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/defaultBlueprints/tier1/134",
+    "value": {
+      "item": "facadewrenchguide-codex"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/defaultBlueprints/tier1/135",
+    "value": {
+      "item": "itemconduitfacade"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/defaultBlueprints/tier1/136",
+    "value": {
+      "item": "extractionconduitfacade"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/defaultBlueprints/tier1/137",
+    "value": {
+      "item": "facadecover"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/defaultBlueprints/tier1/138",
+    "value": {
+      "item": "insertionconduitfacade"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/defaultBlueprints/tier1/139",
+    "value": {
+      "item": "platformwirelesssendingconduit"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/defaultBlueprints/tier1/140",
+    "value": {
+      "item": "platformwirelessreceivingconduit"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/defaultBlueprints/tier1/141",
+    "value": {
+      "item": "wirelessreceivingconduitfacade"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/defaultBlueprints/tier1/142",
+    "value": {
+      "item": "wirelesssendingconduitfacade"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/defaultBlueprints/tier1/143",
+    "value": {
+      "item": "wirelessreceivingconduit"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/defaultBlueprints/tier1/144",
+    "value": {
+      "item": "wirelesssendingconduit"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/defaultBlueprints/tier1/142",
+    "value": {
+      "item": "ioconduit"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/defaultBlueprints/tier1/143",
+    "value": {
+      "item": "platformioconduit"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/defaultBlueprints/tier1/144",
+    "value": {
+      "item": "ioconduitfacade"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/defaultBlueprints/tier1/144",
+    "value": {
+      "item": "conduitstation"
+    }
+  }
+]

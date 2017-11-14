@@ -1,0 +1,38 @@
+{
+  "objectName": "platformconduit",
+  "colonyTags": [],
+  "printable": false,
+  "rarity": "Common",
+  "description": "Transfers items and behaves like a platform",
+  "shortdescription": "Platform Item Conduit",
+  "race": "generic",
+  "category": "transport",
+  "price": 45,
+  "inventoryIcon": "Icon/Icon.png",
+  "health": 3.0,
+  "orientations": [
+    {
+      "image": "Main/Main.png:<color>",
+      "imagePosition": [ -8, -8 ],
+      "animationPosition": [ -8, -8 ],
+      "frames": 1,
+      "animationCycle": 1.0,
+	  "collision" : "platform",
+      "renderLayer": "Platform-10",
+      "direction": "right"
+
+    }
+  ],
+  "frameCooldown": 5,
+  "autoCloseCooldown": 3600,
+  "spawnCooldownTime": 0,
+  "slotCount": 1,
+  "animation": "/Animations/Cable.animation",
+  "animationParts": {
+    "cables": "Cable/Cable.png"
+  },
+  "conduitType": "item",
+  "scriptDelta": 2,
+  "scripts": [ "/Blocks/Conduits/Item Conduit/Script.lua", "/Core/CableCore.lua" ]
+
+}

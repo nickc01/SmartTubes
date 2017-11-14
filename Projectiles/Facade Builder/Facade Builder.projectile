@@ -1,0 +1,19 @@
+{
+  "projectileName" : "facadebuilder",
+  "physics" : "grenadenobounce",
+  "bounces" : -1,
+  "timeToLive" : 100,
+  "image" : "Facade Builder.png",
+  "animationCycle" : 1,
+  "frameNumber" : 1,
+  "power" : 0,
+  "onlyHitTerrain" : true,
+  "damageType" : "NoDamage",
+  "damageKind" : "default",
+  "movementSettings" : {
+    "gravityMultiplier" : 0.0
+  },
+  
+  "scripts" : [ "Facade Builder.lua" ],
+  "scriptDelta" : 1
+}

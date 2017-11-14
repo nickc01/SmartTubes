@@ -1,0 +1,13 @@
+{
+  "input" : [
+    { "item" : "conduitcasing", "count" : 1 },
+	{ "item" : "glass", "count" : 5 },
+	{ "item" : "conduitplatform", "count" : 1 }
+  ],
+  "output" : {
+    "item" : "platformconduit",
+    "count" : 5
+  },
+  "duration" : 0.4,
+  "groups" : [ "conduitstation", "conduitplatform", "all" ]
+}

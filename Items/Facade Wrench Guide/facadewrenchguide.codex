@@ -1,0 +1,28 @@
+{
+  "id" : "facadewrenchguide",
+  "title" : "Facade Wrench Guide",
+  "description" : "A quick guide to using the Facade Wrench",
+  "icon" : "Facade Wrench Guide.png",
+  "contentPages" : [
+    "           Using The Facade Wrench
+
+Right click anywhere to open it's interface
+
+Once Opened, Use the arrows to change the type of conduit to place
+
+The number will tell you how much of the facade conduit you have in your inventory
+
+To place a facade conduit, hover your mouse over a block and click to place it inside the block"," To remove a facade conduit, check the remove mode option in the interface, hover over a facade conduit and click to remove it
+
+Holding the tool in your hand will show you nearby facade conduits
+
+To open a facade conduit's interface, hover over it while holding the tool and right click
+
+Note : Any objects sitting on top of the block you are embedding a facade in, will break","Tip : Holding shift and right clicking anywhere will toggle Remove Mode on and off
+"
+  ],
+    "itemConfig" : {
+    "rarity" : "common",
+    "price" : 25
+  }
+}

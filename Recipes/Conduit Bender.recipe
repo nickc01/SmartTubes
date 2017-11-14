@@ -1,0 +1,13 @@
+{
+  "input" : [
+    { "item" : "durasteelbar", "count" : 7 },
+	{ "item" : "siliconboard", "count" : 2 },
+	{ "item" : "conduitcasing", "count" : 5 }
+  ],
+  "output" : {
+    "item" : "conduitbender",
+    "count" : 1
+  },
+  "duration" : 0.4,
+  "groups" : [ "conduitstation", "conduitutility", "all" ]
+}

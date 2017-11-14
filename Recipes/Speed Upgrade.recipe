@@ -1,0 +1,12 @@
+{
+  "input" : [
+    { "item" : "titaniumbar", "count" : 5 },
+	{ "item" : "wire", "count" : 2 }
+  ],
+  "output" : {
+    "item" : "speedupgrade",
+    "count" : 1
+  },
+  "duration" : 0.4,
+  "groups" : [ "conduitstation", "conduitutility", "all" ]
+}

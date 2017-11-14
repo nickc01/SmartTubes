@@ -1,0 +1,24 @@
+{
+  "projectileName": "cursorInvalidR",
+  "physics": "grenadenobounce",
+  "bounces": -1,
+  "timeToLive": 1000,
+  "image": "Icon.png",
+  "animationCycle": 1,
+  "frameNumber": 1,
+  "fullbright": true,
+  
+  
+  "power": 0,
+  "onlyHitTerrain": true,
+  "renderLayer": "FrontParticle+10",
+  "damageType": "NoDamage",
+  "damageKind": "default",
+  "movementSettings": {
+    "collisionEnabled": false,
+    "gravityMultiplier": 0.0
+  },
+
+  "scripts": [ "/Projectiles/Facade Wrench Cursors/Facade Wrench Cursor.lua" ],
+  "scriptDelta": 0
+}

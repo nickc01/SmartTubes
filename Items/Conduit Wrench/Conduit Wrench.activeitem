@@ -1,0 +1,21 @@
+{
+  "itemName" : "conduitwrench",
+  "price" : 0,
+  "level" : 1,
+  "maxStack" : 1,
+  "rarity" : "Common",
+  "category" : "tool",
+  "description" : "Used for placing Conduits Quickly",
+  "shortdescription" : "Conduit Wrench",
+  "twoHanded" : true,
+
+  "inventoryIcon" : "Icon.png",
+  "scripts" : ["Conduit Wrench.lua"],
+  "animation" : "Conduit Wrench.animation",
+  "animationParts" : {
+    "facadewrench" : "Icon.png"
+  },
+  "animationCustom" : {},
+  "fireTime" : 1.0,
+  "fireOffset" : [0.5, 0.0]
+}

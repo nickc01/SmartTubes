@@ -1,0 +1,32 @@
+{
+  "projectileName": "traversalpink",
+  "physics": "grenadenobounce",
+  "bounces": -1,
+  "timeToLive": 1000,
+  "supportsProcessing": true,
+  "image": "Traversal.png",
+  "animationCycle": 1,
+  "frameNumber": 1,
+  "power": 0,
+  "damageType": "NoDamage",
+  "damageKind": "default",
+  "renderLayer": "Platform-12",
+  "collisionEnabled": false,
+  "ignorePlatformCollision": true,
+  "collidesForeground": false,
+  "collidesLiquid": false,
+  "speed": 40,
+  "movementSettings": {
+    "gravityMultiplier": 0.0,
+    "collisionEnabled": false,
+    "collisionPoly": [
+      [ 0.5, 0.5 ],
+      [ 0.5, 0.5 ],
+      [ 0.5, 0.5 ],
+      [ 0.5, 0.5 ]
+    ]
+  },
+
+  "scripts": [ "/Projectiles/Traversals/Traversal.lua" ],
+  "scriptDelta": 1
+}

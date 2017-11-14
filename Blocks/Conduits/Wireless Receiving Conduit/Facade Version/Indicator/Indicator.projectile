@@ -1,0 +1,25 @@
+{
+  "projectileName" : "indicatorwirelessreceivingconduit",
+  "physics" : "grenadenobounce",
+  "bounces" : -1,
+  "timeToLive" : 1,
+  "image" : "Indicator.png",
+  "fullbright" : true,
+  "animationCycle" : 1,
+  "frameNumber" : 1,
+  "power" : 0,
+  "renderLayer" : "FrontParticle+10",
+  "collisionEnabled" : false,
+  "ignorePlatformCollision" : true,
+  "collidesForeground" : false,
+  "collidesLiquid" : false,
+  "damageType" : "NoDamage",
+  "damageKind" : "default",
+  "movementSettings" : {
+    "gravityMultiplier" : 0.0,
+	"collisionEnabled" : false,
+	"collisionPoly" : [ [0.5, 0.5], [0.5, 0.5], [0.5, 0.5], [0.5, 0.5] ]
+  },
+  "scripts" : [ "/Core/Facade/Facade Indicator.lua" ],
+  "scriptDelta" : 100
+}

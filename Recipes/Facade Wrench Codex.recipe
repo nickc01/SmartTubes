@@ -1,0 +1,10 @@
+{
+  "input" : [
+  ],
+  "output" : {
+    "item" : "facadewrenchguide-codex",
+    "count" : 1
+  },
+  "duration" : 0.4,
+  "groups" : [ "conduitstation", "conduitfacade", "all" ]
+}

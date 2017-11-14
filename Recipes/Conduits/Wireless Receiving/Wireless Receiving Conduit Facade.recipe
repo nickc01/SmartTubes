@@ -1,0 +1,12 @@
+{
+  "input" : [
+    { "item" : "wirelessreceivingconduit", "count" : 1 },
+	{ "item" : "facadecover", "count" : 1 }
+  ],
+  "output" : {
+    "item" : "wirelessreceivingconduitfacade",
+    "count" : 1
+  },
+  "duration" : 0.4,
+  "groups" : [ "conduitstation", "conduitfacade", "all" ]
+}

@@ -1,0 +1,34 @@
+{
+  "objectName" : "curvedconduit5x5tl",
+  "colonyTags" : [],
+  "printable" : false,
+  "rarity" : "Common",
+  "description" : "Transports Items",
+  "shortdescription" : "Curved Conduit 5x5",
+  "race" : "generic",
+  "category" : "transport",
+  "price" : 45,
+  "inventoryIcon" : "Curve.png:default.0",
+  "health" : 3.0,
+  "orientations" : [
+    {
+      "image": "Curve.png:<color>.<frame>",
+
+      "imagePosition": [ 0, 0 ],
+      "spaces" : [ [0, 0], [1, 0],[2,1],[3,1],[3,2],[4,3],[4,4] ],
+      "frames": 1,
+      "animationCycle": 1.0,
+      "renderLayer": "Platform-11",
+      "direction": "right"
+
+    }
+  ],
+
+  "animation" : "/Blocks/Conduits/Curved/Curve.animation",
+  "animationParts" : {
+    "curves" : "Curve.png"
+  },
+  "conduitType" : "curved",
+  "scripts": [ "/Blocks/Conduits/Curved/Curved Conduit.lua", "/Core/CableCore.lua" ],
+  "scriptDelta" : 1
+}

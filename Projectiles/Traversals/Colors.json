@@ -1,0 +1,16 @@
+{
+  "Colors": [
+    [ "ff0000", "red" ],
+    [ "ff7e00", "orange" ],
+    [ "ffe400", "yellow" ],
+    [ "06ff00", "green" ],
+    [ "00fcff", "cyan" ],
+    [ "0012ff", "blue" ],
+    [ "7e00ff", "purple" ],
+    [ "ff00c0", "pink" ],
+    [ "000000", "black" ],
+    [ "858585", "gray" ],
+    [ "ffffff", "white" ]
+
+  ]
+}

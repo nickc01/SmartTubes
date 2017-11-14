@@ -1,0 +1,11 @@
+{
+  "input" : [
+    { "item" : "titaniumbar", "count" : 5 }
+  ],
+  "output" : {
+    "item" : "conduitcasing",
+    "count" : 1
+  },
+  "duration" : 0.4,
+  "groups" : [ "conduitstation", "conduitnormal", "all" ]
+}

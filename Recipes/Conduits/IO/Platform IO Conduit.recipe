@@ -1,0 +1,14 @@
+{
+  "input" : [
+    { "item" : "extractionconduit", "count" : 1 },
+	{ "item" : "insertionconduit", "count" : 1 },
+	{ "item" : "conduitplatform", "count" : 1 }
+	
+  ],
+  "output" : {
+    "item" : "platformioconduit",
+    "count" : 1
+  },
+  "duration" : 0.4,
+  "groups" : [ "conduitstation", "conduitplatform", "all" ]
+}

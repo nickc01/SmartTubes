@@ -1,0 +1,43 @@
+{
+  "objectName": "conduitstation",
+  "colonyTags": [ "pretty" ],
+  "rarity": "Common",
+  "category": "transport",
+  "price": 50,
+  "description": "Used for crafting Conduits",
+  "shortdescription": "Conduit Station",
+  "race": "generic",
+  "inventoryIcon": "Conduit Station.png:1",
+  "orientations" : [
+    {
+      "imageLayers" : [ { "image" : "Conduit Station.png:<frame>" },{ "image" : "Conduit Station FullBright.png:<frame>", "fullbright" : true } ],
+      "imagePosition" : [0, 0],
+
+      "direction" : "left",
+      "flipImages" : true,
+
+      "frames" : 110,
+      "animationCycle" : 7,
+
+      "spaceScan" : 0.1,
+      "anchors" : [ "bottom" ]
+    },
+    {
+      "imageLayers" : [ { "image" : "Conduit Station.png:<frame>" },{ "image" : "Conduit Station FullBright.png:<frame>", "fullbright" : true } ],
+      "imagePosition" : [0, 0],
+
+      "direction" : "right",
+
+      "frames" : 110,
+      "animationCycle" : 7,
+
+      "spaceScan" : 0.1,
+      "anchors" : [ "bottom" ]
+    }
+  ],
+  "interactAction" : "OpenCraftingInterface",
+  "interactData" : {
+    "config" : "/Blocks/Conduit Station/UI/Conduit Station.config",
+    "filter" : [ "conduitstation" ]
+  }
+}

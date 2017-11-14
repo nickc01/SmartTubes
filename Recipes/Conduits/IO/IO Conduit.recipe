@@ -1,0 +1,12 @@
+{
+  "input" : [
+    { "item" : "extractionconduit", "count" : 1 },
+	{ "item" : "insertionconduit", "count" : 1 }
+  ],
+  "output" : {
+    "item" : "ioconduit",
+    "count" : 1
+  },
+  "duration" : 0.4,
+  "groups" : [ "conduitstation", "conduitnormal", "all" ]
+}

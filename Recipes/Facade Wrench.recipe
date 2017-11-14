@@ -1,0 +1,12 @@
+{
+  "input" : [
+    { "item" : "titaniumbar", "count" : 5 },
+	{ "item" : "durasteelbar", "count" : 3 }
+  ],
+  "output" : {
+    "item" : "facadewrench",
+    "count" : 1
+  },
+  "duration" : 0.4,
+  "groups" : [ "conduitstation", "conduitfacade", "all" ]
+}

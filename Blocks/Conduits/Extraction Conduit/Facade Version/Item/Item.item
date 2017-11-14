@@ -1,0 +1,10 @@
+{
+  "itemName" : "extractionconduitfacade",
+  "price" : 10,
+  "rarity" : "Common",
+  "category" : "craftingMaterial",
+  "inventoryIcon" : "Icon.png",
+  "description" : "An Extraction Conduit that can be embedded in the ground via Facade Wrench",
+  "shortdescription" : "Extraction Conduit Facade",
+  "itemTags" : [ "reagent" ]
+}

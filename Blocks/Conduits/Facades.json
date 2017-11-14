@@ -1,0 +1,52 @@
+{
+  "Facades": [
+    {
+      "conduit": "itemconduit",
+      "item": "itemconduitfacade",
+      "normalBlock": "itemfacadeblock",
+      "occludedBlock": "itemfacadeoccluded",
+      "indicator": "indicatoritemconduit",
+      "displayName": "Item"
+    },
+    {
+      "conduit": "extractionconduit",
+      "item": "extractionconduitfacade",
+      "normalBlock": "extractionfacadeblock",
+      "occludedBlock": "extractionfacadeoccluded",
+      "indicator": "indicatorextractionconduit",
+      "displayName": "Extraction"
+    },
+    {
+      "conduit": "insertionconduit",
+      "item": "insertionconduitfacade",
+      "normalBlock": "insertionfacadeblock",
+      "occludedBlock": "insertionfacadeoccluded",
+      "indicator": "indicatorinsertionconduit",
+      "displayName": "Insertion"
+    },
+    {
+      "conduit": "ioconduit",
+      "item": "ioconduitfacade",
+      "normalBlock": "iofacadeblock",
+      "occludedBlock": "iofacadeoccluded",
+      "indicator": "indicatorioconduit",
+      "displayName": "IO"
+    },
+	{
+      "conduit": "wirelessreceivingconduit",
+      "item": "wirelessreceivingconduitfacade",
+      "normalBlock": "wirelessreceivingfacadeblock",
+      "occludedBlock": "wirelessreceivingfacadeoccluded",
+      "indicator": "indicatorwirelessreceivingconduit",
+      "displayName": "Wireless Receiver"
+    },
+	{
+      "conduit": "wirelesssendingconduit",
+      "item": "wirelesssendingconduitfacade",
+      "normalBlock": "wirelesssendingfacadeblock",
+      "occludedBlock": "wirelesssendingfacadeoccluded",
+      "indicator": "indicatorwirelesssendingconduit",
+      "displayName": "Wireless Sender"
+    }
+  ]
+}
