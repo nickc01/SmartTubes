@@ -80,7 +80,8 @@ UpdateAfterLimit = function()
 		end
 	end
 	Indicators = {};
-	local Pos = world.entityPosition(activeItem.ownerEntityId());
+	--sb.logInfo("Aim Position = " .. sb.print(vecFloor(activeItem.ownerAimPosition())));
+	local Pos = activeItem.ownerAimPosition()--world.entityPosition(vecFloor(activeItem.ownerAimPosition()));
 	if Pos ~= nil then
 		local Objects = world.objectQuery(Pos,10);
 		local offset = {0.5,0.5};
@@ -99,7 +100,7 @@ function update(dt,fireMode,shiftHeld)
 	if First == false then
 		First = true;
 		local PreviousConfig = config.getParameter("PreviousConfig");
-		sb.logInfo("Previous Config = " .. sb.print(PreviousConfig));
+		--sb.logInfo("Previous Config = " .. sb.print(PreviousConfig));
 		if PreviousConfig ~= nil then
 			world.sendEntityMessage(activeItem.ownerEntityId(),"SetConfig",PreviousConfig);
 			Config = PreviousConfig;
@@ -171,6 +172,7 @@ local function EmbedInBlock(Position)
 		HasBackground = Background;
 	end
 	local Object,IsOccluded = GetBlock(Foreground);
+	--sb.logInfo("Material Above = " .. sb.print(world.objectAt(vecAdd(Position,{0,1}))));
 	local Info = 
 	{
 		--ADD OCLUDED BOOLEAN
@@ -250,13 +252,13 @@ CheckPosition = function(Position)
 	--TODO
 	if Config.Breaking == false then
 		local Material = world.material(Position,"foreground");
-		if world.objectAt(Position) == nil and Material ~= nil and Material ~= false and string.find(Material,"metamaterial:") == nil and world.isTileProtected(Position) == false then
+		if world.objectAt(Position) == nil and Material ~= nil and Material ~= false and string.find(Material,"metamaterial:") == nil and (world.isTileProtected(Position) == false or player.isAdmin()) then
 			return true;
 		else
 			return false;
 		end
 	else
-		if world.objectAt(Position) ~= nil and world.getObjectParameter(world.objectAt(Position),"IsFacade") == true then
+		if world.objectAt(Position) ~= nil and world.getObjectParameter(world.objectAt(Position),"IsFacade") == true and (world.isTileProtected(Position) == false or player.isAdmin()) then
 			return true;
 		else
 			return false;
@@ -289,7 +291,7 @@ end
 
 UpdateCursor = function()
 	Activated = false;
-	if world.magnitude(world.entityPosition(activeItem.ownerEntityId()),activeItem.ownerAimPosition()) > 10 then
+	if world.magnitude(world.entityPosition(activeItem.ownerEntityId()),activeItem.ownerAimPosition()) > 10 and player.isAdmin() == false then
 		IsValid = nil;
 		DestroyCursor();
 		return nil;
