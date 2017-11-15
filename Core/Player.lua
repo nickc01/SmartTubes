@@ -20,6 +20,7 @@ function init()
 		return Config;
 	end);
 	message.setHandler("SetConfig",function(_,_,value)
+		sb.logInfo("Setting Config to " .. sb.print(value));
 		Config = value;
 	end);
 	message.setHandler("SetSwapItem",function(_,_,item)
@@ -27,7 +28,7 @@ function init()
 	end);
 end
 
-function stringTable(table,name,spacer)
+--[[function stringTable(table,name,spacer)
 	if table == nil then return name ..  " = nil" end;
 	if spacer == nil then spacer = "" end;
 	local startingString = "\n" .. spacer ..  name .. " :\n" .. spacer .. "(";
@@ -55,4 +56,4 @@ function stringTable(table,name,spacer)
 	end
 	startingString = startingString .. "\n" .. spacer .. ")";
 	return startingString;
-end
+end--]]

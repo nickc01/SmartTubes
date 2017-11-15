@@ -5,4 +5,7 @@ function init()
 	message.setHandler("Destroy", function()
 		projectile.die();
 	end);
+	message.setHandler("Refresh",function()
+		projectile.setTimeToLive(1);
+	end);
 end

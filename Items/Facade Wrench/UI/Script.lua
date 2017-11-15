@@ -26,6 +26,7 @@ end
 function init()
 	SourceID = pane.sourceEntity();
 	Config = SendAndWait(SourceID,"GetConfig");
+	widget.setChecked("removeMode",Config.Breaking);
 	FacadeConfig = root.assetJson("/Blocks/Conduits/Facades.json").Facades;
 	SetConduit();
 end

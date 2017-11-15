@@ -65,10 +65,15 @@ function init()
 	--sb.logInfo("Before = " .. sb.print(config.getParameter("test1")));
 	--activeItem.setInstanceValue("test1","thisisatest");
 	--sb.logInfo("After = " .. sb.print(config.getParameter("test1")));
+	--sb.logInfo("EntityID = " .. sb.print(entity.id()));
+	--sb.logInfo("ValueTest = " .. sb.print(config.getParameter("ValueTest")));
 	UpdateAfterLimit();
 end
 
 UpdateAfterLimit = function()
+	if Cursor ~= nil then
+		world.sendEntityMessage(Cursor,"Refresh");
+	end
 	if Indicators ~= nil then
 		for i=1,#Indicators do
 			world.sendEntityMessage(Indicators[i],"Destroy");
@@ -88,7 +93,18 @@ UpdateAfterLimit = function()
 	end
 end
 
+local First = false;
+
 function update(dt,fireMode,shiftHeld)
+	if First == false then
+		First = true;
+		local PreviousConfig = config.getParameter("PreviousConfig");
+		sb.logInfo("Previous Config = " .. sb.print(PreviousConfig));
+		if PreviousConfig ~= nil then
+			world.sendEntityMessage(activeItem.ownerEntityId(),"SetConfig",PreviousConfig);
+			Config = PreviousConfig;
+		end
+	end
 	Timer = Timer + dt;
 	if Timer >= Limit then
 		Timer = 0;
@@ -115,6 +131,7 @@ function update(dt,fireMode,shiftHeld)
 	local NewConfig = SendAndWait(activeItem.ownerEntityId(),"GetConfig");
 	if StoredPosition ~= nil and (Config == nil or Config.Breaking ~= NewConfig.Breaking) then
 		Config = NewConfig;
+		IsValid = nil;
 		UpdateCursor();
 	else
 		Config = NewConfig;
@@ -124,6 +141,7 @@ function update(dt,fireMode,shiftHeld)
 		if PreviousState == "primary" then
 			PreviousState = "none";
 		end
+		IsValid = nil;
 		UpdateCursor();
 	end
 end
@@ -301,4 +319,11 @@ UpdateAim = function()
 	local aim,direction = activeItem.aimAngleAndDirection(0, activeItem.ownerAimPosition());
 	activeItem.setArmAngle(aim);
 	activeItem.setFacingDirection(direction);
+end
+
+function uninit()
+	if Cursor ~= nil and world.entityExists(Cursor) then
+		DestroyCursor();
+	end
+	activeItem.setInstanceValue("PreviousConfig",Config);
 end
