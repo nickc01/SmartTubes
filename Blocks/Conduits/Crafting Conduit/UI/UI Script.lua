@@ -1,0 +1,190 @@
+local RecipesList = "recipeArea.itemList";
+local AddedRecipesList = "addedRecipeArea.itemList";
+local UpdateRecipesForItem;
+
+local ItemImageSpacing = 2;
+
+local ItemConfigs = setmetatable({},{ __mode = 'v'})
+
+local function GetConfig(ItemName)
+	if ItemConfigs[ItemName] == nil then
+		ItemConfigs[ItemName] = root.itemConfig(ItemName);
+	end
+	return ItemConfigs[ItemName].config;
+end
+
+local function GetItemImage(ItemName)
+	if ItemConfigs[ItemName] == nil then
+		ItemConfigs[ItemName] = root.itemConfig(ItemName);
+	end
+	local Config = ItemConfigs[ItemName];
+	local IMG = Config.config.inventoryIcon;
+	if string.find(IMG,"^/") == nil then
+		local Directory = Config.directory;
+		if string.find(Directory,"/$") == nil then
+			IMG = Directory .. "/" .. IMG;
+		else
+			IMG = Directory .. IMG;
+		end
+	end
+	sb.logInfo("IMG = " .. sb.print(IMG));
+	return IMG;
+	--sb.logInfo("Config = " .. sb.print(Config));
+end
+
+--[[
+Doc for widget.addFlowImage();
+
+--widget
+
+
+
+--]]
+local Elements = nil;
+
+function init()
+	--[[sb.logInfo("A = " .. sb.print(A));
+	sb.logInfo("B = " .. sb.print(B));
+	sb.logInfo("C = " .. sb.print(C));
+	sb.logInfo("D = " .. sb.print(D))--]]
+	--sb.logInfo("Widget = " .. sb.print(widget));
+	--Canvas.Init();
+	widget.setSliderRange("requiredItemsSlider", 0, 1000);
+	widget.registerMemberCallback(RecipesList, "MoveRight", function() sb.logInfo("This is a test") end);
+	widget.registerMemberCallback(RecipesList, "MoveLeft", function() sb.logInfo("This is a test") end);
+end
+function update(dt)
+	--widget.setSliderValue("requiredItemsSlider",widget.getSliderValue("requiredItemsSlider") + 1);
+	--[[if Elements ~= nil then
+		for k,i in ipairs(Elements) do
+			--sb.logInfo("Element = " .. sb.print(i));
+			local Position = widget.getPosition(i);
+			Position[1] = Position[1] - 1;
+			widget.setPosition(i,Position);
+		end
+	end--]]
+	--sb.logInfo("Recipe Added = " .. sb.print(widget.addListItem("recipeArea.itemList")));
+	--local ListItem = widget.addListItem("recipeArea.itemList");
+	--widget.addListItem("recipeArea.itemList." .. ListItem .. ".requiredItems.itemList");
+end
+
+local AllRecipes = {};
+
+UpdateRecipesForItem = function(Item)
+	AllRecipes = {};
+	widget.clearListItems(RecipesList);
+	if Item ~= nil then
+		local Recipes = root.recipesForItem(Item.name);
+		sb.logInfo("Recipes = " .. sb.printJson(Recipes,1));
+		if Recipes ~= nil then
+			--Elements = {};
+			local Elements = 0;
+			for k,i in ipairs(Recipes) do
+				local ItemSlot = widget.addListItem(RecipesList);
+				widget.setItemSlotItem(RecipesList .. "." .. ItemSlot .. ".outputItemImage",i.output);
+
+				--Canvas.AddBinding(RecipesList .. "." .. ItemSlot .. ".requiredItemsCanvas");
+
+				--local RequiredItemsCanvas = Canvas.GetBinding(RecipesList .. "." .. ItemSlot .. ".requiredItemsCanvas");
+				--RequiredItemsCanvas:drawImage("/interface/actionbar/actionbarcover.png",{0,0});
+				sb.logInfo(RecipesList .. "." .. ItemSlot .. ".itemSlider");
+				--widget.setSliderRange(RecipesList .. "." .. ItemSlot .. ".itemSlider", 0, 1000);
+				widget.setSliderValue(RecipesList .. "." .. ItemSlot .. ".itemSlider",1);
+				--sb.logInfo("Value = " .. sb.print(widget.getSliderValue(RecipesList)));
+				for m,n in ipairs(i.input) do
+				--for i=0,24 do
+					local Layout = RecipesList .. "." .. ItemSlot .. ".requiredItems";
+					--root.imageSize();
+					local Image = GetItemImage(n.name);
+					local ImageSize = root.imageSize(Image);
+					local MaxSize = math.max(ImageSize[1],ImageSize[2]);
+					local ScaleFactor = 1;
+					if MaxSize > 16 then
+						ScaleFactor = 16 / MaxSize;
+					end
+					--for j=1,10 do
+						widget.addFlowImage(Layout,"slot" .. n.name,"/interface/actionbar/actionbarcover.png");
+						if ScaleFactor == 1 then
+							widget.addFlowImage(Layout,"item" .. n.name,Image);
+						else
+							widget.addFlowImage(Layout,"item" .. n.name,Image .. "?scalenearest=" .. ScaleFactor);
+						end
+						Elements = Elements + 1;
+						widget.setPosition(Layout .. ".slot" .. n.name,{(18 * ((m * 1) - 1)),0});
+						widget.setPosition(Layout .. ".item" .. n.name,{(18 * ((m * 1) - 1)) - (ImageSize[1] / 2) + 9,8 - (ImageSize[2] / 2)});
+						if Elements > 4 then
+							
+						end
+					--end
+					--Elements[#Elements + 1] = RecipesList .. "." .. ItemSlot .. ".requiredItems.rain" .. i;
+				end
+				--widget.addFlowImage(RecipesList .. "." .. ItemSlot .. ".requiredItems","/interface/actionbar/actionbarcover.png","/interface/actionbar/actionbarcover.png");
+				--widget.addFlowImage(RecipesList .. "." .. ItemSlot .. ".requiredItems","/interface/actionbar/actionbarcover.png","/interface/actionbar/actionbarcover.png");
+				--widget.addFlowImage(RecipesList .. "." .. ItemSlot .. ".requiredItems","/interface/actionbar/actionbarcover.png","/interface/actionbar/actionbarcover.png");
+				--[[sb.logInfo("ItemSlot = " .. sb.print(ItemSlot));
+				sb.logInfo("Final = " .. sb.print(RecipesList .. "." .. ItemSlot .. ".requiredItems.itemList"));
+				local StartingPos;
+				local ItemSize;
+				local Requirements = {};
+				for i=1,k do
+					Requirements[#Requirements + 1] = widget.addListItem(RecipesList .. "." .. ItemSlot .. ".requiredItems.itemList");
+					--[[if StartingPos == nil then
+						StartingPos = widget.getPosition(RecipesList .. "." .. ItemSlot .. ".requiredItems.itemList." .. Requirements[#Requirements]);
+						ItemSize = widget.getSize(RecipesList .. "." .. ItemSlot .. ".requiredItems.itemList." .. Requirements[#Requirements]);
+					end
+					--local Path = 
+					--[[sb.logInfo("Requirement = " .. sb.print(Requirements));
+					if StartingPos == nil then
+						StartingPos = widget.getPosition(RecipesList .. "." .. ItemSlot .. ".requiredItems.itemList." .. Requirements);
+						ItemSize = widget.getSize(RecipesList .. "." .. ItemSlot .. ".requiredItems.itemList." .. Requirements);
+						sb.logInfo("Size = " .. sb.print(ItemSize));
+						sb.logInfo("Position = " .. sb.print(StartingPos));
+					else
+						sb.logInfo("Element Position = " .. sb.print(widget.getPosition(RecipesList .. "." .. ItemSlot .. ".requiredItems.itemList." .. Requirements)));
+						--ItemSize = widget.getSize(RecipesList .. "." .. ItemSlot .. ".requiredItems.itemList." .. Requirements);
+						local NewPos = {1 * i,-(1 * i)};
+						widget.setPosition(RecipesList .. "." .. ItemSlot .. ".requiredItems.itemList." .. Requirements,NewPos);
+						sb.logInfo("Element Position2 = " .. sb.print(widget.getPosition(RecipesList .. "." .. ItemSlot .. ".requiredItems.itemList." .. Requirements)));
+					end
+				end
+				for k,i in ipairs(Requirements) do
+					sb.logInfo("Element Position = " .. sb.print(widget.getPosition(RecipesList .. "." .. ItemSlot .. ".requiredItems.itemList." .. i)));
+					local ElementPos = widget.getPosition(RecipesList .. "." .. ItemSlot .. ".requiredItems.itemList." .. i);
+					--ItemSize = widget.getSize(RecipesList .. "." .. ItemSlot .. ".requiredItems.itemList." .. Requirements);
+					--local NewPos = {1 * k,-(1 * k)};
+					local NewPos = {ElementPos[2],ElementPos[1]};
+					--widget.setPosition(RecipesList .. "." .. ItemSlot .. ".requiredItems.itemList." .. i,NewPos);
+					sb.logInfo("Element Position2 = " .. sb.print(widget.getPosition(RecipesList .. "." .. ItemSlot .. ".requiredItems.itemList." .. i)));
+				end--]]
+				--Elements[#Elements + 1] = RecipesList .. "." .. ItemSlot .. ".requiredItems.itemList." .. Requirements .. ".outputItemImage";
+				--widget.setSliderEnabled(RecipesList .. "." .. ItemSlot .. ".requiredItems",false);
+			end
+		end
+	end
+end
+
+local RecipeItemSlot;
+function RecipeItemBox()
+	--sb.logInfo("CLICKED!");
+	RecipeItemSlot = player.swapSlotItem();
+	--sb.logInfo("Item = " .. sb.print(RecipeItemSlot));
+	widget.setItemSlotItem("recipeItemBox",RecipeItemSlot);
+	UpdateRecipesForItem(RecipeItemSlot);
+end
+
+function RecipeItemBoxRight()
+	RecipeItemSlot = nil;
+	widget.setItemSlotItem("recipeItemBox",RecipeItemSlot);
+	UpdateRecipesForItem(RecipeItemSlot);
+end
+
+function RecipeItemBoxHelp()
+	
+end
+
+function SliderUpdate(A,B,C,D)
+	sb.logInfo("A = " .. sb.print(A));
+	sb.logInfo("B = " .. sb.print(B));
+	sb.logInfo("C = " .. sb.print(C));
+	sb.logInfo("D = " .. sb.print(D));
+end
