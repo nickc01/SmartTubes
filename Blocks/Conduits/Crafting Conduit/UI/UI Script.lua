@@ -2,6 +2,10 @@ local RecipesList = "recipeArea.itemList";
 local AddedRecipesList = "addedRecipeArea.itemList";
 local UpdateRecipesForItem;
 
+local RecipeCanvas;
+
+local RecipeScrollbar;
+
 local ItemImageSpacing = 2;
 
 local ItemConfigs = setmetatable({},{ __mode = 'v'})
@@ -27,7 +31,7 @@ local function GetItemImage(ItemName)
 			IMG = Directory .. IMG;
 		end
 	end
-	sb.logInfo("IMG = " .. sb.print(IMG));
+	--sb.logInfo("IMG = " .. sb.print(IMG));
 	return IMG;
 	--sb.logInfo("Config = " .. sb.print(Config));
 end
@@ -40,18 +44,34 @@ Doc for widget.addFlowImage();
 
 
 --]]
-local Elements = nil;
 
 function init()
+	--RecipeCanvas = widget.bindCanvas("recipeCanvas");
+	--CanvasCore.AddClickCallback(RecipeCanvas,"RecipeCanvasClick");
+	RecipeCanvas = CanvasCore.InitCanvas("recipeCanvas","RecipeCanvasClick");
+	RecipeScrollbar = CanvasCore.CreateScrollbar(
+	RecipeCanvas,
+	{126,3},
+	{126,169},
+	"/Blocks/Conduits/Crafting Conduit/UI/Window/SliderArrowUp.png",
+	"/Blocks/Conduits/Crafting Conduit/UI/Window/SliderArrowDown.png",
+	"/Blocks/Conduits/Crafting Conduit/UI/Window/ScrollArea.png",
+	"/Blocks/Conduits/Crafting Conduit/UI/Window/SliderMid.png",
+	"/Blocks/Conduits/Crafting Conduit/UI/Window/SliderTop.png",
+	"/Blocks/Conduits/Crafting Conduit/UI/Window/SliderBottom.png",
+	2,0
+	);
+	sb.logInfo("RecipeScrollbar = " .. sb.print(RecipeScrollbar));
+	RecipeScrollbar.Draw();
 	--[[sb.logInfo("A = " .. sb.print(A));
 	sb.logInfo("B = " .. sb.print(B));
 	sb.logInfo("C = " .. sb.print(C));
 	sb.logInfo("D = " .. sb.print(D))--]]
 	--sb.logInfo("Widget = " .. sb.print(widget));
 	--Canvas.Init();
-	widget.setSliderRange("requiredItemsSlider", 0, 1000);
-	widget.registerMemberCallback(RecipesList, "MoveRight", function() sb.logInfo("This is a test") end);
-	widget.registerMemberCallback(RecipesList, "MoveLeft", function() sb.logInfo("This is a test") end);
+	--widget.setSliderRange("requiredItemsSlider", 0, 1000);
+	--widget.registerMemberCallback(RecipesList, "MoveRight", function() sb.logInfo("This is a test") end);
+	--widget.registerMemberCallback(RecipesList, "MoveLeft", function() sb.logInfo("This is a test") end);
 end
 function update(dt)
 	--widget.setSliderValue("requiredItemsSlider",widget.getSliderValue("requiredItemsSlider") + 1);
@@ -66,11 +86,25 @@ function update(dt)
 	--sb.logInfo("Recipe Added = " .. sb.print(widget.addListItem("recipeArea.itemList")));
 	--local ListItem = widget.addListItem("recipeArea.itemList");
 	--widget.addListItem("recipeArea.itemList." .. ListItem .. ".requiredItems.itemList");
+	CanvasCore.Update();
 end
 
 local AllRecipes = {};
 
-UpdateRecipesForItem = function(Item)
+function UpdateRecipesForItem(item)
+	--DrawScrollbar(RecipeScrollbar,RecipeCanvas);
+	
+	--[[DrawMainScrollbar(
+	{127,3},
+	{127,169},
+	"/Blocks/Conduits/Crafting Conduit/UI/Window/SliderArrowUp.png",
+	"/Blocks/Conduits/Crafting Conduit/UI/Window/SliderArrowDown.png",
+	"/Blocks/Conduits/Crafting Conduit/UI/Window/ScrollArea.png",
+	"/Blocks/Conduits/Crafting Conduit/UI/Window/SliderMid.png"
+	);--]]
+end
+
+--[[UpdateRecipesForItem = function(Item)
 	AllRecipes = {};
 	widget.clearListItems(RecipesList);
 	if Item ~= nil then
@@ -155,13 +189,13 @@ UpdateRecipesForItem = function(Item)
 					local NewPos = {ElementPos[2],ElementPos[1]};
 					--widget.setPosition(RecipesList .. "." .. ItemSlot .. ".requiredItems.itemList." .. i,NewPos);
 					sb.logInfo("Element Position2 = " .. sb.print(widget.getPosition(RecipesList .. "." .. ItemSlot .. ".requiredItems.itemList." .. i)));
-				end--]]
+				end
 				--Elements[#Elements + 1] = RecipesList .. "." .. ItemSlot .. ".requiredItems.itemList." .. Requirements .. ".outputItemImage";
 				--widget.setSliderEnabled(RecipesList .. "." .. ItemSlot .. ".requiredItems",false);
 			end
 		end
 	end
-end
+end--]]
 
 local RecipeItemSlot;
 function RecipeItemBox()
