@@ -4,6 +4,8 @@ local UpdateRecipesForItem;
 
 local RecipeScrollbar;
 
+local RecipeCanvas;
+
 local ItemImageSpacing = 2;
 
 local ItemConfigs = setmetatable({},{ __mode = 'v'})
@@ -13,6 +15,10 @@ local function GetConfig(ItemName)
 		ItemConfigs[ItemName] = root.itemConfig(ItemName);
 	end
 	return ItemConfigs[ItemName].config;
+end
+
+local function vecSub(A,B)
+	return {A[1] - B[1],A[2] - B[2]}
 end
 
 local function GetItemImage(ItemName)
@@ -44,8 +50,8 @@ Doc for widget.addFlowImage();
 --]]
 
 function init()
-	CanvasCore.AddCanvas("recipeCanvas","RecipeCanvas");
-	RecipeScrollbar = CanvasCore.AddScrollBar("RecipeCanvas",{100,84},166,{
+	RecipeCanvas = CanvasCore.AddCanvas("recipeCanvas","RecipeCanvas");
+	RecipeScrollbar = CanvasCore.AddScrollBar("RecipeCanvas",{122,2,131,169},nil,{
 		ScrollerTop = "/Blocks/Conduits/Crafting Conduit/UI/Window/SliderTop.png",
 		Scroller = "/Blocks/Conduits/Crafting Conduit/UI/Window/SliderMid.png",
 		ScrollerBottom = "/Blocks/Conduits/Crafting Conduit/UI/Window/SliderBottom.png"
@@ -60,6 +66,7 @@ function init()
 		Bottom = "/Blocks/Conduits/Crafting Conduit/UI/Window/SliderArrowDown.png",
 	},"Vertical");
 	RecipeScrollbar.Draw();
+	RecipeScrollbar.SetSliderSize(5);
 	--RecipeCanvas = widget.bindCanvas("recipeCanvas");
 	--CanvasCore.AddClickCallback(RecipeCanvas,"RecipeCanvasClick");
 	--[[RecipeCanvas = CanvasCore.InitCanvas("recipeCanvas","RecipeCanvasClick");
@@ -89,6 +96,15 @@ function init()
 	--widget.registerMemberCallback(RecipesList, "MoveLeft", function() sb.logInfo("This is a test") end);
 end
 function update(dt)
+	--RecipeScrollbar.SetSliderSize(RecipeScrollbar.GetSliderSize() + 1);
+	--RecipeScrollbar.SetSliderValue(RecipeScrollbar.GetSliderValue() + 0.01);
+	--RecipeScrollbar.Draw();
+	--local Position = vecSub(RecipeCanvas:mousePosition(),RecipeScrollbar.GetPosition());
+	--Position[1] = 100 / Position[1];
+	--Position[2] = Position[2] / RecipeScrollbar.GetLength();
+--	RecipeScrollbar.SetSliderValue(Position[2]);
+	RecipeScrollbar.SetToMousePosition();
+	RecipeScrollbar.Draw();
 	--widget.setSliderValue("requiredItemsSlider",widget.getSliderValue("requiredItemsSlider") + 1);
 	--[[if Elements ~= nil then
 		for k,i in ipairs(Elements) do

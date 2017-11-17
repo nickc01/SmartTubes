@@ -12,7 +12,9 @@ function CanvasCore.AddCanvas(CanvasName,AliasName)
 			error(sb.print(CanvasName) .. " is already Added under the Alias Name : " .. sb.print(k));
 		end
 	end
-	Canvases[AliasName] = {Canvas = widget.bindCanvas(CanvasName),Name = CanvasName,Elements = {}};
+	local Binding = widget.bindCanvas(CanvasName);
+	Canvases[AliasName] = {Canvas = Binding,Name = CanvasName,Elements = {}};
+	return Binding;
 end
 --[[
 Canvas.AddScrollBar()
@@ -46,6 +48,20 @@ local function Lerp(A,B,T)
 	return ((A - B) * T) + B;
 end
 
+local function vecAdd(A,B,C)
+	if C == nil then
+		return {A[1] + B[1],A[2] + B[2]};
+	else
+		return {A[1] + B,A[2] + C};
+	end
+end
+local function rectVectAdd(A,B)
+	return {A[1] + B[1],A[2] + B[2],A[3] + B[1],A[4] + B[2]};
+end
+local function vecSub(A,B)
+	return {A[1] - B[1],A[2] - B[2]}
+end
+
 local function SetScrollerRect(RectMax,Size,Position,Mode)
 	if Size < 1 then
 		Size = 1;
@@ -62,7 +78,12 @@ local function SetScrollerRect(RectMax,Size,Position,Mode)
 	end
 end
 
-function CanvasCore.AddScrollBar(CanvasName,Origin,Length,Scroller,ScrollerBackground,Arrows,Mode)
+function CanvasCore.AddScrollBar(CanvasName,Origin,Length,Scroller,ScrollerBackground,Arrows,Mode,InitialSize,InitialValue)
+	InitialSize = InitialSize or 1;
+	InitialValue = InitialValue or 0;
+	if Origin[3] ~= nil and Origin[4] ~= nil then
+		return CanvasCore.AddScrollBar(CanvasName,{Origin[3] - ((Origin[3] - Origin[1]) / 2),Origin[4] - ((Origin[4] - Origin[2]) / 2)},Origin[4] - Origin[2],Scroller,ScrollerBackground,Arrows,Mode,InitialSize,InitialValue);
+	end
 	--sb.logInfo("Canvases = " .. sb.print(Canvases));
 	local Canvas = Canvases[CanvasName].Canvas;
 	local Element = {};
@@ -128,24 +149,33 @@ function CanvasCore.AddScrollBar(CanvasName,Origin,Length,Scroller,ScrollerBackg
 		--Element.ScrollerOrigin = ScrollerStart;
 		--Element.ScrollerRegion = ScrollerRegion;
 
-		local ScrollRect = SetScrollerRect(ScrollerRegion,1,0.5,Mode);
+		local ScrollRect = SetScrollerRect(ScrollerRegion,InitialSize,InitialValue,Mode);
 
 		local ScrollerBottomSize = root.imageSize(Scroller.ScrollerBottom);
+		local ScrollerTopSize = root.imageSize(Scroller.ScrollerTop);
 
 		Element.Scroller = {
-			Rect = ScrollRect,
+			Rect = rectVectAdd(ScrollRect,ScrollerStart),
 			Image = Scroller.Scroller,
+			Size = ScrollerBottomSize[2] + ScrollRect[4] - ScrollRect[2] + ScrollerTopSize[2],
 			Top = {
-				Position = {ScrollRect[1],ScrollRect[4]},
+				Position = vecAdd({ScrollRect[1],ScrollRect[4]},ScrollerStart),
 				Image = Scroller.ScrollerTop
 			},
 			Bottom = {
-				Position = {ScrollRect[1],ScrollRect[2] - ScrollerBottomSize[2]},
-				Image = Scroller.ScrollerBottom
+				Position = vecAdd({ScrollRect[1],ScrollRect[2] - ScrollerBottomSize[2]},ScrollerStart),
+				Image = Scroller.ScrollerBottom,
+				Size = ScrollerBottomSize
 			},
-			Origin = ScrollerStart,
+			Start = ScrollerStart,
 			Region = ScrollerRegion
 		}
+		Element.Size = InitialSize;
+		Element.Value = InitialValue;
+		Element.Length = (ScrollerRegion[4] / InitialSize);
+		--sb.logInfo("Length = " .. sb.print(Element.Length));
+		--sb.logInfo("Size = " .. sb.print(InitialSize));
+		Element.Mode = Mode;
 		
 		ElementController.Draw = function()
 			Canvas:drawImage(Element.BottomArrow.Image,Element.BottomArrow.Center,nil,nil,true);
@@ -156,6 +186,40 @@ function CanvasCore.AddScrollBar(CanvasName,Origin,Length,Scroller,ScrollerBackg
 			Canvas:drawTiledImage(Element.Scroller.Image,{0,0},Element.Scroller.Rect);
 			Canvas:drawImage(Element.Scroller.Bottom.Image,Element.Scroller.Bottom.Position);
 			Canvas:drawImage(Element.Scroller.Top.Image,Element.Scroller.Top.Position);
+		end
+		ElementController.GetSliderSize = function()
+			return Element.Size;
+		end
+		ElementController.SetSliderSize = function(NewSize)
+			Canvas:clear();
+			Element.Size = NewSize;
+			local ScrollRect = SetScrollerRect(ScrollerRegion,Element.Size,Element.Value,Element.Mode);
+			Element.Scroller.Rect = rectVectAdd(ScrollRect,Element.Scroller.Start);
+			Element.Scroller.Top.Position = vecAdd({ScrollRect[1],ScrollRect[4]},Element.Scroller.Start);
+			Element.Scroller.Bottom.Position = vecAdd({ScrollRect[1],ScrollRect[2] - Element.Scroller.Bottom.Size[2]},Element.Scroller.Start);
+			Element.Length = (ScrollerRegion[4] / Element.Size);
+			Element.Scroller.Size = ScrollerTopSize[2] + ScrollRect[4] - ScrollRect[2] + ScrollerBottomSize[2];
+		end
+		ElementController.SetSliderValue = function(NewValue)
+			Canvas:clear();
+			Element.Value = NewValue;
+			local ScrollRect = SetScrollerRect(ScrollerRegion,Element.Size,Element.Value,Element.Mode);
+			Element.Scroller.Rect = rectVectAdd(ScrollRect,Element.Scroller.Start);
+			Element.Scroller.Top.Position = vecAdd({ScrollRect[1],ScrollRect[4]},Element.Scroller.Start);
+			Element.Scroller.Bottom.Position = vecAdd({ScrollRect[1],ScrollRect[2] - Element.Scroller.Bottom.Size[2]},Element.Scroller.Start);
+		end
+		ElementController.GetSliderValue = function()
+			return Element.Value;
+		end
+		ElementController.GetPosition = function()
+			return Element.Scroller.Start;
+		end
+		ElementController.SetToMousePosition = function()
+			local Position = 
+			ElementController.SetSliderValue((vecSub(Canvas:mousePosition(),ElementController.GetPosition())[2] - (Element.Length / 2)) / (ScrollerRegion[4] - ElementController.GetLength()));
+		end
+		ElementController.GetLength = function()
+			return Element.Length;
 		end
 	end
 	return ElementController;
