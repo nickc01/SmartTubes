@@ -2,8 +2,6 @@ local RecipesList = "recipeArea.itemList";
 local AddedRecipesList = "addedRecipeArea.itemList";
 local UpdateRecipesForItem;
 
-local RecipeCanvas;
-
 local RecipeScrollbar;
 
 local ItemImageSpacing = 2;
@@ -46,9 +44,25 @@ Doc for widget.addFlowImage();
 --]]
 
 function init()
+	CanvasCore.AddCanvas("recipeCanvas","RecipeCanvas");
+	RecipeScrollbar = CanvasCore.AddScrollBar("RecipeCanvas",{100,84},166,{
+		ScrollerTop = "/Blocks/Conduits/Crafting Conduit/UI/Window/SliderTop.png",
+		Scroller = "/Blocks/Conduits/Crafting Conduit/UI/Window/SliderMid.png",
+		ScrollerBottom = "/Blocks/Conduits/Crafting Conduit/UI/Window/SliderBottom.png"
+	},
+	{
+		ScrollerTop = "/Blocks/Conduits/Crafting Conduit/UI/Window/SliderBackgroundTop.png",
+		Scroller = "/Blocks/Conduits/Crafting Conduit/UI/Window/SliderBackgroundMid.png",
+		ScrollerBottom = "/Blocks/Conduits/Crafting Conduit/UI/Window/SliderBackgroundBottom.png"
+	},
+	{
+		Top = "/Blocks/Conduits/Crafting Conduit/UI/Window/SliderArrowUp.png",
+		Bottom = "/Blocks/Conduits/Crafting Conduit/UI/Window/SliderArrowDown.png",
+	},"Vertical");
+	RecipeScrollbar.Draw();
 	--RecipeCanvas = widget.bindCanvas("recipeCanvas");
 	--CanvasCore.AddClickCallback(RecipeCanvas,"RecipeCanvasClick");
-	RecipeCanvas = CanvasCore.InitCanvas("recipeCanvas","RecipeCanvasClick");
+	--[[RecipeCanvas = CanvasCore.InitCanvas("recipeCanvas","RecipeCanvasClick");
 	RecipeScrollbar = CanvasCore.CreateScrollbar(
 	RecipeCanvas,
 	{126,3},
@@ -62,7 +76,7 @@ function init()
 	2,0.5
 	);
 	sb.logInfo("RecipeScrollbar = " .. sb.print(RecipeScrollbar));
-	CanvasCore.AddElement(RecipeCanvas,RecipeScrollbar);
+	CanvasCore.AddElement(RecipeCanvas,RecipeScrollbar);--]]
 	--RecipeScrollbar.Draw();
 	--[[sb.logInfo("A = " .. sb.print(A));
 	sb.logInfo("B = " .. sb.print(B));
@@ -87,8 +101,8 @@ function update(dt)
 	--sb.logInfo("Recipe Added = " .. sb.print(widget.addListItem("recipeArea.itemList")));
 	--local ListItem = widget.addListItem("recipeArea.itemList");
 	--widget.addListItem("recipeArea.itemList." .. ListItem .. ".requiredItems.itemList");
-	RecipeScrollbar.ChangePosition(dt * 0.1);
-	CanvasCore.Update(dt);
+	--RecipeScrollbar.ChangePosition(dt * 0.1);
+	--CanvasCore.Update(dt);
 end
 
 local AllRecipes = {};
