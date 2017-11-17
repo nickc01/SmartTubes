@@ -59,10 +59,11 @@ function init()
 	"/Blocks/Conduits/Crafting Conduit/UI/Window/SliderMid.png",
 	"/Blocks/Conduits/Crafting Conduit/UI/Window/SliderTop.png",
 	"/Blocks/Conduits/Crafting Conduit/UI/Window/SliderBottom.png",
-	2,0
+	2,0.5
 	);
 	sb.logInfo("RecipeScrollbar = " .. sb.print(RecipeScrollbar));
-	RecipeScrollbar.Draw();
+	CanvasCore.AddElement(RecipeCanvas,RecipeScrollbar);
+	--RecipeScrollbar.Draw();
 	--[[sb.logInfo("A = " .. sb.print(A));
 	sb.logInfo("B = " .. sb.print(B));
 	sb.logInfo("C = " .. sb.print(C));
@@ -86,7 +87,8 @@ function update(dt)
 	--sb.logInfo("Recipe Added = " .. sb.print(widget.addListItem("recipeArea.itemList")));
 	--local ListItem = widget.addListItem("recipeArea.itemList");
 	--widget.addListItem("recipeArea.itemList." .. ListItem .. ".requiredItems.itemList");
-	CanvasCore.Update();
+	RecipeScrollbar.ChangePosition(dt * 0.1);
+	CanvasCore.Update(dt);
 end
 
 local AllRecipes = {};
