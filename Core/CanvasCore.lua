@@ -76,6 +76,7 @@ local function SetScrollerRect(RectMax,Size,Position,Mode)
 		local RectTop = {0,RectMax[4] - Rect[4],RectMax[3],RectMax[4]};
 		return {0,Lerp(RectTop[2],Rect[2],Position),RectMax[3],Lerp(RectTop[4],Rect[4],Position)};
 	end
+	
 end
 
 function CanvasCore.AddScrollBar(CanvasName,Origin,Length,Scroller,ScrollerBackground,Arrows,Mode,InitialSize,InitialValue)
