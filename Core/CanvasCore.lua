@@ -1,238 +1,162 @@
 CanvasCore = {};
 
-local ClickCalls = {};
-local CanvasResets = {};
-local CanvasElements = {};
-local CanvasClick;
+local Canvases = {};
 
-local function vecAdd(A,B,C)
-	if C == nil then
-		return {A[1] + B[1],A[2] + B[2]};
-	else
-		return {A[1] + B,A[2] + C};
-	end
+function CanvasCore.New()
+	return require("/Core/CanvasCore.lua");
 end
 
-local function PosWithinRect(Pos,Rect)
-	return Pos[1] >= Rect[1] and Pos[2] >= Rect[2] and Pos[1] <= Rect[3] and Pos[2] <= Rect[4];
-end
-
-local function rectVecAdd(A,B)
-	return {A[1] + B[1],A[2] + B[2],A[3] + B[1],A[4] + B[2]};
-end
-
-local function Lerp(A,B,t)
-	return ((math.max(A,B) - math.min(A,B)) * t) + math.min(A,B);
-end
-
-local function DrawScrollbar(Scrollbar,Canvas,ParentPos)
-	ParentPos = ParentPos or {0,0};
-	Canvas:drawImage(Scrollbar.BottomArrow.Asset,vecAdd(Scrollbar.BottomArrow.Position,ParentPos));
-	Canvas:drawImage(Scrollbar.TopArrow.Asset,vecAdd(Scrollbar.TopArrow.Position,ParentPos));
-	Canvas:drawTiledImage(Scrollbar.ScrollTile.Mid,{0,0},rectVecAdd(Scrollbar.ScrollRectArea,vecAdd(ParentPos,Scrollbar.ScrollRectStart)));
-	Canvas:drawImage(Scrollbar.ScrollTile.Top,{Scrollbar.ScrollRectArea[3] + Scrollbar.ScrollRectStart[1] + ParentPos[1] + Scrollbar.ScrollTile.TopOffset[1],Scrollbar.ScrollRectArea[4] + Scrollbar.ScrollRectStart[2] + ParentPos[2] + Scrollbar.ScrollTile.TopOffset[2]});
-	Canvas:drawImage(Scrollbar.ScrollTile.Bottom,{Scrollbar.ScrollRectArea[1] + Scrollbar.ScrollRectStart[1] + ParentPos[1] + Scrollbar.ScrollTile.BottomOffset[1],Scrollbar.ScrollRectArea[2] + Scrollbar.ScrollRectStart[2] + ParentPos[2] + Scrollbar.ScrollTile.BottomOffset[2]});
-end
-
-function CanvasCore.InitCanvas(CanvasName,ClickCallbackName)
-	local NewCanvas = widget.bindCanvas(CanvasName);
-	if ClickCallbackName ~= nil then
-		CanvasCore.AddClickCallback(NewCanvas,ClickCallbackName);
-	end
-	return NewCanvas;
-end
-
-function CanvasCore.AddClickEvent(Canvas,OnClick,OnClickContinuous,OnHover,OnHoverContinuous,ClickArea)
-	ClickCalls[#ClickCalls + 1] = {
-		Canvas = Canvas,
-		OnClick = OnClick,
-		OnClickContinuous = OnClickContinuous or false,
-		OnHover = OnHover,
-		OnHoverContinuous = OnHoverContinuous or false,
-		ClickArea = ClickArea,
-		Hovered = false,
-		Clicked = false
-	}
-end
-
-function CanvasCore.AddElement(Canvas,Element)
-	if CanvasElements[Canvas] == nil then
-		CanvasElements[Canvas] = {Element};
-		CanvasResets[Canvas] = true;
-	else
-		CanvasElements[Canvas][#CanvasElements[Canvas] + 1] = Element;
-	end
-	getmetatable(Element).IsElement = true;
-end
-
-function CanvasCore.AddClickCallback(Canvas,ClickCallbackName)
-	_ENV[ClickCallbackName] = function(Position,Button,IsButtonDown)
-		CanvasClick(Canvas,Position,Button,IsButtonDown);
-	end
-end
-
-function CanvasCore.Update(dt)
-	for i=1,#ClickCalls do
-		local CurrentCall = ClickCalls[i];
-		if CurrentCall.OnHover ~= nil then
-			local MousePos = CurrentCall.Canvas:mousePosition();
-			if PosWithinRect(MousePos,CurrentCall.ClickArea) then
-				if CurrentCall.Hovered == false or CurrentCall.OnHoverContinuous == true then
-					CurrentCall.Hovered = true;
-					CurrentCall.OnHoverContinuous(CurrentCall.Canvas,MousePos,true);
-				end
-				if CurrentCall.Clicked == true and CurrentCall.OnClickContinuous == true then
-					CurrentCall.OnClick(CurrentCall.Canvas,MousePos,CurrentCall.StoredButton,true);
-				end
-			else
-				if CurrentCall.Hovered == true then
-					CurrentCall.Hovered = false;
-					CurrentCall.OnHover(CurrentCall.Canvas,MousePos,false);
-				end
-			end
+function CanvasCore.AddCanvas(CanvasName,AliasName)
+	for k,i in pairs(Canvases) do
+		if i.Name == CanvasName then
+			error(sb.print(CanvasName) .. " is already Added under the Alias Name : " .. sb.print(k));
 		end
 	end
-	for k,i in pairs(CanvasResets) do
-		if i == true then
-			k:clear();
-			for k,i in ipairs(CanvasElements[k]) do
-				i.Draw();
-			end
-			CanvasResets[k] = false;
-		end
+	Canvases[AliasName] = {Canvas = widget.bindCanvas(CanvasName),Name = CanvasName,Elements = {}};
+end
+--[[
+Canvas.AddScrollBar()
+CanvasName: The Alias Name of the Canvas
+Origin: The Origin Position of the Scrollbar
+Length: If Mode is Horizontal, this is the Width, if vertical, this is the Height
+Scroller: The Textures for the Scroller, in the form:
+{
+	ScrollerTop: The Top of the Scroller, or if Horizontal, the Right Side of the Scroller
+	Scroller: The Main Part of the Scroller, this will be tiled to fit the Length of the Scroller
+	ScrollerBottom: The Bottom of the Scroller, or if Horizontal, the Left Side of the Scroller
+}
+ScrollerBackground: The Textures for the Scroller Background, in the form:
+{
+	ScrollerTop: The Top of the Scroller Background, or if Horizontal, the Right Side of the Scroller Background
+	Scroller: The Main Part of the Scroller Background, this will be tiled to fit the Length of the Scroller Background
+	ScrollerBottom: The Bottom of the Scroller Background, or if Horizontal, the Left Side of the Scroller Background
+}
+Arrows: The Textures for the Arrows, in the form:
+{
+	Top: The Image for the Top Arrow, or if Horizontal, the Right Arrow
+	Bottom: The Image for the Bottom Arrow, or if Horizontal, the Left Arrow
+}
+Mode: The Type of Scroller, possible values are
+{
+	Horizontal: For a Horizontal Scrollbar
+	Vertical: For a Vertical Scrollbar
+}
+]]
+local function Lerp(A,B,T)
+	return ((A - B) * T) + B;
+end
+
+local function SetScrollerRect(RectMax,Size,Position,Mode)
+	if Size < 1 then
+		Size = 1;
 	end
-	for k,i in pairs(CanvasElements) do
-		for m,n in ipairs(i) do
-			getmetatable(n).UpdateFunc(dt);
-		end
+	if Position < 0 then
+		Position = 0;
+	elseif Position > 1 then
+		Position = 1;
+	end
+	if Mode == "Vertical" then
+		local Rect = {0,0,RectMax[3],RectMax[4] / Size};
+		local RectTop = {0,RectMax[4] - Rect[4],RectMax[3],RectMax[4]};
+		return {0,Lerp(RectTop[2],Rect[2],Position),RectMax[3],Lerp(RectTop[4],Rect[4],Position)};
 	end
 end
 
-function CanvasCore.CreateScrollbar(Canvas,BottomPosition,TopPosition,TopArrow,BottomArrow,ScrollArea,ScrollTile,ScrollTileTop,ScrollTileBottom,InitialScrollSize,InitialScrollPosition)
-	if InitialScrollPosition < 0 then
-		InitialScrollPosition = 0;
-	end
-	if InitialScrollPosition > 1 then
-		InitialScrollPosition = 1;
-	end
-	if InitialScrollSize < 1 then
-		InitialScrollSize = 1;
-	end
-	local BottomArrowSize = root.imageSize(BottomArrow);
-	local TopArrowSize = root.imageSize(TopArrow);
-	local Middle = {BottomPosition[1],math.floor(((TopPosition[2] - BottomPosition[2]) * 0.5) + BottomPosition[2])};
-	local SizeScrollArea = {math.max(root.imageSize(ScrollTile)[1],root.imageSize(ScrollArea)[1]),TopPosition[2] - (BottomPosition[2] + BottomArrowSize[2])};
-	local ScrollTopSize = root.imageSize(ScrollTileTop);
-	local ScrollBottomSize = root.imageSize(ScrollTileBottom);
-	local FirstHalf = {math.floor(SizeScrollArea[1] / 2),math.floor(SizeScrollArea[2] / 2)};
-	local BottomScroll = {Middle[1] - FirstHalf[1],Middle[2] - FirstHalf[2]};
-	local TopScroll = {Middle[1] + SizeScrollArea[1] - FirstHalf[1],Middle[2] + SizeScrollArea[2] - FirstHalf[2]};
-	local ScrollRectStart = {BottomScroll[1],BottomScroll[2] + ScrollBottomSize[2]};
-	local ScrollRectMax = {0,0,TopScroll[1] - ScrollRectStart[1],TopScroll[2] - ScrollTopSize[2] - ScrollRectStart[2]};
-	local ScrollRectBottom = {0,0,ScrollRectMax[3],ScrollRectMax[4] / InitialScrollSize};
-	local ScrollRectTop = {0,ScrollRectMax[4] - (ScrollRectMax[4] / InitialScrollSize),ScrollRectMax[3],ScrollRectMax[4]};
-	local Scrollbar;
-	local ClickRect;
-	local ScrollMeta = {
-		BottomArrow = 
-		{
-			Position = {BottomPosition[1] - math.floor(BottomArrowSize[1] / 2),BottomPosition[2] - math.floor(BottomArrowSize[2] / 2)},
-			Asset = BottomArrow;
-		},
-		TopArrow = {
-			Position = {TopPosition[1] - math.floor(TopArrowSize[1] / 2),TopPosition[2] - math.floor(TopArrowSize[2] / 2)},
-			Asset = TopArrow
-		},
-		ScrollArea = {
-			Position = BottomScroll,
-			Asset = ScrollArea
-		},
-		ScrollTile = {
-			Top = ScrollTileTop,
-			Mid = ScrollTile,
-			Bottom = ScrollTileBottom,
-			BottomOffset = {0,-ScrollBottomSize[2]},
-			TopOffset = {-ScrollTopSize[1],0}
-		},
-		ScrollSize = InitialScrollSize,
-		ScrollPosition = InitialScrollPosition,
-		ScrollRectStart = ScrollRectStart,
-		ScrollRectMax = ScrollRectMax,
-		ScrollRectBottom = ScrollRectBottom,
-		ScrollRectTop = ScrollRectTop,
-		Clicking = false,
-		LastMousePos,
-		UpdateFunc = function(dt)
-			if Clicking == true then
-				
-			end
-		end,
-		Parent = nil,
-		Callbacks = {},
-		ScrollRectArea = {0,Lerp(ScrollRectTop[2],ScrollRectBottom[2],InitialScrollPosition),ScrollRectMax[3],Lerp(ScrollRectTop[4],ScrollRectBottom[4],InitialScrollPosition)}
-	}
-	ClickRect = rectVecAdd(ScrollMeta.ScrollRectArea,ScrollMeta.ScrollRectStart)
-	Scrollbar = setmetatable({
-		Draw = function()
-			if ScrollMeta.Parent == nil then
-				DrawScrollbar(ScrollMeta,Canvas);
-			else
-				DrawScrollbar(ScrollMeta,Canvas,ScrollMeta.Parent.Position);
-			end
-		end,
-		GetPosition = function()
-			return ScrollMeta.ScrollPosition;
-		end,
-		ChangePosition = function(Amount)
-			Scrollbar.SetPosition(Scrollbar.GetPosition() + Amount);
-		end,
-		SetPosition = function(NewPosition)
-			if NewPosition < 0 then
-				NewPosition = 0;
-			elseif NewPosition > 1 then
-				NewPosition = 1;
-			end
-			ScrollMeta.ScrollPosition = NewPosition;
-			local NewScrollRect = {0,Lerp(ScrollRectTop[2],ScrollRectBottom[2],NewPosition),ScrollRectMax[3],Lerp(ScrollRectTop[4],ScrollRectBottom[4],NewPosition)};
+function CanvasCore.AddScrollBar(CanvasName,Origin,Length,Scroller,ScrollerBackground,Arrows,Mode)
+	--sb.logInfo("Canvases = " .. sb.print(Canvases));
+	local Canvas = Canvases[CanvasName].Canvas;
+	local Element = {};
+	local ElementController = {};
+	if Mode == "Vertical" then
+		local Size = {math.max(root.imageSize(Scroller.Scroller)[1],root.imageSize(ScrollerBackground.Scroller)[1]),Length};
+		local ScrollBarBottomLeft = {math.floor(Origin[1] - (Size[1] / 2)),math.floor(Origin[2] - (Size[2] / 2))};
+		local ScrollBarTopRight = {ScrollBarBottomLeft[1] + Size[1],ScrollBarBottomLeft[2] + Size[2]};
+		--local ScrollBarRect = {ScrollBarBottomLeft[1],ScrollBarBottomLeft[2],ScrollBarTopRight[1],ScrollBarTopRight[2]};
 
-			ClickRect[1],ClickRect[2],ClickRect[3],ClickRect[4] =
-			ClickRect[1] + NewScrollRect[1] - ScrollMeta.ScrollRectArea[1],
-			ClickRect[2] + NewScrollRect[2] - ScrollMeta.ScrollRectArea[2],
-			ClickRect[3] + NewScrollRect[3] - ScrollMeta.ScrollRectArea[3],
-			ClickRect[4] + NewScrollRect[4] - ScrollMeta.ScrollRectArea[4]
+		local BottomArrowSize = root.imageSize(Arrows.Bottom);
+		local BottomArrowCenter = {Origin[1],ScrollBarBottomLeft[2] + (BottomArrowSize[2] / 2)};
 
-			ScrollMeta.ScrollRectArea = NewScrollRect;
+		Element.BottomArrow = {
+			Center = BottomArrowCenter,
+			Image = Arrows.Bottom
+		}
 
-			if ScrollMeta.IsElement == true then
-				CanvasResets[Canvas] = true;
-			end
-			if ScrollMeta.Callbacks.OnScrollerUpdate ~= nil then
-				ScrollMeta.Callbacks.OnScrollerUpdate(NewPosition);
-			end
-		end,
-		AddFunctionCallBack = function(OnScrollerUpdate)
-			ScrollMeta.Callbacks.OnScrollerUpdate = OnScrollerUpdate;
-		end
-	},
-	ScrollMeta);
-	local OnClick = function(Position,Button,IsButtonDown)
-		--sb.logInfo("You Clicked The Scrollbar");
-		sb.logInfo("Button = " .. sb.print(Button));
-		if Button == 0 then
-			ScrollMeta.Clicking == IsButtonDown;
-			LastMousePos = Canvas:mousePosition();
+		local TopArrowSize = root.imageSize(Arrows.Top);
+		local TopArrowCenter = {Origin[1],ScrollBarTopRight[2] - (TopArrowSize[2] / 2)};
+
+		Element.TopArrow = {
+			Center = TopArrowCenter,
+			Image = Arrows.Top
+		}
+		local ScrollArea = {ScrollBarBottomLeft[1],ScrollBarBottomLeft[2] + BottomArrowSize[2],ScrollBarTopRight[1],ScrollBarTopRight[2] - TopArrowSize[2]};
+
+		local BackgroundScrollerBottomSize = root.imageSize(ScrollerBackground.ScrollerBottom);
+
+		local BackgroundScrollerBottomPos = {Origin[1],ScrollArea[2] + (BackgroundScrollerBottomSize[2] / 2)};
+
+		Element.BackgroundScrollerBottom = {
+			Center = BackgroundScrollerBottomPos,
+			Image = ScrollerBackground.ScrollerBottom
+		}
+
+		local BackgroundScrollerTopSize = root.imageSize(ScrollerBackground.ScrollerTop);
+
+		local BackgroundScrollerTopPos = {Origin[1],ScrollArea[4] - (BackgroundScrollerTopSize[2] / 2)};
+
+		Element.BackgroundScrollerTop = {
+			Center = BackgroundScrollerTopPos,
+			Image = ScrollerBackground.ScrollerTop
+		}
+
+		ScrollArea = {ScrollArea[1],ScrollArea[2] + BackgroundScrollerBottomSize[2],ScrollArea[3],ScrollArea[4] - BackgroundScrollerTopSize[2]};
+
+		local BackgroundScrollerSize = root.imageSize(ScrollerBackground.Scroller);
+		local ScrollerSize = root.imageSize(Scroller.Scroller);
+
+		local BackgroundScrollerRect = {Origin[1] - (BackgroundScrollerSize[1] / 2),ScrollArea[2],Origin[1] + (BackgroundScrollerSize[1] / 2),ScrollArea[4]};
+		--local BackgrounmdScrollerRect = {Origin[1] - (ScrollerSize[1] / 2),ScrollArea[2],Origin[1] + (ScrollerSize[1] / 2),ScrollArea[4]};
+
+		Element.BackgroundScroller = {
+			Rect = BackgroundScrollerRect,
+			Image = ScrollerBackground.Scroller
+		}
+
+		local ScrollerStart = {Origin[1] - (ScrollerSize[1] / 2),BackgroundScrollerRect[2],Origin[1] + (ScrollerSize[1] / 2),BackgroundScrollerRect[4]};
+
+		local ScrollerRegion = {0,0,ScrollerSize[1],ScrollerStart[4] - ScrollerStart[2]};
+
+		--Element.ScrollerOrigin = ScrollerStart;
+		--Element.ScrollerRegion = ScrollerRegion;
+
+		local ScrollRect = SetScrollerRect(ScrollerRegion,1,0.5,Mode);
+
+		local ScrollerBottomSize = root.imageSize(Scroller.ScrollerBottom);
+
+		Element.Scroller = {
+			Rect = ScrollRect,
+			Image = Scroller.Scroller,
+			Top = {
+				Position = {ScrollRect[1],ScrollRect[4]},
+				Image = Scroller.ScrollerTop
+			},
+			Bottom = {
+				Position = {ScrollRect[1],ScrollRect[2] - ScrollerBottomSize[2]},
+				Image = Scroller.ScrollerBottom
+			},
+			Origin = ScrollerStart,
+			Region = ScrollerRegion
+		}
+		
+		ElementController.Draw = function()
+			Canvas:drawImage(Element.BottomArrow.Image,Element.BottomArrow.Center,nil,nil,true);
+			Canvas:drawImage(Element.TopArrow.Image,Element.TopArrow.Center,nil,nil,true);
+			Canvas:drawImage(Element.BackgroundScrollerBottom.Image,Element.BackgroundScrollerBottom.Center,nil,nil,true);
+			Canvas:drawImage(Element.BackgroundScrollerTop.Image,Element.BackgroundScrollerTop.Center,nil,nil,true);
+			Canvas:drawTiledImage(Element.BackgroundScroller.Image,{0,0},Element.BackgroundScroller.Rect);
+			Canvas:drawTiledImage(Element.Scroller.Image,{0,0},Element.Scroller.Rect);
+			Canvas:drawImage(Element.Scroller.Bottom.Image,Element.Scroller.Bottom.Position);
+			Canvas:drawImage(Element.Scroller.Top.Image,Element.Scroller.Top.Position);
 		end
 	end
-	CanvasCore.AddClickEvent(Canvas,OnClick,false,nil,nil,ClickRect);
-	return Scrollbar;
-end
-
-CanvasClick = function(Canvas,Position,Button,IsButtonDown)
-	for i=1,#ClickCalls do
-		if ClickCalls[i].Canvas == Canvas and PosWithinRect(Position,ClickCalls[i].ClickArea) and ClickCalls[i].OnClick ~= nil then
-			ClickCalls[i].Clicked = IsButtonDown;
-			ClickCalls[i].StoredButton = Button;
-			ClickCalls[i].OnClick(Position,Button,IsButtonDown);
-		end
-	end
+	return ElementController;
 end
