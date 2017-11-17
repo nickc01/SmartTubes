@@ -20,7 +20,7 @@ end
 local function vecSub(A,B)
 	return {A[1] - B[1],A[2] - B[2]}
 end
-
+ 
 local function GetItemImage(ItemName)
 	if ItemConfigs[ItemName] == nil then
 		ItemConfigs[ItemName] = root.itemConfig(ItemName);
