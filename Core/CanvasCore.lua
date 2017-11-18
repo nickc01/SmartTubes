@@ -16,6 +16,22 @@ function CanvasCore.AddCanvas(CanvasName,AliasName)
 	Canvases[AliasName] = {Canvas = Binding,Name = CanvasName,Elements = {}};
 	return Binding;
 end
+
+local function DeleteElement(Element)
+	for k,i in ipairs(Canvases[Element.CanvasName].Elements) do
+		if i.ID == Element.ID then
+			table.remove(Canvases[Element.CanvasName].Elements,k);
+		end
+	end
+end
+
+local function Rectify(Pos,Size,IsCentered)
+	if IsCentered == true then
+		return {Pos[1] - (Size[1] / 2),Pos[2] - (Size[2] / 2),Pos[1] + (Size / 2), Pos[2] + (Size / 2)};
+	else
+		return {Pos[1],Pos[2],Pos[1] + Size[1],Pos[2] + Size[2]};
+	end
+end
 --[[
 Canvas.AddScrollBar()
 CanvasName: The Alias Name of the Canvas
@@ -88,6 +104,7 @@ end
 function CanvasCore.Update(dt)
 	for k,i in pairs(Canvases) do
 		i.Canvas:clear();
+		sb.logInfo("Elements = " .. sb.print(jsize(i.Elements)));
 		for m,n in ipairs(i.Elements) do
 			if n.Update ~= nil then
 				n.Update(dt);
@@ -113,6 +130,8 @@ function CanvasCore.AddScrollBar(CanvasName,Origin,Length,Scroller,ScrollerBackg
 	local Canvas = Canvases[CanvasName].Canvas;
 	local Element = {};
 	local ElementController = {};
+	Element.Canvas = Canvas;
+	Element.CanvasName = CanvasName;
 	if Mode ~= nil then
 		local Size;
 		if Mode == "Vertical" then
@@ -282,14 +301,22 @@ function CanvasCore.AddScrollBar(CanvasName,Origin,Length,Scroller,ScrollerBackg
 		end
 		
 		Element.Draw = function()
-			Canvas:drawImage(Element.BottomArrow.Image,Element.BottomArrow.Center,nil,nil,true);
-			Canvas:drawImage(Element.TopArrow.Image,Element.TopArrow.Center,nil,nil,true);
-			Canvas:drawImage(Element.BackgroundScrollerBottom.Image,Element.BackgroundScrollerBottom.Center,nil,nil,true);
-			Canvas:drawImage(Element.BackgroundScrollerTop.Image,Element.BackgroundScrollerTop.Center,nil,nil,true);
-			Canvas:drawTiledImage(Element.BackgroundScroller.Image,{0,0},Element.BackgroundScroller.Rect);
-			Canvas:drawTiledImage(Element.Scroller.Image,{0,0},Element.Scroller.Rect);
-			Canvas:drawImage(Element.Scroller.Bottom.Image,Element.Scroller.Bottom.Position);
-			Canvas:drawImage(Element.Scroller.Top.Image,Element.Scroller.Top.Position);
+			Element.Canvas:drawImage(Element.BottomArrow.Image,Element.BottomArrow.Center,nil,nil,true);
+			Element.Canvas:drawImage(Element.TopArrow.Image,Element.TopArrow.Center,nil,nil,true);
+			Element.Canvas:drawImage(Element.BackgroundScrollerBottom.Image,Element.BackgroundScrollerBottom.Center,nil,nil,true);
+			Element.Canvas:drawImage(Element.BackgroundScrollerTop.Image,Element.BackgroundScrollerTop.Center,nil,nil,true);
+			Element.Canvas:drawTiledImage(Element.BackgroundScroller.Image,{0,0},Element.BackgroundScroller.Rect);
+			Element.Canvas:drawTiledImage(Element.Scroller.Image,{0,0},Element.Scroller.Rect);
+			Element.Canvas:drawImage(Element.Scroller.Bottom.Image,Element.Scroller.Bottom.Position);
+			Element.Canvas:drawImage(Element.Scroller.Top.Image,Element.Scroller.Top.Position);
+		end
+		ElementController.Delete = function()
+			if Element.Parent == nil then
+				DeleteElement(Element);
+			end
+			for k,i in pairs(ElementController) do
+				ElementController[k] = nil;
+			end
 		end
 		ElementController.GetSliderSize = function()
 			return Element.Size;
@@ -327,9 +354,9 @@ function CanvasCore.AddScrollBar(CanvasName,Origin,Length,Scroller,ScrollerBackg
 		end
 		ElementController.SetToMousePosition = function()
 			if Element.Mode == "Vertical" then
-				ElementController.SetSliderValue((vecSub(Canvas:mousePosition(),ElementController.GetPosition())[2] - (Element.Length / 2)) / (ScrollerRegion[4] - ElementController.GetLength()));
+				ElementController.SetSliderValue((vecSub(Element.Canvas:mousePosition(),ElementController.GetPosition())[2] - (Element.Length / 2)) / (ScrollerRegion[4] - ElementController.GetLength()));
 			elseif Element.Mode == "Horizontal" then
-				ElementController.SetSliderValue((vecSub(Canvas:mousePosition(),ElementController.GetPosition())[1] - (Element.Length / 2)) / (ScrollerRegion[3] - ElementController.GetLength()));
+				ElementController.SetSliderValue((vecSub(Element.Canvas:mousePosition(),ElementController.GetPosition())[1] - (Element.Length / 2)) / (ScrollerRegion[3] - ElementController.GetLength()));
 			end
 		end
 		ElementController.GetLength = function()
@@ -337,9 +364,9 @@ function CanvasCore.AddScrollBar(CanvasName,Origin,Length,Scroller,ScrollerBackg
 		end
 		ElementController.GetValueAtMousePosition = function()
 			if Element.Mode == "Vertical" then
-				return (vecSub(Canvas:mousePosition(),ElementController.GetPosition())[2] - (Element.Length / 2)) / (ScrollerRegion[4] - Element.Length);
+				return (vecSub(Element.Canvas:mousePosition(),ElementController.GetPosition())[2] - (Element.Length / 2)) / (ScrollerRegion[4] - Element.Length);
 			elseif Element.Mode == "Horizontal" then
-				return (vecSub(Canvas:mousePosition(),ElementController.GetPosition())[1] - (Element.Length / 2)) / (ScrollerRegion[3] - Element.Length);
+				return (vecSub(Element.Canvas:mousePosition(),ElementController.GetPosition())[1] - (Element.Length / 2)) / (ScrollerRegion[3] - Element.Length);
 			end
 		end
 	end
