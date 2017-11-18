@@ -4,6 +4,8 @@ local UpdateRecipesForItem;
 
 local RecipeScrollbar;
 
+local HorizontalTestScrollbar;
+
 local RecipeCanvas;
 
 local ItemImageSpacing = 2;
@@ -19,6 +21,10 @@ end
 
 local function vecSub(A,B)
 	return {A[1] - B[1],A[2] - B[2]}
+end
+
+local function vecAdd(A,B)
+	return {A[1] + B[1],A[2] + B[2]};
 end
  
 local function GetItemImage(ItemName)
@@ -64,9 +70,24 @@ function init()
 	{
 		Top = "/Blocks/Conduits/Crafting Conduit/UI/Window/SliderArrowUp.png",
 		Bottom = "/Blocks/Conduits/Crafting Conduit/UI/Window/SliderArrowDown.png",
-	},"Vertical");
-	RecipeScrollbar.Draw();
-	RecipeScrollbar.SetSliderSize(5);
+	},"Vertical",5,0.5);
+	HorizontalTestBar = CanvasCore.AddScrollBar("RecipeCanvas",{0,0,121,9},100,{
+		ScrollerTop = "/Blocks/Conduits/Crafting Conduit/UI/Window/Horizontal Scroll Bar/SliderRight.png",
+		Scroller = "/Blocks/Conduits/Crafting Conduit/UI/Window/Horizontal Scroll Bar/SliderMid.png",
+		ScrollerBottom = "/Blocks/Conduits/Crafting Conduit/UI/Window/Horizontal Scroll Bar/SliderLeft.png"
+	},
+	{
+		ScrollerTop = "/Blocks/Conduits/Crafting Conduit/UI/Window/Horizontal Scroll Bar/SliderBackgroundRight.png",
+		Scroller = "/Blocks/Conduits/Crafting Conduit/UI/Window/Horizontal Scroll Bar/SliderBackgroundMid.png",
+		ScrollerBottom = "/Blocks/Conduits/Crafting Conduit/UI/Window/Horizontal Scroll Bar/SliderBackgroundLeft.png"
+	},
+	{
+		Top = "/Blocks/Conduits/Crafting Conduit/UI/Window/Horizontal Scroll Bar/SliderArrowRight.png",
+		Bottom = "/Blocks/Conduits/Crafting Conduit/UI/Window/Horizontal Scroll Bar/SliderArrowLeft.png",
+	},"Horizontal",5,0.5);
+	--RecipeScrollbar.Draw();
+	--HorizontalTestBar.Draw();
+--	RecipeScrollbar.SetSliderSize(5);
 	--RecipeCanvas = widget.bindCanvas("recipeCanvas");
 	--CanvasCore.AddClickCallback(RecipeCanvas,"RecipeCanvasClick");
 	--[[RecipeCanvas = CanvasCore.InitCanvas("recipeCanvas","RecipeCanvasClick");
@@ -96,6 +117,12 @@ function init()
 	--widget.registerMemberCallback(RecipesList, "MoveLeft", function() sb.logInfo("This is a test") end);
 end
 function update(dt)
+	CanvasCore.Update(dt);
+	RecipeScrollbar.SetToMousePosition();
+	HorizontalTestBar.SetToMousePosition();
+	--RecipeScrollbar.SetPosition(RecipeScrollbar.GetPosition());
+	--RecipeScrollbar.Draw();
+	--HorizontalTestBar.Draw();
 	--RecipeScrollbar.SetSliderSize(RecipeScrollbar.GetSliderSize() + 1);
 	--RecipeScrollbar.SetSliderValue(RecipeScrollbar.GetSliderValue() + 0.01);
 	--RecipeScrollbar.Draw();
@@ -103,8 +130,8 @@ function update(dt)
 	--Position[1] = 100 / Position[1];
 	--Position[2] = Position[2] / RecipeScrollbar.GetLength();
 --	RecipeScrollbar.SetSliderValue(Position[2]);
-	RecipeScrollbar.SetToMousePosition();
-	RecipeScrollbar.Draw();
+	--RecipeScrollbar.SetToMousePosition();
+	--RecipeScrollbar.Draw();
 	--widget.setSliderValue("requiredItemsSlider",widget.getSliderValue("requiredItemsSlider") + 1);
 	--[[if Elements ~= nil then
 		for k,i in ipairs(Elements) do
