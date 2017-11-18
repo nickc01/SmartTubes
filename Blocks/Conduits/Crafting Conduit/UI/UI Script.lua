@@ -116,10 +116,23 @@ function init()
 	--widget.registerMemberCallback(RecipesList, "MoveRight", function() sb.logInfo("This is a test") end);
 	--widget.registerMemberCallback(RecipesList, "MoveLeft", function() sb.logInfo("This is a test") end);
 end
+
+local Timer = 0;
+local Deleted = false;
+
 function update(dt)
 	CanvasCore.Update(dt);
-	RecipeScrollbar.SetToMousePosition();
+	if Deleted == false then
+		RecipeScrollbar.SetToMousePosition();
+	end
 	HorizontalTestBar.SetToMousePosition();
+	Timer = Timer + dt;
+	if Timer >= 1 and Deleted == false then
+		sb.logInfo("Before = " .. sb.print(RecipeScrollbar));
+		RecipeScrollbar.Delete();
+		sb.logInfo("After = " .. sb.print(RecipeScrollbar));
+		Deleted = true;
+	end
 	--RecipeScrollbar.SetPosition(RecipeScrollbar.GetPosition());
 	--RecipeScrollbar.Draw();
 	--HorizontalTestBar.Draw();
