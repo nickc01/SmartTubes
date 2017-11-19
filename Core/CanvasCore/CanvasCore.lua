@@ -1,3 +1,5 @@
+require ("/Core/Math.lua");
+local vec = vec;
 CanvasCore = {};
 
 local Canvases = {};
@@ -15,6 +17,13 @@ function CanvasCore.AddCanvas(CanvasName,AliasName)
 	local Binding = widget.bindCanvas(CanvasName);
 	Canvases[AliasName] = {Canvas = Binding,Name = CanvasName,Elements = {}};
 	return Binding;
+end
+
+function CanvasCore.GetCanvas(CanvasAlias)
+	if Canvases[CanvasAlias] == nil then
+		error(sb.print(CanvasAlias) .. " is not a valid Canvas Alias");
+	end
+	return Canvases[CanvasAlias].Canvas;
 end
 
 local function DeleteElement(Element)
