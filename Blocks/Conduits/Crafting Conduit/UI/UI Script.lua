@@ -123,9 +123,9 @@ local Deleted = false;
 function update(dt)
 	CanvasCore.Update(dt);
 	--if Deleted == false then
-		RecipeScrollbar.SetToMousePosition();
+	--	RecipeScrollbar.SetToMousePosition();
 	--end
-	HorizontalTestBar.SetToMousePosition();;
+	--HorizontalTestBar.SetToMousePosition();;
 end
 
 local AllRecipes = {};

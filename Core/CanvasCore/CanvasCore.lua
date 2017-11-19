@@ -1,4 +1,5 @@
 require ("/Core/Math.lua");
+require ("/Core/CanvasCore/ElementBase.lua");
 local vec = vec;
 CanvasCore = {};
 
@@ -23,8 +24,21 @@ function CanvasCore.GetCanvas(CanvasAlias)
 	if Canvases[CanvasAlias] == nil then
 		error(sb.print(CanvasAlias) .. " is not a valid Canvas Alias");
 	end
+	sb.logInfo("Value = " .. sb.print(Canvases[CanvasAlias]));
 	return Canvases[CanvasAlias].Canvas;
 end
+
+--[[local function CreateElement(CanvasAlias)
+	--sb.logInfo("vec = " .. sb.print(vec));
+	--local NewVec = require ("/Core/Math.lua");
+	--sb.logInfo("New Vec = " .. sb.print(NewVec));
+	local NewElement = require("/Core/CanvasCore/ElementBase.lua");
+	--sb.logInfo("New Element = " .. sb.print(NewElement));
+	if CanvasAlias ~= nil then
+		NewElement.Element.SetCanvas(CanvasAlias);
+	end
+	return NewElement.Element;
+end--]]
 
 local function DeleteElement(Element)
 	for k,i in ipairs(Canvases[Element.CanvasName].Elements) do
@@ -128,6 +142,312 @@ function CanvasCore.Update(dt)
 end
 
 function CanvasCore.AddScrollBar(CanvasName,Origin,Length,Scroller,ScrollerBackground,Arrows,Mode,InitialSize,InitialValue)
+	InitialSize = InitialSize or 1;
+	InitialValue = InitialValue or 0;
+	if Origin[3] ~= nil and Origin[4] ~= nil then
+		local Length;
+		if Mode == "Vertical" then
+			Length = Origin[4] - Origin[2];
+		elseif Mode == "Horizontal" then
+			Length = Origin[3] - Origin[1];
+		end
+		return CanvasCore.AddScrollBar(CanvasName,{Origin[3] - ((Origin[3] - Origin[1]) / 2),Origin[4] - ((Origin[4] - Origin[2]) / 2)},Length,Scroller,ScrollerBackground,Arrows,Mode,InitialSize,InitialValue);
+	end
+	--sb.logInfo("Canvases = " .. sb.print(Canvases));
+	--local Canvas = Canvases[CanvasName].Canvas;
+	--local Element = {};
+	--local ElementController = {};
+	local Element = CreateElement(CanvasName);
+	--Element.Canvas = Canvas;
+	--Element.CanvasName = CanvasName;
+	if Mode ~= nil then
+		local Size;
+		if Mode == "Vertical" then
+			Size = {math.max(root.imageSize(Scroller.Scroller)[1],root.imageSize(ScrollerBackground.Scroller)[1]),Length};
+		elseif Mode == "Horizontal" then
+			Size = {Length,math.max(root.imageSize(Scroller.Scroller)[2],root.imageSize(ScrollerBackground.Scroller)[2])};
+		end
+		local ScrollBarBottomLeft = {math.floor(Origin[1] - (Size[1] / 2)),math.floor(Origin[2] - (Size[2] / 2))};
+		local ScrollBarTopRight = {ScrollBarBottomLeft[1] + Size[1],ScrollBarBottomLeft[2] + Size[2]};
+
+		local BottomArrowSize = root.imageSize(Arrows.Bottom);
+		local BottomArrowCenter;
+		if Mode == "Vertical" then
+			BottomArrowCenter = {Origin[1],ScrollBarBottomLeft[2] + (BottomArrowSize[2] / 2)};
+		elseif Mode == "Horizontal" then
+			BottomArrowCenter = {ScrollBarBottomLeft[1] + (BottomArrowSize[1] / 2),Origin[2]};
+		end
+
+		--[[Element.BottomArrow = {
+			Rect = Rectify(BottomArrowCenter,BottomArrowSize,true),
+			RelativeCenter = BottomArrowCenter,
+			Image = Arrows.Bottom
+		}--]]
+		Element.AddDrawable("BottomArrow",Rectify(BottomArrowCenter,BottomArrowSize,true),Arrows.Bottom);
+
+		local TopArrowSize = root.imageSize(Arrows.Top);
+		local TopArrowCenter;
+		if Mode == "Vertical" then
+			TopArrowCenter = {Origin[1],ScrollBarTopRight[2] - (TopArrowSize[2] / 2)};
+		elseif Mode == "Horizontal" then
+			TopArrowCenter = {ScrollBarTopRight[1] - (TopArrowSize[1] / 2),Origin[2]};
+		end
+
+		--[[Element.TopArrow = {
+			Rect = Rectify(TopArrowCenter,TopArrowSize,true),
+			RelativeCenter = TopArrowCenter,
+			Image = Arrows.Top
+		}--]]
+		Element.AddDrawable("TopArrow",Rectify(TopArrowCenter,TopArrowSize,true),Arrows.Top);
+		local ScrollArea;
+		if Mode == "Vertical" then
+			ScrollArea = {ScrollBarBottomLeft[1],ScrollBarBottomLeft[2] + BottomArrowSize[2],ScrollBarTopRight[1],ScrollBarTopRight[2] - TopArrowSize[2]};
+		elseif Mode == "Horizontal" then
+			ScrollArea = {ScrollBarBottomLeft[1] + BottomArrowSize[1],ScrollBarBottomLeft[2],ScrollBarTopRight[1] - TopArrowSize[1],ScrollBarTopRight[2]};
+		end
+
+		local BackgroundScrollerBottomSize = root.imageSize(ScrollerBackground.ScrollerBottom);
+		local BackgroundScrollerBottomPos;
+		if Mode == "Vertical" then
+			BackgroundScrollerBottomPos = {Origin[1],ScrollArea[2] + (BackgroundScrollerBottomSize[2] / 2)};
+		elseif Mode == "Horizontal" then
+			BackgroundScrollerBottomPos = {ScrollArea[1] + (BackgroundScrollerBottomSize[1] / 2),Origin[2]};
+		end
+
+		--[[Element.BackgroundScrollerBottom = {
+			Rect = Rectify(BackgroundScrollerBottomPos,BackgroundScrollerBottomSize,true),
+			RelativeCenter = BackgroundScrollerBottomPos,
+			Image = ScrollerBackground.ScrollerBottom
+		}--]]
+		Element.AddDrawable("BackgroundScrollerBottom",Rectify(BackgroundScrollerBottomPos,BackgroundScrollerBottomSize,true),ScrollerBackground.ScrollerBottom);
+
+		local BackgroundScrollerTopSize = root.imageSize(ScrollerBackground.ScrollerTop);
+		local BackgroundScrollerTopPos;
+		if Mode == "Vertical" then
+			BackgroundScrollerTopPos = {Origin[1],ScrollArea[4] - (BackgroundScrollerTopSize[2] / 2)};
+		elseif Mode == "Horizontal" then
+			BackgroundScrollerTopPos = {ScrollArea[3] - (BackgroundScrollerTopSize[1] / 2),Origin[2]};
+		end
+
+		--[[Element.BackgroundScrollerTop = {
+			Rect = Rectify(BackgroundScrollerTopPos,BackgroundScrollerTopSize,true),
+			RelativeCenter = BackgroundScrollerTopPos,
+			Image = ScrollerBackground.ScrollerTop
+		}--]]
+
+		Element.AddDrawable("BackgroundScrollerTop",Rectify(BackgroundScrollerTopPos,BackgroundScrollerTopSize,true),ScrollerBackground.ScrollerTop);
+
+		if Mode == "Vertical" then
+			ScrollArea = {ScrollArea[1],ScrollArea[2] + BackgroundScrollerBottomSize[2],ScrollArea[3],ScrollArea[4] - BackgroundScrollerTopSize[2]};
+		elseif Mode == "Horizontal" then
+			ScrollArea = {ScrollArea[1] + BackgroundScrollerBottomSize[1],ScrollArea[2],ScrollArea[3] - BackgroundScrollerTopSize[1],ScrollArea[4]};
+		end
+
+		local BackgroundScrollerSize = root.imageSize(ScrollerBackground.Scroller);
+		local ScrollerSize = root.imageSize(Scroller.Scroller);
+
+		local BackgroundScrollerRect;
+		if Mode == "Vertical" then
+			BackgroundScrollerRect = {Origin[1] - (BackgroundScrollerSize[1] / 2),ScrollArea[2],Origin[1] + (BackgroundScrollerSize[1] / 2),ScrollArea[4]};
+		elseif Mode == "Horizontal" then
+			BackgroundScrollerRect = {ScrollArea[1],Origin[2] - (BackgroundScrollerSize[2] / 2),ScrollArea[3],Origin[2] + (BackgroundScrollerSize[2] / 2)};
+		end
+		--local BackgrounmdScrollerRect = {Origin[1] - (ScrollerSize[1] / 2),ScrollArea[2],Origin[1] + (ScrollerSize[1] / 2),ScrollArea[4]};
+
+		--[[Element.BackgroundScroller = {
+			Rect = BackgroundScrollerRect,
+			RelativeRect = BackgroundScrollerRect,
+			Image = ScrollerBackground.Scroller
+		}--]]
+		Element.AddDrawable("BackgroundScroller",BackgroundScrollerRect,ScrollerBackground.Scroller,true);
+
+		local ScrollerStart;
+		local ScrollerRegion;
+		local ScrollRect;
+		if Mode == "Vertical" then
+			ScrollerStart = {Origin[1] - (ScrollerSize[1] / 2),BackgroundScrollerRect[2],Origin[1] + (ScrollerSize[1] / 2),BackgroundScrollerRect[4]};
+			ScrollerRegion = {0,0,ScrollerSize[1],ScrollerStart[4] - ScrollerStart[2]};
+		elseif Mode == "Horizontal" then
+			ScrollerStart = {BackgroundScrollerRect[1],Origin[2] - (ScrollerSize[2] / 2),BackgroundScrollerRect[3],Origin[2] + (ScrollerSize[2] / 2)};
+			ScrollerRegion = {0,0,ScrollerStart[3] - ScrollerStart[1],ScrollerSize[2]};
+		end
+		--Element.OriginOffset = vecSub(ScrollerStart,ScrollBarBottomLeft);
+		--Element.BackgroundScroller.RelativeRect = rectVectSub(Element.BackgroundScroller.RelativeRect,ScrollerStart);
+		--Element.BackgroundScrollerTop.RelativeCenter = vecSub(Element.BackgroundScrollerTop.RelativeCenter,ScrollerStart);
+		--Element.BackgroundScrollerBottom.RelativeCenter = vecSub(Element.BackgroundScrollerBottom.RelativeCenter,ScrollerStart);
+		--Element.TopArrow.RelativeCenter = vecSub(Element.TopArrow.RelativeCenter,ScrollerStart);
+		--Element.BottomArrow.RelativeCenter = vecSub(Element.BottomArrow.RelativeCenter,ScrollerStart);
+
+		local ScrollRect = SetScrollerRect(ScrollerRegion,InitialSize,InitialValue,Mode);
+
+
+		local ScrollerBottomSize = root.imageSize(Scroller.ScrollerBottom);
+		local ScrollerTopSize = root.imageSize(Scroller.ScrollerTop);
+
+		--[[Element.Scroller = {
+			Rect = rectVectAdd(ScrollRect,ScrollerStart),
+			Image = Scroller.Scroller,
+			Top = {
+				Image = Scroller.ScrollerTop
+			},
+			Bottom = {
+				Image = Scroller.ScrollerBottom,
+				Size = ScrollerBottomSize
+			},
+			Start = ScrollerStart,
+			Region = ScrollerRegion
+		}--]]
+		Element.AddDrawable("Scroller",rectVectAdd(ScrollRect,ScrollerStart),Scroller.Scroller);
+		local TopScrollerPos;
+		local BottomScrollerPos;
+		if Mode == "Vertical" then
+			--Element.Scroller.Top.Position = vecAdd({ScrollRect[1],ScrollRect[4]},ScrollerStart);
+			TopScrollerPos = Rectify(vecAdd({ScrollRect[1],ScrollRect[4]},ScrollerStart),ScrollerTopSize);
+			--Element.Scroller.Bottom.Position = vecAdd({ScrollRect[1],ScrollRect[2] - ScrollerBottomSize[2]},ScrollerStart);
+			BottomScrollerPos = Rectify(vecAdd({ScrollRect[1],ScrollRect[2] - ScrollerBottomSize[2]},ScrollerStart),ScrollerBottomSize);
+			Element.Length = (ScrollerRegion[4] / InitialSize);
+		elseif Mode == "Horizontal" then
+			TopScrollerPos = Rectify(vecAdd({ScrollRect[3],ScrollRect[2]},ScrollerStart),ScrollerTopSize);
+			BottomScrollerPos = Rectify(vecAdd({ScrollRect[1] - ScrollerBottomSize[1],ScrollRect[2]},ScrollerStart),ScrollerBottomSize);
+			Element.Length = (ScrollerRegion[3] / InitialSize);
+		end
+
+		Element.AddDrawable("ScrollerTop",TopScrollerPos,Scroller.ScrollerTop);
+		Element.AddDrawable("ScrollerBottom",BottomScrollerPos,Scroller.ScrollerBottom);
+
+		Element.Size = InitialSize;
+		Element.Value = InitialValue;
+		Element.Controller = ElementController;
+		Element.Mode = Mode;
+		--Element.ID = sb.makeUuid();
+
+		
+
+		--[[Element.UpdatePosValues = function()
+			local Position = ElementController.GetPosition();
+			local ScrollRect = SetScrollerRect(ScrollerRegion,Element.Size,Element.Value,Element.Mode);
+			Element.Scroller.Rect = rectVectAdd(ScrollRect,Position);
+			if Element.Mode == "Vertical" then
+				--Element.Scroller.Top.Position = vecAdd({ScrollRect[1],ScrollRect[4]},Position);
+				Element.Scroller.Top.Rect = Rectify(vecAdd({ScrollRect[1],ScrollRect[4]},Position),ScrollerTopSize);
+				--Element.Scroller.Bottom.Position = vecAdd({ScrollRect[1],ScrollRect[2] - Element.Scroller.Bottom.Size[2]},Position);
+				Element.Scroller.Bottom.Rect = Rectify(vecAdd({ScrollRect[1],ScrollRect[2] - Element.Scroller.Bottom.Size[2]},Position),ScrollerBottomSize);
+				Element.Length = (ScrollerRegion[4] / Element.Size);
+			elseif Element.Mode == "Horizontal" then
+				--Element.Scroller.Top.Position = vecAdd({ScrollRect[3],ScrollRect[2]},Position);
+				Element.Scroller.Top.Rect = Rectify(vecAdd({ScrollRect[3],ScrollRect[2]},Position),ScrollerTopSize);
+				--Element.Scroller.Bottom.Position = vecAdd({ScrollRect[1] - Element.Scroller.Bottom.Size[1],ScrollRect[2]},Position);
+				Element.Scroller.Bottom.Rect = Rectify(vecAdd({ScrollRect[1] - Element.Scroller.Bottom.Size[1],ScrollRect[2]},Position),ScrollerBottomSize);
+				Element.Length = (ScrollerRegion[3] / Element.Size);
+			end
+			Element.BackgroundScroller.Rect = rectVectAdd(Element.BackgroundScroller.RelativeRect,Position);
+			Element.BackgroundScrollerTop.Rect = Rectify(vecAdd(Element.BackgroundScrollerTop.RelativeCenter,Position),BackgroundScrollerTopSize,true);
+			Element.BackgroundScrollerBottom.Rect = Rectify(vecAdd(Element.BackgroundScrollerBottom.RelativeCenter,Position),BackgroundScrollerBottomSize,true);
+			Element.TopArrow.Rect = Rectify(vecAdd(Element.TopArrow.RelativeCenter,Position),TopArrowSize,true);
+			Element.BottomArrow.Rect = Rectify(vecAdd(Element.BottomArrow.RelativeCenter,Position),BottomArrowSize,true);
+		end--]]
+		
+		--[[Element.Draw = function()
+			Element.Canvas:drawImage(Element.BottomArrow.Image,Element.BottomArrow.Center,nil,nil,true);
+			Element.Canvas:drawImage(Element.TopArrow.Image,Element.TopArrow.Center,nil,nil,true);
+			Element.Canvas:drawImage(Element.BackgroundScrollerBottom.Image,Element.BackgroundScrollerBottom.Center,nil,nil,true);
+			Element.Canvas:drawImage(Element.BackgroundScrollerTop.Image,Element.BackgroundScrollerTop.Center,nil,nil,true);
+			Element.Canvas:drawTiledImage(Element.BackgroundScroller.Image,{0,0},Element.BackgroundScroller.Rect);
+			Element.Canvas:drawTiledImage(Element.Scroller.Image,{0,0},Element.Scroller.Rect);
+			Element.Canvas:drawImage(Element.Scroller.Bottom.Image,Element.Scroller.Bottom.Position);
+			Element.Canvas:drawImage(Element.Scroller.Top.Image,Element.Scroller.Top.Position);
+			Element.Canvas:drawImageRect(Element.BottomArrow.Image,RectMin(Element.BottomArrow.Rect),Element.BottomArrow.Rect);
+			Element.Canvas:drawImageRect(Element.TopArrow.Image,RectMin(Element.TopArrow.Rect),Element.TopArrow.Rect);
+			Element.Canvas:drawImageRect(Element.BackgroundScrollerBottom.Image,RectMin(Element.BackgroundScrollerBottom.Rect),Element.BackgroundScrollerBottom.Rect);
+			Element.Canvas:drawImageRect(Element.BackgroundScrollerTop.Image,RectMin(Element.BackgroundScrollerTop.Rect),Element.BackgroundScrollerTop.Rect);
+			Element.Canvas:drawTiledImage(Element.BackgroundScroller.Image,{0,0},Element.BackgroundScroller.Rect);
+			Element.Canvas:drawTiledImage(Element.Scroller.Image,{0,0},Element.Scroller.Rect);
+			--Element.Canvas:drawImageRect(Element.BackgroundScroller.Image,RectMin(Element.BackgroundScroller.Rect),Element.BackgroundScroller.Rect);
+			--Element.Canvas:drawImageRect(Element.Scroller.Image,RectMin(Element.Scroller.Rect),Element.Scroller.Rect);
+			Element.Canvas:drawImageRect(Element.Scroller.Bottom.Image,RectMin(Element.Scroller.Bottom.Rect),Element.Scroller.Bottom.Rect);
+			Element.Canvas:drawImageRect(Element.Scroller.Top.Image,RectMin(Element.Scroller.Top.Rect),Element.Scroller.Top.Rect);
+		end--]]
+		--[[ElementController.Delete = function()
+			if Element.Parent == nil then
+				DeleteElement(Element);
+			end
+			for k,i in pairs(ElementController) do
+				ElementController[k] = nil;
+			end
+		end--]]
+		Element.AddControllerValue("GetSliderSize",function()
+			return Element.Size;
+		end);
+
+		--[[ElementController.GetSliderSize = function()
+			return Element.Size;
+		end--]]
+		Element.AddControllerValue("SetSliderSize",function()
+			Element.Size = NewSize;
+		end);
+		--[[ElementController.SetSliderSize = function(NewSize)
+			Element.Size = NewSize;
+			Element.UpdatePosValues();
+		end--]]
+		Element.AddControllerValue("SetSliderValue",function()
+			Element.Value = NewValue;
+		end);
+		--[[ElementController.SetSliderValue = function(NewValue)
+			Element.Value = NewValue;
+			Element.UpdatePosValues();
+		end--]]
+		Element.AddControllerValue("GetSliderValue",function()
+			return Element.Value;
+		end);
+		Element.AddControllerValue("GetLength",function()
+			return Element.Length;
+		end);
+		--[[ElementController.GetSliderValue = function()
+			return Element.Value;
+		end--]]
+		--[[ElementController.GetPosition = function()
+			if Element.Parent ~= nil then
+				return vecAdd(Element.Scroller.Start,Element.Parent.GetPosition());
+			end
+			return Element.Scroller.Start;
+		end
+		ElementController.GetRelativePosition = function()
+			return Element.Scroller.Start;
+		end
+		ElementController.SetPosition = function(Pos)
+			local NewPos = Pos;
+			if Element.Parent ~= nil then
+				NewPos = vecAdd(Pos,Element.GetPosition());
+			end
+			ElementController.SetRelativePosition(NewPos);
+		end
+		ElementController.SetRelativePosition = function(Pos)
+			Element.Scroller.Start = Pos;
+			Element.UpdatePosValues();
+		end--]]
+		--[[ElementController.SetToMousePosition = function()
+			if Element.Mode == "Vertical" then
+				ElementController.SetSliderValue((vecSub(Element.Canvas:mousePosition(),ElementController.GetPosition())[2] - (Element.Length / 2)) / (ScrollerRegion[4] - ElementController.GetLength()));
+			elseif Element.Mode == "Horizontal" then
+				ElementController.SetSliderValue((vecSub(Element.Canvas:mousePosition(),ElementController.GetPosition())[1] - (Element.Length / 2)) / (ScrollerRegion[3] - ElementController.GetLength()));
+			end
+		end
+		ElementController.GetLength = function()
+			return Element.Length;
+		end
+		ElementController.GetValueAtMousePosition = function()
+			if Element.Mode == "Vertical" then
+				return (vecSub(Element.Canvas:mousePosition(),ElementController.GetPosition())[2] - (Element.Length / 2)) / (ScrollerRegion[4] - Element.Length);
+			elseif Element.Mode == "Horizontal" then
+				return (vecSub(Element.Canvas:mousePosition(),ElementController.GetPosition())[1] - (Element.Length / 2)) / (ScrollerRegion[3] - Element.Length);
+			end
+		end--]]
+	end
+	Canvases[CanvasName].Elements[#Canvases[CanvasName].Elements + 1] = Element;
+	return Element.Finish();
+end
+
+--[[function CanvasCore.AddScrollBar(CanvasName,Origin,Length,Scroller,ScrollerBackground,Arrows,Mode,InitialSize,InitialValue)
 	InitialSize = InitialSize or 1;
 	InitialValue = InitialValue or 0;
 	if Origin[3] ~= nil and Origin[4] ~= nil then
@@ -327,7 +647,7 @@ function CanvasCore.AddScrollBar(CanvasName,Origin,Length,Scroller,ScrollerBackg
 			Element.Canvas:drawTiledImage(Element.BackgroundScroller.Image,{0,0},Element.BackgroundScroller.Rect);
 			Element.Canvas:drawTiledImage(Element.Scroller.Image,{0,0},Element.Scroller.Rect);
 			Element.Canvas:drawImage(Element.Scroller.Bottom.Image,Element.Scroller.Bottom.Position);
-			Element.Canvas:drawImage(Element.Scroller.Top.Image,Element.Scroller.Top.Position);--]]
+			Element.Canvas:drawImage(Element.Scroller.Top.Image,Element.Scroller.Top.Position);
 			Element.Canvas:drawImageRect(Element.BottomArrow.Image,RectMin(Element.BottomArrow.Rect),Element.BottomArrow.Rect);
 			Element.Canvas:drawImageRect(Element.TopArrow.Image,RectMin(Element.TopArrow.Rect),Element.TopArrow.Rect);
 			Element.Canvas:drawImageRect(Element.BackgroundScrollerBottom.Image,RectMin(Element.BackgroundScrollerBottom.Rect),Element.BackgroundScrollerBottom.Rect);
@@ -400,4 +720,4 @@ function CanvasCore.AddScrollBar(CanvasName,Origin,Length,Scroller,ScrollerBackg
 		end
 	end
 	return ElementController;
-end
+end--]]
