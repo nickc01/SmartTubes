@@ -41,19 +41,8 @@ local function GetItemImage(ItemName)
 			IMG = Directory .. IMG;
 		end
 	end
-	--sb.logInfo("IMG = " .. sb.print(IMG));
 	return IMG;
-	--sb.logInfo("Config = " .. sb.print(Config));
 end
-
---[[
-Doc for widget.addFlowImage();
-
---widget
-
-
-
---]]
 
 function init()
 	RecipeCanvas = CanvasCore.AddCanvas("recipeCanvas","RecipeCanvas");
@@ -70,7 +59,7 @@ function init()
 	{
 		Top = "/Blocks/Conduits/Crafting Conduit/UI/Window/SliderArrowUp.png",
 		Bottom = "/Blocks/Conduits/Crafting Conduit/UI/Window/SliderArrowDown.png",
-	},"Vertical",5,0.5);
+	},"Vertical",5,0);
 	HorizontalTestBar = CanvasCore.AddScrollBar("RecipeCanvas",{0,0,121,9},100,{
 		ScrollerTop = "/Blocks/Conduits/Crafting Conduit/UI/Window/Horizontal Scroll Bar/SliderRight.png",
 		Scroller = "/Blocks/Conduits/Crafting Conduit/UI/Window/Horizontal Scroll Bar/SliderMid.png",
@@ -85,47 +74,13 @@ function init()
 		Top = "/Blocks/Conduits/Crafting Conduit/UI/Window/Horizontal Scroll Bar/SliderArrowRight.png",
 		Bottom = "/Blocks/Conduits/Crafting Conduit/UI/Window/Horizontal Scroll Bar/SliderArrowLeft.png",
 	},"Horizontal",5,0.5);
-	--RecipeScrollbar.Draw();
-	--HorizontalTestBar.Draw();
---	RecipeScrollbar.SetSliderSize(5);
-	--RecipeCanvas = widget.bindCanvas("recipeCanvas");
-	--CanvasCore.AddClickCallback(RecipeCanvas,"RecipeCanvasClick");
-	--[[RecipeCanvas = CanvasCore.InitCanvas("recipeCanvas","RecipeCanvasClick");
-	RecipeScrollbar = CanvasCore.CreateScrollbar(
-	RecipeCanvas,
-	{126,3},
-	{126,169},
-	"/Blocks/Conduits/Crafting Conduit/UI/Window/SliderArrowUp.png",
-	"/Blocks/Conduits/Crafting Conduit/UI/Window/SliderArrowDown.png",
-	"/Blocks/Conduits/Crafting Conduit/UI/Window/ScrollArea.png",
-	"/Blocks/Conduits/Crafting Conduit/UI/Window/SliderMid.png",
-	"/Blocks/Conduits/Crafting Conduit/UI/Window/SliderTop.png",
-	"/Blocks/Conduits/Crafting Conduit/UI/Window/SliderBottom.png",
-	2,0.5
-	);
-	sb.logInfo("RecipeScrollbar = " .. sb.print(RecipeScrollbar));
-	CanvasCore.AddElement(RecipeCanvas,RecipeScrollbar);--]]
-	--RecipeScrollbar.Draw();
-	--[[sb.logInfo("A = " .. sb.print(A));
-	sb.logInfo("B = " .. sb.print(B));
-	sb.logInfo("C = " .. sb.print(C));
-	sb.logInfo("D = " .. sb.print(D))--]]
-	--sb.logInfo("Widget = " .. sb.print(widget));
-	--Canvas.Init();
-	--widget.setSliderRange("requiredItemsSlider", 0, 1000);
-	--widget.registerMemberCallback(RecipesList, "MoveRight", function() sb.logInfo("This is a test") end);
-	--widget.registerMemberCallback(RecipesList, "MoveLeft", function() sb.logInfo("This is a test") end);
+	--sb.logInfo("RecipeScrollbar = " .. sb.print(RecipeScrollbar));
 end
-
-local Timer = 0;
-local Deleted = false;
 
 function update(dt)
 	CanvasCore.Update(dt);
-	--if Deleted == false then
-	--	RecipeScrollbar.SetToMousePosition();
-	--end
-	--HorizontalTestBar.SetToMousePosition();;
+	RecipeScrollbar.SetToMousePosition();
+	HorizontalTestBar.SetToMousePosition();;
 end
 
 local AllRecipes = {};
@@ -150,11 +105,4 @@ end
 
 function RecipeItemBoxHelp()
 	
-end
-
-function SliderUpdate(A,B,C,D)
-	sb.logInfo("A = " .. sb.print(A));
-	sb.logInfo("B = " .. sb.print(B));
-	sb.logInfo("C = " .. sb.print(C));
-	sb.logInfo("D = " .. sb.print(D));
 end
