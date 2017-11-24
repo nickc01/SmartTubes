@@ -10,7 +10,7 @@ function CreateElement(CanvasName)
 	local Position;
 	local ID;
 
-	local CalculatePosition = function()
+	--[[local CalculatePosition = function()
 		local LowestPoint;
 		for k,i in pairs(Drawables) do
 			if LowestPoint == nil then
@@ -28,7 +28,7 @@ function CreateElement(CanvasName)
 			LowestPoint = {0,0};
 		end
 		Position = LowestPoint;
-	end
+	end--]]
 
 	local Controller = setmetatable({},{__index = function()
 		error("This Element hasn't been finished yet");
@@ -82,7 +82,11 @@ function CreateElement(CanvasName)
 			IsTiled = IsTiled,
 			TextureRect = rect.minimize(Rect)
 		}
-		CalculatePosition();
+		--CalculatePosition();
+	end
+
+	Element.SetPosition = function(pos)
+		Position = pos;
 	end
 
 	Element.SetDrawableRect = function(Name,Rect)
@@ -137,15 +141,24 @@ function CreateElement(CanvasName)
 		
 	end
 	
+	local function MakeRectsAbsolute()
+		for k,i in ipairs(Drawables) do
+			i.LocalRect = i.Rect;
+			i.Rect = rect.vecAdd(i.Rect,Position);
+		end
+	end
 
 	Element.Finish = function()
 		if Canvas == nil then
 			error("This element doesn't have a Canvas Alias Set, run SetCanvas() to set the element's Canvas Alias");
 		end
-		CalculatePosition();
+		if Position == nil then
+			error("This element doesn't have a position set, run SetPosition(pos) to set the element's position");
+		end
+		MakeRectsAbsolute();
 		Controller = ControllerBase;
 		ID = sb.makeUuid();
-		return Controller;
+		return Controller,Element;
 	end
 	if CanvasName ~= nil then
 		Element.SetCanvas(CanvasName);
