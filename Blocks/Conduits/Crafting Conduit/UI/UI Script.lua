@@ -45,8 +45,9 @@ local function GetItemImage(ItemName)
 end
 
 function init()
+	CanvasCore.Init();
 	RecipeCanvas = CanvasCore.AddCanvas("recipeCanvas","RecipeCanvas");
-	RecipeScrollbar = CanvasCore.AddScrollBar("RecipeCanvas",{122,2,131,169},nil,{
+	RecipeScrollbar = CanvasCore.CreateElement("Scrollbar","RecipeCanvas",{122,1,131,171},{
 		ScrollerTop = "/Blocks/Conduits/Crafting Conduit/UI/Window/SliderTop.png",
 		Scroller = "/Blocks/Conduits/Crafting Conduit/UI/Window/SliderMid.png",
 		ScrollerBottom = "/Blocks/Conduits/Crafting Conduit/UI/Window/SliderBottom.png"
@@ -60,7 +61,7 @@ function init()
 		Top = "/Blocks/Conduits/Crafting Conduit/UI/Window/SliderArrowUp.png",
 		Bottom = "/Blocks/Conduits/Crafting Conduit/UI/Window/SliderArrowDown.png",
 	},"Vertical",5,0);
-	HorizontalTestBar = CanvasCore.AddScrollBar("RecipeCanvas",{0,0,121,9},100,{
+	HorizontalTestBar = CanvasCore.CreateElement("Scrollbar","RecipeCanvas",{0,0,121,9},{
 		ScrollerTop = "/Blocks/Conduits/Crafting Conduit/UI/Window/Horizontal Scroll Bar/SliderRight.png",
 		Scroller = "/Blocks/Conduits/Crafting Conduit/UI/Window/Horizontal Scroll Bar/SliderMid.png",
 		ScrollerBottom = "/Blocks/Conduits/Crafting Conduit/UI/Window/Horizontal Scroll Bar/SliderLeft.png"
@@ -80,7 +81,7 @@ end
 function update(dt)
 	CanvasCore.Update(dt);
 	RecipeScrollbar.SetToMousePosition();
-	HorizontalTestBar.SetToMousePosition();;
+	HorizontalTestBar.SetToMousePosition();
 end
 
 local AllRecipes = {};
