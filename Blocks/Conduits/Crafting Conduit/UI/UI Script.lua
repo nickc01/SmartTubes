@@ -75,13 +75,24 @@ function init()
 		Top = "/Blocks/Conduits/Crafting Conduit/UI/Window/Horizontal Scroll Bar/SliderArrowRight.png",
 		Bottom = "/Blocks/Conduits/Crafting Conduit/UI/Window/Horizontal Scroll Bar/SliderArrowLeft.png",
 	},"Horizontal",5,0.5);
-	--sb.logInfo("RecipeScrollbar = " .. sb.print(RecipeScrollbar));
 end
-
+local Deleted = false;
+local Timer = 0;
 function update(dt)
 	CanvasCore.Update(dt);
-	RecipeScrollbar.SetToMousePosition();
+	if Deleted == false then
+		RecipeScrollbar.SetToMousePosition();
+	end
 	HorizontalTestBar.SetToMousePosition();
+	Timer = Timer + dt;
+	if Timer > 2 then
+		if Deleted == false then
+			sb.logInfo("Before = " .. sb.print(RecipeScrollbar));
+			RecipeScrollbar.Delete();
+			sb.logInfo("After = " .. sb.print(RecipeScrollbar));
+			Deleted = true;
+		end
+	end
 end
 
 local AllRecipes = {};
@@ -91,9 +102,7 @@ end
 
 local RecipeItemSlot;
 function RecipeItemBox()
-	--sb.logInfo("CLICKED!");
 	RecipeItemSlot = player.swapSlotItem();
-	--sb.logInfo("Item = " .. sb.print(RecipeItemSlot));
 	widget.setItemSlotItem("recipeItemBox",RecipeItemSlot);
 	UpdateRecipesForItem(RecipeItemSlot);
 end

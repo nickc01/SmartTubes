@@ -7,28 +7,9 @@ function CreateElement(CanvasName)
 	local Element = {};
 	local Drawables = {};
 	local Canvas;
+	local CanvasAlias;
 	local Position;
 	local ID;
-
-	--[[local CalculatePosition = function()
-		local LowestPoint;
-		for k,i in pairs(Drawables) do
-			if LowestPoint == nil then
-				LowestPoint = {i.Rect[1],i.Rect[2]};
-			else
-				if i.Rect[1] < LowestPoint[1] then
-					LowestPoint[1] = i.Rect[1];
-				end
-				if i.Rect[2] < LowestPoint[2] then
-					LowestPoint[2] = i.Rect[2];
-				end
-			end
-		end
-		if LowestPoint == nil then
-			LowestPoint = {0,0};
-		end
-		Position = LowestPoint;
-	end--]]
 
 	local Controller = setmetatable({},{__index = function()
 		error("This Element hasn't been finished yet");
@@ -82,7 +63,6 @@ function CreateElement(CanvasName)
 			IsTiled = IsTiled,
 			TextureRect = rect.minimize(Rect)
 		}
-		--CalculatePosition();
 	end
 
 	Element.SetPosition = function(pos)
@@ -90,10 +70,7 @@ function CreateElement(CanvasName)
 	end
 
 	Element.SetDrawableRect = function(Name,Rect)
-		--sb.logInfo("Drawables = " .. sb.printJson(Drawables,1));
 		for k,i in ipairs(Drawables) do
-			--sb.logInfo("i.Name = " .. sb.print(i.Name));
-			--sb.logInfo("Name = " .. sb.print(Name));
 			if i.Name == Name then
 				Drawables[k].Rect = rect.vecAdd(Rect,Position);
 				return nil;
@@ -127,6 +104,7 @@ function CreateElement(CanvasName)
 	end
 
 	Element.SetCanvas = function(AliasName)
+		CanvasAlias = AliasName;
 		Canvas = CanvasCore.GetCanvas(AliasName);
 	end
 	Element.GetCanvas = function()
@@ -138,7 +116,7 @@ function CreateElement(CanvasName)
 	end
 	
 	ControllerBase.Delete = function()
-		
+		Element.Core.DeleteElement(CanvasAlias,Element);
 	end
 	
 	local function MakeRectsAbsolute()

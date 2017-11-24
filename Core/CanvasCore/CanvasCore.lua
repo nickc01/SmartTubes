@@ -8,15 +8,33 @@ local Canvases = {};
 
 local Core = {};
 
-function Core.AddElement(CanvasName,Element)
+local function AddElement(CanvasName,Element)
 	Canvases[CanvasName].Elements[#Canvases[CanvasName].Elements + 1] = Element;
+end
+
+function Core.DeleteElement(CanvasName,Element)
+	sb.logInfo("Trying to Delete");
+	if Element.Parent == nil then
+		if Canvases[CanvasName] ~= nil then
+			for k,i in ipairs(Canvases[CanvasName].Elements) do
+				if i.ID == Element.ID then
+					table.remove(Canvases[CanvasName].Elements,k);
+					break;
+				end
+			end
+			local Controller = Element.GetController();
+			for k,i in pairs(Controller) do
+				Controller[k] = nil;
+			end
+		end
+	end
 end
 
 function CanvasCore.CreateElement(Type,CanvasAlias,...)
 	if ElementCreators[Type] ~= nil then
 		local Controller,Element = ElementCreators[Type](CanvasAlias,...);
-		Core.AddElement(CanvasAlias,Element);
-		sb.logInfo("Element = " .. sb.print(Element));
+		Element.Core = Core;
+		AddElement(CanvasAlias,Element);
 		return Controller;
 	else
 		error("Element Type of " .. sb.print(Type) .. "doesn't exist");
@@ -41,13 +59,13 @@ function CanvasCore.GetCanvas(CanvasAlias)
 	return Canvases[CanvasAlias].Canvas;
 end
 
-local function DeleteElement(Element)
+--[[local function DeleteElement(Element)
 	for k,i in ipairs(Canvases[Element.CanvasName].Elements) do
 		if i.ID == Element.ID then
 			table.remove(Canvases[Element.CanvasName].Elements,k);
 		end
 	end
-end
+end--]]
 
 function CanvasCore.Init()
 	local ElementJson = root.assetJson("/Core/CanvasCore/Elements.json").Elements;
