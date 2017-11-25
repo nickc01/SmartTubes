@@ -21,6 +21,11 @@ end
 function rect.minimize(A)
 	return {0,0,A[3] - A[1],A[4] - A[2]};
 end
+
+function rect.intersect(A,B)
+	local Rect = {};
+
+end
 function rect.copy(A)
 	return {A[1],A[2],A[3],A[4]};
 end

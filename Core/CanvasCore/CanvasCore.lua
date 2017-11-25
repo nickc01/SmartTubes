@@ -8,16 +8,32 @@ local Canvases = {};
 
 local Core = {};
 
+local ControllerIndex = {};
+
 local function AddElement(CanvasName,Element)
 	Canvases[CanvasName].Elements[#Canvases[CanvasName].Elements + 1] = Element;
+	ControllerIndex[Element.GetController()] = Element;
+end
+function Core.RemoveElement(CanvasName,Element)
+	for k,i in ipairs(Canvases[CanvasName].Elements) do
+		if i.GetID() == Element.GetID() then
+			sb.logInfo("ID = " .. sb.print(Element.GetID()));
+			table.remove(Canvases[CanvasName].Elements,k);
+			ControllerIndex[Element.GetController()] = nil;
+			return nil;
+		end
+	end
+end
+
+function Core.GetElementByController(controller)
+	return ControllerIndex[controller];
 end
 
 function Core.DeleteElement(CanvasName,Element)
-	sb.logInfo("Trying to Delete");
 	if Element.Parent == nil then
 		if Canvases[CanvasName] ~= nil then
 			for k,i in ipairs(Canvases[CanvasName].Elements) do
-				if i.ID == Element.ID then
+				if i.GetID() == Element.GetID() then
 					table.remove(Canvases[CanvasName].Elements,k);
 					break;
 				end
@@ -32,10 +48,12 @@ end
 
 function CanvasCore.CreateElement(Type,CanvasAlias,...)
 	if ElementCreators[Type] ~= nil then
-		local Controller,Element = ElementCreators[Type](CanvasAlias,...);
+		local Element = ElementCreators[Type](CanvasAlias,...);
 		Element.Core = Core;
+		Element.Type = Type;
+		sb.logInfo("ID = " .. sb.print(Element.GetID()));
 		AddElement(CanvasAlias,Element);
-		return Controller;
+		return Element.GetController();
 	else
 		error("Element Type of " .. sb.print(Type) .. "doesn't exist");
 	end
