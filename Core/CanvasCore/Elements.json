@@ -3,6 +3,10 @@
     {
       "Name": "Scrollbar",
       "Script": "/Core/CanvasCore/Scrollbar.lua"
+    },
+    {
+      "Name": "Mask",
+      "Script": "/Core/CanvasCore/Mask.lua"
     }
   ]
 }
