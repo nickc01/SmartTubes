@@ -25,73 +25,66 @@ function CreateElement(CanvasName)
 
 	Element.GetClippingBoundaries = function()
 		if Element.Parent ~= nil then
+			sb.logInfo("Calling Parent");
 			local ParentClip = Element.Parent.GetClippingBoundaries();
+			sb.logInfo("After Parent Call = " .. sb.print(ParentClip));
+		--	sb.logInfo("Parent Clip = " .. sb.print(ParentClip));
 			local LocalClip;
 			if Clippable == true then
 				LocalClip = rect.vecAdd(Element.GetLocalClippingBounds(),Element.GetController().GetAbsolutePosition());
 			end
 			if ParentClip == nil then
+				sb.logInfo("E");
 				return LocalClip;
 			end
 			if ParentClip == "none" then
+				sb.logInfo("D");
 				return ParentClip;
 			end
 			if LocalClip == nil then
+				sb.logInfo("C");
 				return ParentClip;
 			end
 			if rect.intersects(ParentClip,LocalClip) then
+				sb.logInfo("B");
 				return rect.intersection(ParentClip,LocalClip);
 			else
+				sb.logInfo("A");
 				return "none";
 			end
 		else
 			local LocalClip;
+			sb.logInfo("Top Parent");
 			if Clippable == true then
 				LocalClip = rect.vecAdd(Element.GetLocalClippingBounds(),Element.GetController().GetAbsolutePosition());
 			end
-			--sb.logInfo("Local Clip = " .. sb.print(LocalClip));
+			--sb.logInfo("Top Mask = " .. sb.print(LocalClip));
+			sb.logInfo("Top Parent Clip + " .. sb.print(LocalClip));
 			return LocalClip;
 		end
 	end
 
 	local function UpdateClips()
-		--sb.logInfo("Clip Area = " .. sb.print(Element.GetClippingBoundaries()));
 		local Boundaries = Element.GetClippingBoundaries();
-		--[[if Boundaries == nil then
-			return nil;
-		end--]]
-		--[[if Boundaries ~= nil and Boundaries ~= "none" then
-			Boundaries = rect.vecSub(Boundaries,Position);
-		end--]]
+		sb.logInfo("Boundaries = " .. sb.print(Boundaries));
 		for k,i in ipairs(Drawables) do
 			if Boundaries == nil then
 				i.Rejected = false;
 				i.Rect = i.OriginalRect;
 				i.TextureRect = i.OriginalTextureRect;
-				--sb.logInfo("E");
 				break;
 			end
 			if Boundaries == "none" then
-				--sb.logInfo("D");
 				i.Rejected = true;
 			else
 				if rect.isInverted(Boundaries) then
-					--sb.logInfo("C");
 					i.Rejected = true;
 				else
-					--sb.logInfo("Boundary = " .. sb.print(Boundaries));
-					--sb.logInfo("OriginalRect = " .. sb.print(rect.vecAdd(i.OriginalRect,Element.GetController().GetAbsolutePosition())));
 					local Final,Offset = rect.cut(Boundaries,rect.vecAdd(i.OriginalRect,Element.GetController().GetAbsolutePosition()));
-					--sb.logInfo("Final = " .. sb.print(Final));
 					if rect.isInverted(Final) then
-						--sb.logInfo("B");
 						i.Rejected = true;
 					else
-						--sb.logInfo("A");
 						Final = rect.vecSub(Final,Element.GetController().GetAbsolutePosition());
-						--sb.logInfo("FinalFinal = " .. sb.print(Final));
-						--sb.logInfo("Minimized = " .. sb.print(rect.minimize(Final)));
-						--sb.logInfo("Offset = " .. sb.print(Offset));
 						i.Rejected = false;
 						i.Rect = Final;
 						i.TextureRect = rect.vecAdd(rect.minimize(Final),{Offset[1],Offset[2]});
@@ -118,15 +111,11 @@ function CreateElement(CanvasName)
 	end
 
 	ControllerBase.ChangePosition = function(Diff)
-		--[[for k,i in pairs(Drawables) do
-			i.Rect = rect.vecAdd(i.Rect,Diff);
-		end--]]
 		Position = vec.add(Position,Diff);
 		Element.UpdateClips();
 	end
 
 	ControllerBase.SetAbsolutePosition = function(Pos)
-		--sb.logInfo("Setting To Pos " .. sb.print(Pos));
 		if Element.Parent ~= nil then
 			local CurrentAbsolutePosition = vec.add(Position,Element.Parent.GetController().GetAbsolutePosition());
 			Element.GetController().ChangePosition(vec.sub(Pos,CurrentAbsolutePosition));
@@ -147,11 +136,7 @@ function CreateElement(CanvasName)
 	end
 
 	ControllerBase.GetAbsolutePosition = function()
-		--sb.logInfo("Parent = " .. sb.print(Element.Parent));
 		if Element.Parent ~= nil then
-		--	sb.logInfo("Local Position = " .. sb.print(Position));
-		--	sb.logInfo("Parent Position = " .. sb.print(Element.Parent.GetController().GetAbsolutePosition()));
-			--sb.logInfo("Abs Position = " .. sb.print(vec.add(Position,Element.Parent.GetController().GetAbsolutePosition())));
 			return vec.add(Position,Element.Parent.GetController().GetAbsolutePosition());
 		end
 		return {Position[1],Position[2]};
@@ -187,10 +172,8 @@ function CreateElement(CanvasName)
 		if Clippable == false then
 			Element.Clipping(true);
 		end
-		--if Clippable == true then
 		ClippingBounds = {rect[1],rect[2],rect[3],rect[4]};
 		Element.UpdateClips();
-		--end
 	end
 
 	Element.GetLocalClippingBounds = function()
@@ -233,7 +216,6 @@ function CreateElement(CanvasName)
 		for k,i in ipairs(Drawables) do
 			if i.Name == Name then
 				return {i.OriginalRect[1],i.OriginalRect[2],i.OriginalRect[3],i.OriginalRect[4]};
-				--return rect.vecSub(i.Rect,Position);
 			end
 		end
 		error("Drawable of " .. sb.print(Name) .. " doesn't exist");
@@ -242,10 +224,6 @@ function CreateElement(CanvasName)
 	Element.Draw = function()
 		for k,i in ipairs(Drawables) do
 			if i.Rejected == false then
-				--sb.logInfo("Getting VALUE");
-				--sb.logInfo("DrawRect = " .. sb.print(rect.vecAdd(i.Rect,Controller.GetAbsolutePosition())) .. " Name = " .. sb.print(i.Name));
-				--sb.logInfo("Absolute Position = " .. sb.print(Controller.GetAbsolutePosition()));
-				--sb.logInfo("Rendering Pos = " .. sb.print(Controller.GetAbsolutePosition()));
 				if i.IsTiled == true then
 					Canvas:drawTiledImage(i.Image,i.TextureOffset,rect.vecAdd(i.Rect,Controller.GetAbsolutePosition()));
 				else
@@ -254,7 +232,6 @@ function CreateElement(CanvasName)
 			end
 		end
 		if ParentMode == true then
-			--sb.logInfo("Children = " .. sb.print(Children));
 			for k,i in ipairs(Children) do
 				i.Draw();
 			end
@@ -276,26 +253,6 @@ function CreateElement(CanvasName)
 		end
 	end
 
-	--[[local Children;
-	Element.CanHaveChildren = false;
-
-	Element.SetParentMode = function(bool)
-		if bool == true then
-			Children = {};
-		else
-			
-		end
-	end
-
-	Element.SetParent = function(element)
-		if element == nil and Element.Parent ~= nil then
-			Element.Parent = nil;
-			return nil;
-		end
-		if element ~= nil and element.CanHaveChildren == true then
-			
-		end
-	end--]]
 	local function GetAllChildren()
 		if #Children == 0 then
 			return function()
@@ -354,19 +311,15 @@ function CreateElement(CanvasName)
 		if ParentMode == true then
 			if element.Parent == nil then
 				Children[#Children + 1] = element;
-				--local Position = element.GetController().GetAbsolutePosition();
 				element.Parent = Element;
-				Element.Core.RemoveElement(CanvasAlias,element);
-				Element.UpdateClips();
-				--element.GetController().SetAbsolutePosition(Position);
+				element.Core.RemoveElement(CanvasAlias,element);
+				element.UpdateClips();
 			else
 				if element.Parent ~= Element then
-					--local Position = element.GetController().GetAbsolutePosition();
 					element.Parent.RemoveChild(element);
 					element.Parent = Element;
 					Children[#Children + 1] = element;
-					Element.UpdateClips();
-					--element.GetController().SetAbsolutePosition(Position);
+					element.UpdateClips();
 				end
 			end
 		end
@@ -375,11 +328,9 @@ function CreateElement(CanvasName)
 		for k,i in ipairs(Children) do
 			if i.GetID() == element.GetID() then
 				table.remove(Children,k);
-				--local Position = element.GetController().GetAbsolutePosition();
 				element.Parent = nil;
-				Element.Core.AddElement(CanvasAlias,element);
-				Element.UpdateClips();
-				--element.GetController().SetAbsolutePosition(Position);
+				element.Core.AddElement(CanvasAlias,element);
+				element.UpdateClips();
 				return true;
 			end
 		end
@@ -424,16 +375,17 @@ function CreateElement(CanvasName)
 		ControllerBase[name] = value;
 	end
 	
-	ControllerBase.Delete = function(ChildrenToo)
+	ControllerBase.Delete = function()
+		if Element.Parent ~= nil then
+			Element.Parent.RemoveChild(Element);
+		end
+		if ParentMode == true then
+			for i=#Children,1,-1 do
+				Children[i].GetController().Delete();
+			end
+		end
 		Element.Core.DeleteElement(CanvasAlias,Element);
 	end
-	
-	--[[local function MakeRectsAbsolute()
-		for k,i in ipairs(Drawables) do
-			i.LocalRect = i.Rect;
-			i.Rect = rect.vecAdd(i.Rect,Position);
-		end
-	end--]]
 
 	Element.Finish = function()
 		if Finished == false then
@@ -443,7 +395,6 @@ function CreateElement(CanvasName)
 			if Position == nil then
 				error("This element doesn't have a position set, run SetPosition(pos) to set the element's position");
 			end
-			--MakeRectsAbsolute();
 			Controller = ControllerBase;
 			ID = sb.makeUuid();
 			Finished = true;
