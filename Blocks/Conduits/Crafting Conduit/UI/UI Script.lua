@@ -8,7 +8,11 @@ local RecipeCanvas;
 local RecipeScrollbar;
 local HorizontalTestScrollbar;
 local TestMask;
+local TestInsideMask;
 local TestImage;
+local TestAnchor;
+local ImageMask1;
+local ImageMask2;
 
 
 
@@ -83,13 +87,24 @@ function init()
 	},"Horizontal",100,0.5);
 
 	TestMask = CanvasCore.CreateElement("Mask","RecipeCanvas",{10,10,60,60});
+	TestInsideMask = CanvasCore.CreateElement("Mask","RecipeCanvas",{10,10,30,30});
+	TestAnchor = CanvasCore.CreateElement("Anchor Point","RecipeCanvas",{10,10});
+	ImageMask1 = CanvasCore.CreateElement("Image","RecipeCanvas","/Blocks/Conduits/Crafting Conduit/UI/Window/Test/ImageTestMask1.png");
+	ImageMask2 = CanvasCore.CreateElement("Image","RecipeCanvas","/Blocks/Conduits/Crafting Conduit/UI/Window/Test/ImageTestMask2.png");
+
+	TestMask.AddChild(ImageMask1);
+	TestInsideMask.AddChild(ImageMask2);
 	--sb.logInfo("Test Mask Position = " .. sb.print(TestMask.GetPosition()));
 	--sb.logInfo("Horizontal Test Bar ID = " .. sb.print(HorizontalTestBar.GetID()));
-	TestMask.AddChild(HorizontalTestBar);
+	TestMask.AddChild(TestInsideMask);
+	TestMask.AddChild(TestAnchor);
+	TestAnchor.AddChild(HorizontalTestBar);
 
 end
 local Deleted = false;
 local Timer = 0;
+local Timer2 = 0;
+local MaskParent = true;
 function update(dt)
 	CanvasCore.Update(dt);
 	--TestMask.ChangePosition({0.1,0.1});
@@ -97,12 +112,31 @@ function update(dt)
 		--RecipeScrollbar.SetToMousePosition();
 	--end
 	Timer = Timer + dt;
-	HorizontalTestBar.SetToMousePosition();
+	Timer2 = Timer2 + dt;
+	if Timer > 0 then
+		HorizontalTestBar.SetToMousePosition();
+	end
 	if Timer > 1 then
 		HorizontalTestBar.SetAbsolutePosition(vecAdd(HorizontalTestBar.GetAbsolutePosition(),{-1,0.0}));
+		--[[HorizontalTestBar.SetAbsolutePosition(vecAdd(HorizontalTestBar.GetAbsolutePosition(),{-1,0.0}));
+		if Timer > 5 then
+			TestMask.Delete();
+			Timer = -1000;
+		end--]]
 		--HorizontalTestBar.SetAbsolutePosition({0,0});
 		--sb.logInfo("Abs Position = " .. sb.print(HorizontalTestBar.GetAbsolutePosition()));
 		--Timer = -1000;
+	end
+	if Timer2 > 1 then
+		MaskParent = not MaskParent;
+		Timer2 = Timer2 - 1;
+		if MaskParent == true then
+			sb.logInfo("Switching to First Mask");
+			TestAnchor.AddChild(HorizontalTestBar);
+		else
+			sb.logInfo("Switching to Second Mask");
+			TestInsideMask.AddChild(HorizontalTestBar);
+		end
 	end
 	--[[Timer = Timer + dt;
 	if Timer > 2 then

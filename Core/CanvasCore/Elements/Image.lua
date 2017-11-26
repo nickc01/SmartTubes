@@ -6,7 +6,7 @@ function Creator.Create(CanvasName,Image,Position)
 	local ImageSize = root.imageSize(Image);
 	local Rect = {0,0,ImageSize[1],ImageSize[2]};
 	Element.AddDrawable("Image",Rect,Image);
-	Element.SetPosition(Position);
+	Element.SetPosition(Position or {0,0});
 	Element.SetParentMode(true);
 	Element.SetClippingBounds(Rect);
 	return Element;

@@ -23,7 +23,7 @@ function rect.minimize(A)
 end
 
 function rect.intersection(A,B)
-	local Rect = {math.max(A[1],B[1]),math.max(A[2],B[2]),math.min(A[3],B[3]),math.min(A[4],B[4])};
+	return {math.max(A[1],B[1]),math.max(A[2],B[2]),math.min(A[3],B[3]),math.min(A[4],B[4])};
 
 end
 function rect.copy(A)
