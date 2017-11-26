@@ -7,5 +7,6 @@ function Creator.Create(CanvasName,Rect)
 	local Element = CreateElement(CanvasName);
 	Element.SetPosition(Position);
 	Element.SetParentMode(true);
-	return Element.Finish();
+	Element.SetClippingBounds(rect.vecSub(Rect,Position));
+	return Element;
 end
