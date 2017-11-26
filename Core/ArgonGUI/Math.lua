@@ -76,9 +76,9 @@ function rect.isInverted(A)
 	return A[4] <= A[2] or A[3] <= A[1];
 end
 
-function isWithin(A,B)
+--[[function isWithin(A,B)
 	return A[1] >= B[1] and A[1] <= B[3] and A[3] >= B[1] and A[3] <= B[3] and A[2] >= B[2] and A[2] <= B[4] and A[4] >= B[2] and A[4] <= B[4];
-end
+end--]]
 
 function rect.intersects(first, second)
   if first[1] > second[3]
