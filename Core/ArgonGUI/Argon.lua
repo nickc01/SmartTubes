@@ -1,4 +1,5 @@
-local CurrentDirectory;
+require ("/Core/ArgonGUI/Math.lua");
+require ("/Core/ArgonGUI/ElementBase.lua");
 local vec = vec;
 Argon = {};
 local ElementCreators = {};
@@ -9,48 +10,17 @@ local Core = {};
 
 local ControllerIndex = {};
 
-local ElementCreatorFunction = nil;
-
-local function GetCurrentDirectory()
-	if CurrentDirectory == nil then
-		local Scripts = config.getParameter("scripts");
-		for k,i in ipairs(Scripts) do
-			CurrentDirectory = string.match(i,"(.+)Argon%.lua");
-			if CurrentDirectory ~= nil then
-				break;
-			end
-		end
-		if CurrentDirectory == nil then
-			for k,i in pairs(_SBLOADED) do
-				CurrentDirectory = string.match(k,"(.+)Argon%.lua");
-				if CurrentDirectory ~= nil then
-					break;
-				end
-			end
-			if CurrentDirectory == nil then
-				error("Couldn't find directory containing Argon.lua");
-			end
-		end
-		return CurrentDirectory;
-	else
-		return CurrentDirectory;
-	end
-end
-
 local function AddElement(CanvasName,Element)
 	Canvases[CanvasName].Elements[#Canvases[CanvasName].Elements + 1] = Element;
 end
 function Core.RemoveElement(CanvasName,Element)
 	for k,i in ipairs(Canvases[CanvasName].Elements) do
 		if i.GetID() == Element.GetID() then
+			sb.logInfo("ID = " .. sb.print(Element.GetID()));
 			table.remove(Canvases[CanvasName].Elements,k);
 			return nil;
 		end
 	end
-end
-
-function Argon.GetArgonDirectory()
-	return CurrentDirectory;
 end
 
 function Core.GetElementByController(controller)
@@ -82,31 +52,15 @@ function Core.DeleteElement(CanvasName,Element)
 	end
 end
 
-function Argon.SetClickCallback(AliasName,FunctionName)
-	_ENV[FunctionName] = function(Position,ButtonType,IsDown)
-		--sb.logInfo("Clicked");
-		for k,i in ipairs(Canvases[AliasName].Elements) do
-			i.OnClick(Position,ButtonType,IsDown);
-		end
-	end
-end
-local RefCounter = 0;
 function Argon.CreateElement(Type,CanvasAlias,...)
 	if ElementCreators[Type] ~= nil then
-		CreateElement = ElementCreatorFunction;
-		RefCounter = RefCounter + 1;
 		local Element = ElementCreators[Type](CanvasAlias,...);
-		--sb.logInfo("Setting Core for type " .. sb.print(Type));
-		--Element.Core = Core;
-		Element.SetCore(Core);
+		Element.Core = Core;
 		Element.Type = Type;
 		Element.Finish();
+		--sb.logInfo("ID = " .. sb.print(Element.GetID()));
 		AddElement(CanvasAlias,Element);
 		ControllerIndex[Element.GetController()] = Element;
-		RefCounter = RefCounter - 1;
-		if RefCounter == 0 then
-			CreateElement = nil;
-		end
 		return Element.GetController();
 	else
 		error("Element Type of " .. sb.print(Type) .. "doesn't exist");
@@ -131,20 +85,20 @@ function Argon.GetCanvas(CanvasAlias)
 	return Canvases[CanvasAlias].Canvas;
 end
 
+--[[local function DeleteElement(Element)
+	for k,i in ipairs(Canvases[Element.CanvasName].Elements) do
+		if i.ID == Element.ID then
+			table.remove(Canvases[Element.CanvasName].Elements,k);
+		end
+	end
+end--]]
+
 function Argon.Init()
-	GetCurrentDirectory();
-	require (CurrentDirectory .. "Math.lua");
-	require (CurrentDirectory .. "ElementBase.lua");
-	ElementCreatorFunction = CreateElement;
-	CreateElement = nil;
-	local ElementJson = root.assetJson(CurrentDirectory .. "Elements.json").Elements;
+	sb.logInfo("Loaded Scripts = " .. sb.printJson(_SBLOADED,1));
+	local ElementJson = root.assetJson("/Core/ArgonGUI/Elements.json").Elements;
 	for k,i in ipairs(ElementJson) do
 		if i.Name ~= nil then
-			if string.match(i.Script,"^/") ~= nil then
-				require(i.Script);
-			else
-				require(CurrentDirectory .. i.Script);
-			end
+			require(i.Script);
 			if Creator ~= nil and Creator.Create ~= nil then
 				ElementCreators[i.Name] = Creator.Create;
 				Creator = nil;
@@ -153,7 +107,7 @@ function Argon.Init()
 			end
 		end
 	end
-	--sb.logInfo("Loaded Scripts After = " .. sb.printJson(_SBLOADED,1));
+	sb.logInfo("Loaded Scripts After = " .. sb.printJson(_SBLOADED,1));
 end
 
 function Argon.Update(dt)
@@ -163,7 +117,6 @@ function Argon.Update(dt)
 			if n.Update ~= nil then
 				n.Update(dt);
 			end
-			--n.OnHover(i.Canvas:mousePosition());
 			n.Draw();
 		end
 	end
