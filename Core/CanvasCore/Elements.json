@@ -7,6 +7,10 @@
     {
       "Name": "Mask",
       "Script": "/Core/CanvasCore/Mask.lua"
+    },
+    {
+      "Name": "Image",
+      "Script": "/Core/CanvasCore/Image.lua"
     }
   ]
 }

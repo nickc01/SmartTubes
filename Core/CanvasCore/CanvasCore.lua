@@ -51,6 +51,7 @@ function CanvasCore.CreateElement(Type,CanvasAlias,...)
 		local Element = ElementCreators[Type](CanvasAlias,...);
 		Element.Core = Core;
 		Element.Type = Type;
+		Element.Finish();
 		sb.logInfo("ID = " .. sb.print(Element.GetID()));
 		AddElement(CanvasAlias,Element);
 		return Element.GetController();
