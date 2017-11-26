@@ -99,10 +99,12 @@ function Creator.Create(CanvasName,Rect,Scroller,ScrollerBackground,Arrows,Mode,
 		ScrollerBottom = {ScrollRect[1],ScrollRect[2] - ScrollerBottomSize[2],ScrollRect[3],ScrollRect[2]};
 		ScrollerTop = {ScrollRect[1],ScrollRect[4],ScrollRect[3],ScrollRect[4] + ScrollerTopSize[2]};
 		Element.Length = ((ScrollRectArea[4] - ScrollRectArea[2]) / InitialSize);
+		--Element.Length = Element.Length - ScrollerTopSize[2] - ScrollerBottomSize[2];
 	else
 		ScrollerBottom = {ScrollRect[1] - ScrollerBottomSize[1],ScrollRect[2],ScrollRect[1],ScrollRect[4]};
 		ScrollerTop = {ScrollRect[3],ScrollRect[2],ScrollRect[3] + ScrollerTopSize[1],ScrollRect[4]};
 		Element.Length = ((ScrollRectArea[3] - ScrollRectArea[1]) / InitialSize);
+		--Element.Length = Element.Length - ScrollerTopSize[1] - ScrollerBottomSize[1];
 	end
 
 	--Set Position
@@ -174,5 +176,12 @@ function Creator.Create(CanvasName,Rect,Scroller,ScrollerBackground,Arrows,Mode,
 			Element.GetController().SetSliderValue((vec.sub(Element.GetCanvas():mousePosition(),Element.GetController().GetAbsolutePosition())[1] - (Element.Length / 2)) / ((ScrollRectArea[3] - ScrollRectArea[1]) - Element.Length));
 		end
 	end);
-	return Element.Finish();
+	Element.AddControllerValue("GetValueAtMousePosition",function()
+		if Mode == "Vertical" then
+			return (vec.sub(Element.GetCanvas():mousePosition(),Element.GetController().GetAbsolutePosition())[2] - (Element.Length / 2)) / ((ScrollRectArea[4] - ScrollRectArea[2]) - Element.Length);
+		elseif Mode == "Horizontal" then
+			return (vec.sub(Element.GetCanvas():mousePosition(),Element.GetController().GetAbsolutePosition())[1] - (Element.Length / 2)) / ((ScrollRectArea[3] - ScrollRectArea[1]) - Element.Length);
+		end
+	end);
+	return Element;
 end
