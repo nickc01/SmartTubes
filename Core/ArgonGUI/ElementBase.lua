@@ -1,5 +1,5 @@
 if vec == nil then
-	require ("/Core/Math.lua");
+	require ("/Core/ArgonGUI/Math.lua");
 end
 local vec = vec;
 local rect = rect;
@@ -25,48 +25,48 @@ function CreateElement(CanvasName)
 
 	Element.GetClippingBoundaries = function()
 		if Element.Parent ~= nil then
-			sb.logInfo("Calling Parent");
+			--sb.logInfo("Calling Parent");
 			local ParentClip = Element.Parent.GetClippingBoundaries();
-			sb.logInfo("After Parent Call = " .. sb.print(ParentClip));
+			--sb.logInfo("After Parent Call = " .. sb.print(ParentClip));
 		--	sb.logInfo("Parent Clip = " .. sb.print(ParentClip));
 			local LocalClip;
 			if Clippable == true then
 				LocalClip = rect.vecAdd(Element.GetLocalClippingBounds(),Element.GetController().GetAbsolutePosition());
 			end
 			if ParentClip == nil then
-				sb.logInfo("E");
+				--sb.logInfo("E");
 				return LocalClip;
 			end
 			if ParentClip == "none" then
-				sb.logInfo("D");
+				--sb.logInfo("D");
 				return ParentClip;
 			end
 			if LocalClip == nil then
-				sb.logInfo("C");
+				--sb.logInfo("C");
 				return ParentClip;
 			end
 			if rect.intersects(ParentClip,LocalClip) then
-				sb.logInfo("B");
+				--sb.logInfo("B");
 				return rect.intersection(ParentClip,LocalClip);
 			else
-				sb.logInfo("A");
+				--sb.logInfo("A");
 				return "none";
 			end
 		else
 			local LocalClip;
-			sb.logInfo("Top Parent");
+			--sb.logInfo("Top Parent");
 			if Clippable == true then
 				LocalClip = rect.vecAdd(Element.GetLocalClippingBounds(),Element.GetController().GetAbsolutePosition());
 			end
 			--sb.logInfo("Top Mask = " .. sb.print(LocalClip));
-			sb.logInfo("Top Parent Clip + " .. sb.print(LocalClip));
+			--sb.logInfo("Top Parent Clip + " .. sb.print(LocalClip));
 			return LocalClip;
 		end
 	end
 
 	local function UpdateClips()
 		local Boundaries = Element.GetClippingBoundaries();
-		sb.logInfo("Boundaries = " .. sb.print(Boundaries));
+		--sb.logInfo("Boundaries = " .. sb.print(Boundaries));
 		for k,i in ipairs(Drawables) do
 			if Boundaries == nil then
 				i.Rejected = false;
@@ -365,7 +365,7 @@ function CreateElement(CanvasName)
 
 	Element.SetCanvas = function(AliasName)
 		CanvasAlias = AliasName;
-		Canvas = CanvasCore.GetCanvas(AliasName);
+		Canvas = Argon.GetCanvas(AliasName);
 	end
 	Element.GetCanvas = function()
 		return Canvas;

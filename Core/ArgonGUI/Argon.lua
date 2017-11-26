@@ -1,7 +1,7 @@
-require ("/Core/Math.lua");
-require ("/Core/CanvasCore/ElementBase.lua");
+require ("/Core/ArgonGUI/Math.lua");
+require ("/Core/ArgonGUI/ElementBase.lua");
 local vec = vec;
-CanvasCore = {};
+Argon = {};
 local ElementCreators = {};
 
 local Canvases = {};
@@ -52,7 +52,7 @@ function Core.DeleteElement(CanvasName,Element)
 	end
 end
 
-function CanvasCore.CreateElement(Type,CanvasAlias,...)
+function Argon.CreateElement(Type,CanvasAlias,...)
 	if ElementCreators[Type] ~= nil then
 		local Element = ElementCreators[Type](CanvasAlias,...);
 		Element.Core = Core;
@@ -67,7 +67,7 @@ function CanvasCore.CreateElement(Type,CanvasAlias,...)
 	end
 end
 
-function CanvasCore.AddCanvas(CanvasName,AliasName)
+function Argon.AddCanvas(CanvasName,AliasName)
 	for k,i in pairs(Canvases) do
 		if i.Name == CanvasName then
 			error(sb.print(CanvasName) .. " is already Added under the Alias Name : " .. sb.print(k));
@@ -78,7 +78,7 @@ function CanvasCore.AddCanvas(CanvasName,AliasName)
 	return Binding;
 end
 
-function CanvasCore.GetCanvas(CanvasAlias)
+function Argon.GetCanvas(CanvasAlias)
 	if Canvases[CanvasAlias] == nil then
 		error(sb.print(CanvasAlias) .. " is not a valid Canvas Alias");
 	end
@@ -93,8 +93,9 @@ end
 	end
 end--]]
 
-function CanvasCore.Init()
-	local ElementJson = root.assetJson("/Core/CanvasCore/Elements.json").Elements;
+function Argon.Init()
+	sb.logInfo("Loaded Scripts = " .. sb.printJson(_SBLOADED,1));
+	local ElementJson = root.assetJson("/Core/ArgonGUI/Elements.json").Elements;
 	for k,i in ipairs(ElementJson) do
 		if i.Name ~= nil then
 			require(i.Script);
@@ -106,9 +107,10 @@ function CanvasCore.Init()
 			end
 		end
 	end
+	sb.logInfo("Loaded Scripts After = " .. sb.printJson(_SBLOADED,1));
 end
 
-function CanvasCore.Update(dt)
+function Argon.Update(dt)
 	for k,i in pairs(Canvases) do
 		i.Canvas:clear();
 		for m,n in ipairs(i.Elements) do
@@ -118,4 +120,36 @@ function CanvasCore.Update(dt)
 			n.Draw();
 		end
 	end
+end
+
+function stringTable(table,name,spacer)
+	if table == nil then return name ..  " = nil" end;
+	if spacer == nil then spacer = "" end;
+	local startingString = "\n" .. spacer ..  name .. " :\n" .. spacer .. "(";
+	for k,i in pairs(table) do
+		startingString = startingString .. "\n" .. spacer;
+		if type(i) == "table" then
+			startingString = startingString .. stringTable(i,k,spacer .. "	") .. ", ";
+		--else
+			--startingString = startingString .. "	" .. k .. " = " .. 
+		elseif type(i) == "function" then
+				startingString = startingString .. "	" .. k .. " = (FUNC) " .. sb.print(i);
+		elseif type(i) == "boolean" then
+			if i == true then
+				startingString = startingString .. "	" .. k .. " = true, ";
+			else
+				startingString = startingString .. "	" .. k .. " = false, ";
+			end
+		elseif type(i) == "number" then
+			startingString = startingString .. "	(NUM) " .. k .. " = " .. i .. ", ";
+		else
+			if i ~= nil then
+				startingString = startingString .. "	" .. k .. " = " .. sb.print(i) .. ", ";
+			else
+				startingString = startingString .. "	" .. k .. " = nil, ";
+			end
+		end
+	end
+	startingString = startingString .. "\n" .. spacer .. ")";
+	return startingString;
 end
