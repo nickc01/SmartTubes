@@ -54,10 +54,10 @@ local function GetItemImage(ItemName)
 end
 
 function init()
-	CanvasCore.Init();
-	RecipeCanvas = CanvasCore.AddCanvas("recipeCanvas","RecipeCanvas");
-	TestImage = CanvasCore.CreateElement("Image","RecipeCanvas","/Blocks/Conduits/Crafting Conduit/UI/Window/Test/ImageTest.png",{7,7});
-	--[[RecipeScrollbar = CanvasCore.CreateElement("Scrollbar","RecipeCanvas",{122,1,131,171},{
+	Argon.Init();
+	RecipeCanvas = Argon.AddCanvas("recipeCanvas","RecipeCanvas");
+	TestImage = Argon.CreateElement("Image","RecipeCanvas","/Blocks/Conduits/Crafting Conduit/UI/Window/Test/ImageTest.png",{7,7});
+	--[[RecipeScrollbar = Argon.CreateElement("Scrollbar","RecipeCanvas",{122,1,131,171},{
 		ScrollerTop = "/Blocks/Conduits/Crafting Conduit/UI/Window/SliderTop.png",
 		Scroller = "/Blocks/Conduits/Crafting Conduit/UI/Window/SliderMid.png",
 		ScrollerBottom = "/Blocks/Conduits/Crafting Conduit/UI/Window/SliderBottom.png"
@@ -71,7 +71,7 @@ function init()
 		Top = "/Blocks/Conduits/Crafting Conduit/UI/Window/SliderArrowUp.png",
 		Bottom = "/Blocks/Conduits/Crafting Conduit/UI/Window/SliderArrowDown.png",
 	},"Vertical",5,0);--]]
-	HorizontalTestBar = CanvasCore.CreateElement("Scrollbar","RecipeCanvas",{0,0,1000,9},{
+	HorizontalTestBar = Argon.CreateElement("Scrollbar","RecipeCanvas",{0,0,1000,9},{
 		ScrollerTop = "/Blocks/Conduits/Crafting Conduit/UI/Window/Horizontal Scroll Bar/SliderRight.png",
 		Scroller = "/Blocks/Conduits/Crafting Conduit/UI/Window/Horizontal Scroll Bar/SliderMid.png",
 		ScrollerBottom = "/Blocks/Conduits/Crafting Conduit/UI/Window/Horizontal Scroll Bar/SliderLeft.png"
@@ -86,11 +86,11 @@ function init()
 		Bottom = "/Blocks/Conduits/Crafting Conduit/UI/Window/Horizontal Scroll Bar/SliderArrowLeft.png",
 	},"Horizontal",100,0.5);
 
-	TestMask = CanvasCore.CreateElement("Mask","RecipeCanvas",{10,10,60,60});
-	TestInsideMask = CanvasCore.CreateElement("Mask","RecipeCanvas",{10,10,30,30});
-	TestAnchor = CanvasCore.CreateElement("Anchor Point","RecipeCanvas",{10,10});
-	ImageMask1 = CanvasCore.CreateElement("Image","RecipeCanvas","/Blocks/Conduits/Crafting Conduit/UI/Window/Test/ImageTestMask1.png");
-	ImageMask2 = CanvasCore.CreateElement("Image","RecipeCanvas","/Blocks/Conduits/Crafting Conduit/UI/Window/Test/ImageTestMask2.png");
+	TestMask = Argon.CreateElement("Mask","RecipeCanvas",{10,10,60,60});
+	TestInsideMask = Argon.CreateElement("Mask","RecipeCanvas",{10,10,30,30});
+	TestAnchor = Argon.CreateElement("Anchor Point","RecipeCanvas",{10,10});
+	ImageMask1 = Argon.CreateElement("Image","RecipeCanvas","/Blocks/Conduits/Crafting Conduit/UI/Window/Test/ImageTestMask1.png");
+	ImageMask2 = Argon.CreateElement("Image","RecipeCanvas","/Blocks/Conduits/Crafting Conduit/UI/Window/Test/ImageTestMask2.png");
 
 	TestMask.AddChild(ImageMask1);
 	TestInsideMask.AddChild(ImageMask2);
@@ -106,7 +106,7 @@ local Timer = 0;
 local Timer2 = 0;
 local MaskParent = true;
 function update(dt)
-	CanvasCore.Update(dt);
+	Argon.Update(dt);
 	--TestMask.ChangePosition({0.1,0.1});
 	--if Deleted == false then
 		--RecipeScrollbar.SetToMousePosition();

@@ -1,0 +1,20 @@
+{
+  "Elements": [
+    {
+      "Name": "Scrollbar",
+      "Script": "/Core/ArgonGUI/Elements/Scrollbar.lua"
+    },
+    {
+      "Name": "Mask",
+      "Script": "/Core/ArgonGUI/Elements/Mask.lua"
+    },
+    {
+      "Name": "Image",
+      "Script": "/Core/ArgonGUI/Elements/Image.lua"
+    },
+    {
+      "Name": "Anchor Point",
+      "Script": "/Core/ArgonGUI/Elements/Anchor Point.lua"
+    }
+  ]
+}
