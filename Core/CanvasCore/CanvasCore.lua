@@ -12,14 +12,12 @@ local ControllerIndex = {};
 
 local function AddElement(CanvasName,Element)
 	Canvases[CanvasName].Elements[#Canvases[CanvasName].Elements + 1] = Element;
-	ControllerIndex[Element.GetController()] = Element;
 end
 function Core.RemoveElement(CanvasName,Element)
 	for k,i in ipairs(Canvases[CanvasName].Elements) do
 		if i.GetID() == Element.GetID() then
 			sb.logInfo("ID = " .. sb.print(Element.GetID()));
 			table.remove(Canvases[CanvasName].Elements,k);
-			ControllerIndex[Element.GetController()] = nil;
 			return nil;
 		end
 	end
@@ -27,6 +25,13 @@ end
 
 function Core.GetElementByController(controller)
 	return ControllerIndex[controller];
+end
+
+function Core.AddElement(CanvasName,Element)
+	AddElement(CanvasName,Element);
+end
+local function DeletedFunction()
+	error("This Controller Has Been Deleted");
 end
 
 function Core.DeleteElement(CanvasName,Element)
@@ -40,8 +45,9 @@ function Core.DeleteElement(CanvasName,Element)
 			end
 			local Controller = Element.GetController();
 			for k,i in pairs(Controller) do
-				Controller[k] = nil;
+				Controller[k] = DeletedFunction;
 			end
+			ControllerIndex[Element.GetController()] = nil;
 		end
 	end
 end
@@ -52,8 +58,9 @@ function CanvasCore.CreateElement(Type,CanvasAlias,...)
 		Element.Core = Core;
 		Element.Type = Type;
 		Element.Finish();
-		sb.logInfo("ID = " .. sb.print(Element.GetID()));
+		--sb.logInfo("ID = " .. sb.print(Element.GetID()));
 		AddElement(CanvasAlias,Element);
+		ControllerIndex[Element.GetController()] = Element;
 		return Element.GetController();
 	else
 		error("Element Type of " .. sb.print(Type) .. "doesn't exist");
