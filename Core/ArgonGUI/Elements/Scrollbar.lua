@@ -80,7 +80,6 @@ function Creator.Create(CanvasName,Rect,Scroller,ScrollerBackground,Arrows,Mode,
 		BackgroundScrollerBottom = {LocalRect[1],BottomArrow[4],LocalRect[3],BottomArrow[4] + BackgroundScrollerBottomSize[2]};
 		BackgroundScroller = {BackgroundScrollerBottom[1],BackgroundScrollerBottom[4],BackgroundScrollerTop[3],BackgroundScrollerTop[2]};
 	else
-		--TODO
 		BottomArrow = {LocalRect[1],LocalRect[2],LocalRect[1] + BottomArrowSize[1],LocalRect[4]};
 		TopArrow = {LocalRect[3] - TopArrowSize[1],LocalRect[2],LocalRect[3],LocalRect[4]};
 		BackgroundScrollerTop = {TopArrow[1] - BackgroundScrollerTopSize[1],TopArrow[2],TopArrow[1],TopArrow[4]};
