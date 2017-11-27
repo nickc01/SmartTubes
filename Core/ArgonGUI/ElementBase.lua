@@ -5,7 +5,7 @@ local vec = vec;
 local rect = rect;
 function CreateElement(CanvasName)
 	local Element = {};
-	local Drawables = {};
+	local Sprites = {};
 	local ParentingController = {};
 	local Canvas;
 	local CanvasAlias;
@@ -16,6 +16,7 @@ function CreateElement(CanvasName)
 	local Children;
 	local ClippingBounds;
 	local Clippable = false;
+	local UpdateFunc;
 
 	local Controller = setmetatable({},{__index = function()
 		error("This Element hasn't been finished yet");
@@ -67,7 +68,7 @@ function CreateElement(CanvasName)
 	local function UpdateClips()
 		local Boundaries = Element.GetClippingBoundaries();
 		--sb.logInfo("Boundaries = " .. sb.print(Boundaries));
-		for k,i in ipairs(Drawables) do
+		for k,i in ipairs(Sprites) do
 			if Boundaries == nil then
 				i.Rejected = false;
 				i.Rect = i.OriginalRect;
@@ -106,6 +107,12 @@ function CreateElement(CanvasName)
 		end
 	end
 
+	Element.SetUpdateFunction = function(func)
+		UpdateFunc = func;
+	end
+
+	--Element.SetSpriteClickFunction()
+
 	ControllerBase.SetPosition = function(Pos)
 		Element.GetController().ChangePosition(vec.sub(Pos,Position));
 	end
@@ -142,8 +149,8 @@ function CreateElement(CanvasName)
 		return {Position[1],Position[2]};
 	end
 
-	Element.AddDrawable = function(Name,Rect,Image,IsTiled)
-		Drawables[#Drawables + 1] = {
+	Element.AddSprite = function(Name,Rect,Image,IsTiled)
+		Sprites[#Sprites + 1] = {
 			Name = Name,
 			Rect = Rect,
 			OriginalRect = Rect,
@@ -154,7 +161,7 @@ function CreateElement(CanvasName)
 			Rejected = false
 		}
 		if IsTiled == true then
-			Drawables[#Drawables].TextureOffset = {0,0};
+			Sprites[#Sprites].TextureOffset = {0,0};
 		end
 		if Finished == true then
 			Element.UpdateClips();
@@ -184,10 +191,10 @@ function CreateElement(CanvasName)
 		return Clippable;
 	end
 
-	Element.RemoveDrawable = function(Name)
-		for k,i in ipairs(Drawables) do
+	Element.RemoveSprite = function(Name)
+		for k,i in ipairs(Sprites) do
 			if i.Name == Name then
-				table.remove(Drawables,k);
+				table.remove(Sprites,k);
 				return true;
 			end
 		end
@@ -201,28 +208,28 @@ function CreateElement(CanvasName)
 		end
 	end
 
-	Element.SetDrawableRect = function(Name,Rect)
-		for k,i in ipairs(Drawables) do
+	Element.SetSpriteRect = function(Name,Rect)
+		for k,i in ipairs(Sprites) do
 			if i.Name == Name then
-				Drawables[k].OriginalRect = Rect;
+				Sprites[k].OriginalRect = Rect;
 				Element.UpdateClips();
 				return nil;
 			end
 		end
-		error("Drawable of " .. sb.print(Name) .. " doesn't exist");
+		error("Sprite of " .. sb.print(Name) .. " doesn't exist");
 	end
 
-	Element.GetDrawableRect = function(Name)
-		for k,i in ipairs(Drawables) do
+	Element.GetSpriteRect = function(Name)
+		for k,i in ipairs(Sprites) do
 			if i.Name == Name then
 				return {i.OriginalRect[1],i.OriginalRect[2],i.OriginalRect[3],i.OriginalRect[4]};
 			end
 		end
-		error("Drawable of " .. sb.print(Name) .. " doesn't exist");
+		error("Sprite of " .. sb.print(Name) .. " doesn't exist");
 	end
 
 	Element.Draw = function()
-		for k,i in ipairs(Drawables) do
+		for k,i in ipairs(Sprites) do
 			if i.Rejected == false then
 				if i.IsTiled == true then
 					Canvas:drawTiledImage(i.Image,i.TextureOffset,rect.vecAdd(i.Rect,Controller.GetAbsolutePosition()));
@@ -250,6 +257,9 @@ function CreateElement(CanvasName)
 			for k,i in ipairs(Children) do
 				i.Update(dt);
 			end
+		end
+		if UpdateFunc ~= nil then
+			UpdateFunc(dt);
 		end
 	end
 
