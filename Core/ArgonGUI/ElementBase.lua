@@ -307,29 +307,50 @@ function CreateElement(CanvasName)
 		return ParentMode;
 	end
 
-	Element.AddChild = function(element)
+	Element.AddChild = function(element,RetainPosition)
 		if ParentMode == true then
 			if element.Parent == nil then
 				Children[#Children + 1] = element;
+				local Position;
+				if RetainPosition == true then
+					Position = element.GetController().GetAbsolutePosition();
+				end
 				element.Parent = Element;
 				element.Core.RemoveElement(CanvasAlias,element);
+				if RetainPosition == true then
+					element.GetController().SetAbsolutePosition(Position);
+				end
 				element.UpdateClips();
 			else
 				if element.Parent ~= Element then
+					local Position;
+					if RetainPosition == true then
+						Position = element.GetController().GetAbsolutePosition();
+					end
 					element.Parent.RemoveChild(element);
 					element.Parent = Element;
 					Children[#Children + 1] = element;
+					if RetainPosition == true then
+						element.GetController().SetAbsolutePosition(Position);
+					end
 					element.UpdateClips();
 				end
 			end
 		end
 	end
-	Element.RemoveChild = function(element)
+	Element.RemoveChild = function(element,RetainPosition)
 		for k,i in ipairs(Children) do
 			if i.GetID() == element.GetID() then
 				table.remove(Children,k);
+				local Position;
+				if RetainPosition == true then
+					Position = element.GetController().GetAbsolutePosition();
+				end
 				element.Parent = nil;
 				element.Core.AddElement(CanvasAlias,element);
+				if RetainPosition == true then
+					element.GetController().SetAbsolutePosition(Position);
+				end
 				element.UpdateClips();
 				return true;
 			end
@@ -337,12 +358,12 @@ function CreateElement(CanvasName)
 		return false;
 	end
 
-	ParentingController.AddChild = function(controller)
-		Element.AddChild(Element.Core.GetElementByController(controller));
+	ParentingController.AddChild = function(controller,RetainPosition)
+		Element.AddChild(Element.Core.GetElementByController(controller),RetainPosition);
 	end
 	
-	ParentingController.RemoveChild = function(controller)
-		Element.RemoveChild(Element.Core.GetElementByController(controller));
+	ParentingController.RemoveChild = function(controller,RetainPosition)
+		Element.RemoveChild(Element.Core.GetElementByController(controller),RetainPosition);
 	end
 
 	Element.RemoveAllChildren = function()
