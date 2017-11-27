@@ -109,15 +109,15 @@ function Creator.Create(CanvasName,Rect,Scroller,ScrollerBackground,Arrows,Mode,
 	--Set Position
 	Element.SetPosition(Position);
 
-	--Add Drawables 
-	Element.AddDrawable("BottomArrow",BottomArrow,Arrows.Bottom);
-	Element.AddDrawable("TopArrow",TopArrow,Arrows.Top);
-	Element.AddDrawable("BackgroundScrollerTop",BackgroundScrollerTop,ScrollerBackground.ScrollerTop);
-	Element.AddDrawable("BackgroundScrollerBottom",BackgroundScrollerBottom,ScrollerBackground.ScrollerBottom);
-	Element.AddDrawable("BackgroundScroller",BackgroundScroller,ScrollerBackground.Scroller,true);
-	Element.AddDrawable("ScrollerTop",ScrollerTop,Scroller.ScrollerTop);
-	Element.AddDrawable("ScrollerBottom",ScrollerBottom,Scroller.ScrollerBottom);
-	Element.AddDrawable("Scroller",ScrollRect,Scroller.Scroller,true);
+	--Add Sprites 
+	Element.AddSprite("BottomArrow",BottomArrow,Arrows.Bottom);
+	Element.AddSprite("TopArrow",TopArrow,Arrows.Top);
+	Element.AddSprite("BackgroundScrollerTop",BackgroundScrollerTop,ScrollerBackground.ScrollerTop);
+	Element.AddSprite("BackgroundScrollerBottom",BackgroundScrollerBottom,ScrollerBackground.ScrollerBottom);
+	Element.AddSprite("BackgroundScroller",BackgroundScroller,ScrollerBackground.Scroller,true);
+	Element.AddSprite("ScrollerTop",ScrollerTop,Scroller.ScrollerTop);
+	Element.AddSprite("ScrollerBottom",ScrollerBottom,Scroller.ScrollerBottom);
+	Element.AddSprite("Scroller",ScrollRect,Scroller.Scroller,true);
 
 	local function RecalculateScrollValues()
 		local ScrollRect;
@@ -133,9 +133,9 @@ function Creator.Create(CanvasName,Rect,Scroller,ScrollerBackground,Arrows,Mode,
 			ScrollerTop = {ScrollRect[3],ScrollRect[2],ScrollRect[3] + ScrollerTopSize[1],ScrollRect[4]};
 		end
 
-		Element.SetDrawableRect("ScrollerTop",ScrollerTop);
-		Element.SetDrawableRect("ScrollerBottom",ScrollerBottom);
-		Element.SetDrawableRect("Scroller",ScrollRect);
+		Element.SetSpriteRect("ScrollerTop",ScrollerTop);
+		Element.SetSpriteRect("ScrollerBottom",ScrollerBottom);
+		Element.SetSpriteRect("Scroller",ScrollRect);
 	end
 	Element.Size = InitialSize;
 	Element.Value = InitialValue;
