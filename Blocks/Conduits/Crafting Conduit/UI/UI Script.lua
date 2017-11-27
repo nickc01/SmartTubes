@@ -83,10 +83,9 @@ function init()
 		Top = "/Blocks/Conduits/Crafting Conduit/UI/Window/Horizontal Scroll Bar/SliderArrowRight.png",
 		Bottom = "/Blocks/Conduits/Crafting Conduit/UI/Window/Horizontal Scroll Bar/SliderArrowLeft.png",
 	},"Horizontal",100,0.5);
-
+	HorizontalTestBar.ChangePosition({0,10});
 	TestMask = Argon.CreateElement("Mask","RecipeCanvas",{10,10,60,60});
 	TestInsideMask = Argon.CreateElement("Mask","RecipeCanvas",{10,10,30,30});
-	TestAnchor = Argon.CreateElement("Anchor Point","RecipeCanvas",{10,10});
 	ImageMask1 = Argon.CreateElement("Image","RecipeCanvas","/Blocks/Conduits/Crafting Conduit/UI/Window/Test/ImageTestMask1.png");
 	ImageMask2 = Argon.CreateElement("Image","RecipeCanvas","/Blocks/Conduits/Crafting Conduit/UI/Window/Test/ImageTestMask2.png");
 
@@ -95,8 +94,8 @@ function init()
 	--sb.logInfo("Test Mask Position = " .. sb.print(TestMask.GetPosition()));
 	--sb.logInfo("Horizontal Test Bar ID = " .. sb.print(HorizontalTestBar.GetID()));
 	TestMask.AddChild(TestInsideMask);
-	TestMask.AddChild(TestAnchor);
-	TestAnchor.AddChild(HorizontalTestBar);
+	TestMask.AddChild(HorizontalTestBar);
+	TestImage.AddChild(TestMask,true);
 
 end
 local Deleted = false;
@@ -105,46 +104,26 @@ local Timer2 = 0;
 local MaskParent = true;
 function update(dt)
 	Argon.Update(dt);
-	--TestMask.ChangePosition({0.1,0.1});
-	--if Deleted == false then
-		--RecipeScrollbar.SetToMousePosition();
-	--end
 	Timer = Timer + dt;
 	Timer2 = Timer2 + dt;
+	TestImage.ChangePosition({0.05,0.05});
 	if Timer > 0 then
 		HorizontalTestBar.SetToMousePosition();
 	end
 	if Timer > 1 then
 		HorizontalTestBar.SetAbsolutePosition(vecAdd(HorizontalTestBar.GetAbsolutePosition(),{-1,0.0}));
-		--[[HorizontalTestBar.SetAbsolutePosition(vecAdd(HorizontalTestBar.GetAbsolutePosition(),{-1,0.0}));
-		if Timer > 5 then
-			TestMask.Delete();
-			Timer = -1000;
-		end--]]
-		--HorizontalTestBar.SetAbsolutePosition({0,0});
-		--sb.logInfo("Abs Position = " .. sb.print(HorizontalTestBar.GetAbsolutePosition()));
-		--Timer = -1000;
 	end
 	if Timer2 > 1 then
 		MaskParent = not MaskParent;
 		Timer2 = Timer2 - 1;
 		if MaskParent == true then
 			sb.logInfo("Switching to First Mask");
-			TestAnchor.AddChild(HorizontalTestBar);
+			TestMask.AddChild(HorizontalTestBar,true);
 		else
 			sb.logInfo("Switching to Second Mask");
-			TestInsideMask.AddChild(HorizontalTestBar);
+			TestInsideMask.AddChild(HorizontalTestBar,true);
 		end
 	end
-	--[[Timer = Timer + dt;
-	if Timer > 2 then
-		if Deleted == false then
-			sb.logInfo("Before = " .. sb.print(RecipeScrollbar));
-			RecipeScrollbar.Delete();
-			sb.logInfo("After = " .. sb.print(RecipeScrollbar));
-			Deleted = true;
-		end
-	end--]]
 end
 
 local AllRecipes = {};
