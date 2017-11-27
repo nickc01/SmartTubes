@@ -1,3 +1,4 @@
+require ("/Core/ArgonGUI/Argon.lua");
 local RecipesList = "recipeArea.itemList";
 local AddedRecipesList = "addedRecipeArea.itemList";
 local UpdateRecipesForItem;
@@ -13,9 +14,6 @@ local TestImage;
 local TestAnchor;
 local ImageMask1;
 local ImageMask2;
-
-
-
 
 local ItemImageSpacing = 2;
 
@@ -57,7 +55,7 @@ function init()
 	Argon.Init();
 	RecipeCanvas = Argon.AddCanvas("recipeCanvas","RecipeCanvas");
 	TestImage = Argon.CreateElement("Image","RecipeCanvas","/Blocks/Conduits/Crafting Conduit/UI/Window/Test/ImageTest.png",{7,7});
-	--[[RecipeScrollbar = Argon.CreateElement("Scrollbar","RecipeCanvas",{122,1,131,171},{
+	RecipeScrollbar = Argon.CreateElement("Scrollbar","RecipeCanvas",{122,1,131,171},{
 		ScrollerTop = "/Blocks/Conduits/Crafting Conduit/UI/Window/SliderTop.png",
 		Scroller = "/Blocks/Conduits/Crafting Conduit/UI/Window/SliderMid.png",
 		ScrollerBottom = "/Blocks/Conduits/Crafting Conduit/UI/Window/SliderBottom.png"
@@ -70,7 +68,7 @@ function init()
 	{
 		Top = "/Blocks/Conduits/Crafting Conduit/UI/Window/SliderArrowUp.png",
 		Bottom = "/Blocks/Conduits/Crafting Conduit/UI/Window/SliderArrowDown.png",
-	},"Vertical",5,0);--]]
+	},"Vertical",5,0);
 	HorizontalTestBar = Argon.CreateElement("Scrollbar","RecipeCanvas",{0,0,1000,9},{
 		ScrollerTop = "/Blocks/Conduits/Crafting Conduit/UI/Window/Horizontal Scroll Bar/SliderRight.png",
 		Scroller = "/Blocks/Conduits/Crafting Conduit/UI/Window/Horizontal Scroll Bar/SliderMid.png",
