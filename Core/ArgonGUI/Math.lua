@@ -37,6 +37,10 @@ function rect.isWithin(Source,Target)
 			Target[4] <= Source[4];
 end
 
+function rect.isPosWithin(Source,Position)
+	return Position[1] >= Source[1] and Position[2] >= Source[2] and Position[1] <= Source[3] and Position[2] <= Source[4];
+end
+
 --If Target falls within Source
 function rect.cut(Source,Target)
 	local FinalRect = {};

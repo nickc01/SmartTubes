@@ -6,6 +6,7 @@ local rect = rect;
 function CreateElement(CanvasName)
 	local Element = {};
 	local Sprites = {};
+	local SpritesByName = {};
 	local ParentingController = {};
 	local Canvas;
 	local CanvasAlias;
@@ -68,24 +69,32 @@ function CreateElement(CanvasName)
 	local function UpdateClips()
 		local Boundaries = Element.GetClippingBoundaries();
 		--sb.logInfo("Boundaries = " .. sb.print(Boundaries));
+		--sb.logInfo("Sprites Here = " .. sb.print(Sprites));
 		for k,i in ipairs(Sprites) do
+			--sb.logInfo("Clip Index = " .. sb.print(k));
+			--sb.logInfo("CLipping = " .. sb.print(i.Name));
 			if Boundaries == nil then
+				--sb.logInfo("1");
 				i.Rejected = false;
 				i.Rect = i.OriginalRect;
+				--sb.logInfo("I = " .. sb.printJson(i,1));
+				--sb.logInfo("Setting Rect To " .. sb.print(i.OriginalRect));
 				i.TextureRect = i.OriginalTextureRect;
-				break;
-			end
-			if Boundaries == "none" then
+			elseif Boundaries == "none" then
 				i.Rejected = true;
+				--sb.logInfo("2");
 			else
 				if rect.isInverted(Boundaries) then
 					i.Rejected = true;
+					--sb.logInfo("3");
 				else
 					local Final,Offset = rect.cut(Boundaries,rect.vecAdd(i.OriginalRect,Element.GetController().GetAbsolutePosition()));
 					if rect.isInverted(Final) then
 						i.Rejected = true;
+						--sb.logInfo("4");
 					else
 						Final = rect.vecSub(Final,Element.GetController().GetAbsolutePosition());
+						--sb.logInfo("5");
 						i.Rejected = false;
 						i.Rect = Final;
 						i.TextureRect = rect.vecAdd(rect.minimize(Final),{Offset[1],Offset[2]});
@@ -121,6 +130,9 @@ function CreateElement(CanvasName)
 		Position = vec.add(Position,Diff);
 		Element.UpdateClips();
 	end
+	Element.ChangePosition = function(Diff)
+		Element.GetController().ChangePosition();
+	end
 
 	ControllerBase.SetAbsolutePosition = function(Pos)
 		if Element.Parent ~= nil then
@@ -130,8 +142,14 @@ function CreateElement(CanvasName)
 			Element.GetController().SetPosition(Pos);
 		end
 	end
+	Element.SetAbsolutePosition = function(Pos)
+		Element.GetController().SetAbsolutePosition(Pos);
+	end
 
 	ControllerBase.ChangeAbsolutePosition = function(Diff)
+		Element.GetController().ChangePosition(Diff);
+	end
+	Element.ChangeAbsolutePosition = function(Diff)
 		Element.GetController().ChangePosition(Diff);
 	end
 
@@ -148,18 +166,26 @@ function CreateElement(CanvasName)
 		end
 		return {Position[1],Position[2]};
 	end
+	Element.GetAbsolutePosition = function()
+		return Element.GetController().GetAbsolutePosition();
+	end
 
-	Element.AddSprite = function(Name,Rect,Image,IsTiled)
+	Element.AddSprite = function(Name,Rect,Image,IsTiled,Color)
+		if SpritesByName[Name] ~= nil then
+			error("Sprite of " .. sb.print(Name) .. " already exists");
+		end
 		Sprites[#Sprites + 1] = {
 			Name = Name,
 			Rect = Rect,
-			OriginalRect = Rect,
+			OriginalRect = rect.copy(Rect),
 			Image = Image,
 			IsTiled = IsTiled,
+			Color = Color,
 			TextureRect = rect.minimize(Rect),
 			OriginalTextureRect = rect.minimize(Rect),
 			Rejected = false
 		}
+		SpritesByName[Name] = #Sprites;
 		if IsTiled == true then
 			Sprites[#Sprites].TextureOffset = {0,0};
 		end
@@ -192,11 +218,10 @@ function CreateElement(CanvasName)
 	end
 
 	Element.RemoveSprite = function(Name)
-		for k,i in ipairs(Sprites) do
-			if i.Name == Name then
-				table.remove(Sprites,k);
-				return true;
-			end
+		if SpritesByName[Name] ~= nil then
+			table.remove(Sprites,SpritesByName[Name]);
+			table.remove(SpritesByName,Name);
+			return true;
 		end
 		return false;
 	end
@@ -209,32 +234,141 @@ function CreateElement(CanvasName)
 	end
 
 	Element.SetSpriteRect = function(Name,Rect)
+	--[[	sb.logInfo("Sprites AT SET = " .. sb.print(Sprites));
 		for k,i in ipairs(Sprites) do
+			sb.logInfo("Name = " .. sb.print(i.Name));
+		end--]]
+		--[[for k,i in ipairs(Sprites) do
 			if i.Name == Name then
-				Sprites[k].OriginalRect = Rect;
+				--sb.logInfo("Setting Rect for " .. sb.print(i.Name));
+				--sb.logInfo("Current Rect = " .. sb.print(Rect));
+				i.OriginalRect = rect.copy(Rect);
+				--sb.logInfo("I In Set = " .. sb.print(i));
+				Element.UpdateClips();
+				return nil;
+			end
+		end--]]
+		if SpritesByName[Name] ~= nil then
+			Sprites[SpritesByName[Name]].OriginalRect = rect.copy(Rect);
+			Element.UpdateClips();
+		else
+			error("Sprite of " .. sb.print(Name) .. " doesn't exist");
+		end
+	end
+	Element.SetSpriteColor = function(Name,Color)
+		--[[for k,i in ipairs(Sprites) do
+			if i.Name == Name then
+				i.Color = Color;
 				Element.UpdateClips();
 				return nil;
 			end
 		end
-		error("Sprite of " .. sb.print(Name) .. " doesn't exist");
+		error("Sprite of " .. sb.print(Name) .. " doesn't exist");--]]
+		if SpritesByName[Name] ~= nil then
+			Sprites[SpritesByName[Name]].Color = Color;
+			Element.UpdateClips();
+		else
+			error("Sprite of " .. sb.print(Name) .. " doesn't exist");
+		end
+	end
+
+	Element.SetSpriteClickFunction = function(Name,Func)
+		--[[for k,i in ipairs(Sprites) do
+			if i.Name == Name then
+				i.ClickFunc = Func;
+				return nil;
+			end
+		end
+		error("Sprite of " .. sb.print(Name) .. " doesn't exist");--]]
+		if SpritesByName[Name] ~= nil then
+			Sprites[SpritesByName[Name]].ClickFunc = Func;
+		else
+			error("Sprite of " .. sb.print(Name) .. " doesn't exist");
+		end
+	end
+
+	local ClickedSprites = nil;
+
+	Element.OnClick = function(Position,ButtonType,IsDown)
+		if IsDown == true then
+			if ClickedSprites ~= nil then
+				for k,i in ipairs(ClickedSprites) do
+					i.ClickFunc(Position,ButtonType,false);
+				end
+			end
+			ClickedSprites = {};
+			for k,i in ipairs(Sprites) do
+				if i.Rejected == false and i.ClickFunc ~= nil then
+					if rect.isPosWithin(rect.vecAdd(i.Rect,Element.GetAbsolutePosition()),Position) then
+						ClickedSprites[#ClickedSprites + 1] = i;
+						i.ClickFunc(Position,ButtonType,IsDown);
+					end
+				end
+			end
+			
+		else
+			if ClickedSprites == nil then
+				for k,i in ipairs(Sprites) do
+					ClickedSprites = {};
+					if i.ClickFunc ~= nil then
+						if rect.isPosWithin(rect.vecAdd(i.Rect,Element.GetAbsolutePosition()),Position) then
+							ClickedSprites[#ClickedSprites + 1] = i;
+							i.ClickFunc(Position,ButtonType,IsDown);
+						end
+					end
+				end
+			else
+				for k,i in ipairs(ClickedSprites) do
+					i.ClickFunc(Position,ButtonType,IsDown);
+				end
+				ClickedSprites = nil;
+			end
+		end
 	end
 
 	Element.GetSpriteRect = function(Name)
-		for k,i in ipairs(Sprites) do
+		--[[for k,i in ipairs(Sprites) do
 			if i.Name == Name then
 				return {i.OriginalRect[1],i.OriginalRect[2],i.OriginalRect[3],i.OriginalRect[4]};
 			end
 		end
-		error("Sprite of " .. sb.print(Name) .. " doesn't exist");
+		error("Sprite of " .. sb.print(Name) .. " doesn't exist");--]]
+		if SpritesByName[Name] ~= nil then
+			return rect.copy(Sprites[SpritesByName[Name]]);
+		else
+			error("Sprite of " .. sb.print(Name) .. " doesn't exist");
+		end
+	end
+
+	Element.SetSpriteImage = function(Name,Image)
+		sb.logInfo("Test");
+		if SpritesByName[Name] ~= nil then
+			Sprites[SpritesByName[Name]].Image = Image;
+			sb.logInfo("Sprite = " .. sb.print(Sprites[SpritesByName[Name]]));
+		else
+			error("Sprite of " .. sb.print(Name) .. " doesn't exist");
+		end
+	end
+
+	Element.GetSpriteImage = function(Name)
+		if SpritesByName[Name] ~= nil then
+			return Sprites[SpritesByName[Name]].Image;
+		else
+			error("Sprite of " .. sb.print(Name) .. " doesn't exist");
+		end
 	end
 
 	Element.Draw = function()
 		for k,i in ipairs(Sprites) do
+			--sb.logInfo("Rendering Sprite of " .. sb.print(i.Name));
 			if i.Rejected == false then
+				--[[if i.Name == "Scroller" then
+					sb.logInfo("Scroller's Rect = " .. sb.print(i.Rect));
+				end--]]
 				if i.IsTiled == true then
-					Canvas:drawTiledImage(i.Image,i.TextureOffset,rect.vecAdd(i.Rect,Controller.GetAbsolutePosition()));
+					Canvas:drawTiledImage(i.Image,i.TextureOffset,rect.vecAdd(i.Rect,Controller.GetAbsolutePosition()),nil,i.Color);
 				else
-					Canvas:drawImageRect(i.Image,i.TextureRect,rect.vecAdd(i.Rect,Controller.GetAbsolutePosition()));
+					Canvas:drawImageRect(i.Image,i.TextureRect,rect.vecAdd(i.Rect,Controller.GetAbsolutePosition()),i.Color);
 				end
 			end
 		end
