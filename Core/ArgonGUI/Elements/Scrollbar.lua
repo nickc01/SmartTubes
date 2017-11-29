@@ -34,17 +34,25 @@ Scroller: The Textures for the Scroller, in the form:
 	ScrollerTop: The Top of the Scroller, or if Horizontal, the Right Side of the Scroller
 	Scroller: The Main Part of the Scroller, this will be tiled to fit the Length of the Scroller
 	ScrollerBottom: The Bottom of the Scroller, or if Horizontal, the Left Side of the Scroller
+	ScrollerTopHL: The Top of the Scroller when highlighted, or if Horizontal, the Right Side of the Scroller
+	ScrollerHL: The Main Part of the Scroller when highlighted, this will be tiled to fit the Length of the Scroller
+	ScrollerBottomHL: The Bottom of the Scroller when highlighted, or if Horizontal, the Left Side of the Scroller
 }
 ScrollerBackground: The Textures for the Scroller Background, in the form:
 {
 	ScrollerTop: The Top of the Scroller Background, or if Horizontal, the Right Side of the Scroller Background
 	Scroller: The Main Part of the Scroller Background, this will be tiled to fit the Length of the Scroller Background
 	ScrollerBottom: The Bottom of the Scroller Background, or if Horizontal, the Left Side of the Scroller Background
+	ScrollerTopHL: The Top of the Scroller Background when highlighted, or if Horizontal, the Right Side of the Scroller Background
+	ScrollerHL: The Main Part of the Scroller Background when highlighted, this will be tiled to fit the Length of the Scroller Background
+	ScrollerBottomHL: The Bottom of the Scroller Background when highlighted, or if Horizontal, the Left Side of the Scroller Background
 }
 Arrows: The Textures for the Arrows, in the form:
 {
 	Top: The Image for the Top Arrow, or if Horizontal, the Right Arrow
 	Bottom: The Image for the Bottom Arrow, or if Horizontal, the Left Arrow
+	TopHL: The Image for the Top Arrow when highlighted, or if Horizontal, the Right Arrow
+	BottomHL: The Image for the Bottom Arrow when highlighted, or if Horizontal, the Left Arrow
 }
 Mode: The Type of Scroller, possible values are
 {
@@ -135,6 +143,7 @@ function Creator.Create(CanvasName,Rect,Scroller,ScrollerBackground,Arrows,Mode,
 
 		Element.SetSpriteRect("ScrollerTop",ScrollerTop);
 		Element.SetSpriteRect("ScrollerBottom",ScrollerBottom);
+		--sb.logInfo("Scroller = " .. sb.print(ScrollRect));
 		Element.SetSpriteRect("Scroller",ScrollRect);
 	end
 	Element.Size = InitialSize;
@@ -168,11 +177,12 @@ function Creator.Create(CanvasName,Rect,Scroller,ScrollerBackground,Arrows,Mode,
 	Element.AddControllerValue("GetLength",function()
 		return Element.Length;
 	end);
-	Element.AddControllerValue("SetToMousePosition",function()
+	Element.AddControllerValue("SetToMousePosition",function(Offset)
+		Offset = Offset or 0;
 		if Mode == "Vertical" then
-			Element.GetController().SetSliderValue((vec.sub(Element.GetCanvas():mousePosition(),Element.GetController().GetAbsolutePosition())[2] - (Element.Length / 2)) / ((ScrollRectArea[4] - ScrollRectArea[2]) - Element.Length));
+			Element.GetController().SetSliderValue(Offset + ((vec.sub(Element.GetCanvas():mousePosition(),Element.GetController().GetAbsolutePosition())[2] - (Element.Length / 2)) / ((ScrollRectArea[4] - ScrollRectArea[2]) - Element.Length)));
 		elseif Mode == "Horizontal" then
-			Element.GetController().SetSliderValue((vec.sub(Element.GetCanvas():mousePosition(),Element.GetController().GetAbsolutePosition())[1] - (Element.Length / 2)) / ((ScrollRectArea[3] - ScrollRectArea[1]) - Element.Length));
+			Element.GetController().SetSliderValue(Offset + ((vec.sub(Element.GetCanvas():mousePosition(),Element.GetController().GetAbsolutePosition())[1] - (Element.Length / 2)) / ((ScrollRectArea[3] - ScrollRectArea[1]) - Element.Length)));
 		end
 	end);
 	Element.AddControllerValue("GetValueAtMousePosition",function()
@@ -182,5 +192,40 @@ function Creator.Create(CanvasName,Rect,Scroller,ScrollerBackground,Arrows,Mode,
 			return (vec.sub(Element.GetCanvas():mousePosition(),Element.GetController().GetAbsolutePosition())[1] - (Element.Length / 2)) / ((ScrollRectArea[3] - ScrollRectArea[1]) - Element.Length);
 		end
 	end);
+
+	local ScrollerClicked = false;
+	local ScrollerOffset;
+
+	Element.SetUpdateFunction(function(dt)
+		if ScrollerClicked == true then
+		--	sb.logInfo("Setting");
+			--sb.logInfo("Value Before = " .. sb.print(Element.Value));
+			Element.GetController().SetToMousePosition(-ScrollerOffset);
+			--sb.logInfo("Value = " .. sb.print(Element.Value));
+		end
+	end);
+
+	Element.SetSpriteClickFunction("Scroller",function(Position,MouseType,IsDown)
+		--sb.logInfo("Clicked! " .. sb.print(IsDown));
+		ScrollerOffset = Element.GetController().GetValueAtMousePosition() - Element.GetController().GetSliderValue();
+		ScrollerClicked = IsDown;
+		if IsDown == true then
+			if Scroller.ScrollerHL ~= nil then
+				Element.SetSpriteImage("Scroller",Scroller.ScrollerHL);
+			end
+			if Scroller.ScrollerBottomHL ~= nil then
+				Element.SetSpriteImage("ScrollerBottom",Scroller.ScrollerBottomHL);
+			end
+			if Scroller.ScrollerTopHL ~= nil then
+				Element.SetSpriteImage("ScrollerTop",Scroller.ScrollerTopHL);
+			end
+		else
+			sb.logInfo("Setting Not Highlighted");
+			Element.SetSpriteImage("Scroller",Scroller.Scroller);
+			Element.SetSpriteImage("ScrollerBottom",Scroller.ScrollerBottom);
+			Element.SetSpriteImage("ScrollerTop",Scroller.ScrollerTop);
+		end
+	end);
+
 	return Element;
 end

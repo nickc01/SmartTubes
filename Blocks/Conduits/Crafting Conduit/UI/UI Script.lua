@@ -54,22 +54,26 @@ end
 function init()
 	Argon.Init();
 	RecipeCanvas = Argon.AddCanvas("recipeCanvas","RecipeCanvas");
-	TestImage = Argon.CreateElement("Image","RecipeCanvas","/Blocks/Conduits/Crafting Conduit/UI/Window/Test/ImageTest.png",{7,7});
+	Argon.SetClickCallback("RecipeCanvas","RecipeCanvasClick");
+	--TestImage = Argon.CreateElement("Image","RecipeCanvas","/Blocks/Conduits/Crafting Conduit/UI/Window/Test/ImageTest.png",{7,7});
 	RecipeScrollbar = Argon.CreateElement("Scrollbar","RecipeCanvas",{122,1,131,171},{
-		ScrollerTop = "/Blocks/Conduits/Crafting Conduit/UI/Window/SliderTop.png",
-		Scroller = "/Blocks/Conduits/Crafting Conduit/UI/Window/SliderMid.png",
-		ScrollerBottom = "/Blocks/Conduits/Crafting Conduit/UI/Window/SliderBottom.png"
+		ScrollerTop = "/Blocks/Conduits/Crafting Conduit/UI/Window/Vertical Scroll Bar/SliderTop.png",
+		Scroller = "/Blocks/Conduits/Crafting Conduit/UI/Window/Vertical Scroll Bar/SliderMid.png",
+		ScrollerBottom = "/Blocks/Conduits/Crafting Conduit/UI/Window/Vertical Scroll Bar/SliderBottom.png",
+		ScrollerHL = "/Blocks/Conduits/Crafting Conduit/UI/Window/Vertical Scroll Bar/SliderMidHL.png",
+		ScrollerTopHL = "/Blocks/Conduits/Crafting Conduit/UI/Window/Vertical Scroll Bar/SliderTopHL.png",
+		ScrollerBottomHL = "/Blocks/Conduits/Crafting Conduit/UI/Window/Vertical Scroll Bar/SliderBottomHL.png"
 	},
 	{
-		ScrollerTop = "/Blocks/Conduits/Crafting Conduit/UI/Window/SliderBackgroundTop.png",
-		Scroller = "/Blocks/Conduits/Crafting Conduit/UI/Window/SliderBackgroundMid.png",
-		ScrollerBottom = "/Blocks/Conduits/Crafting Conduit/UI/Window/SliderBackgroundBottom.png"
+		ScrollerTop = "/Blocks/Conduits/Crafting Conduit/UI/Window/Vertical Scroll Bar/SliderBackgroundTop.png",
+		Scroller = "/Blocks/Conduits/Crafting Conduit/UI/Window/Vertical Scroll Bar/SliderBackgroundMid.png",
+		ScrollerBottom = "/Blocks/Conduits/Crafting Conduit/UI/Window/Vertical Scroll Bar/SliderBackgroundBottom.png"
 	},
 	{
-		Top = "/Blocks/Conduits/Crafting Conduit/UI/Window/SliderArrowUp.png",
-		Bottom = "/Blocks/Conduits/Crafting Conduit/UI/Window/SliderArrowDown.png",
+		Top = "/Blocks/Conduits/Crafting Conduit/UI/Window/Vertical Scroll Bar/SliderArrowUp.png",
+		Bottom = "/Blocks/Conduits/Crafting Conduit/UI/Window/Vertical Scroll Bar/SliderArrowDown.png",
 	},"Vertical",5,0);
-	HorizontalTestBar = Argon.CreateElement("Scrollbar","RecipeCanvas",{0,0,1000,9},{
+	--[[HorizontalTestBar = Argon.CreateElement("Scrollbar","RecipeCanvas",{0,0,1000,9},{
 		ScrollerTop = "/Blocks/Conduits/Crafting Conduit/UI/Window/Horizontal Scroll Bar/SliderRight.png",
 		Scroller = "/Blocks/Conduits/Crafting Conduit/UI/Window/Horizontal Scroll Bar/SliderMid.png",
 		ScrollerBottom = "/Blocks/Conduits/Crafting Conduit/UI/Window/Horizontal Scroll Bar/SliderLeft.png"
@@ -82,20 +86,20 @@ function init()
 	{
 		Top = "/Blocks/Conduits/Crafting Conduit/UI/Window/Horizontal Scroll Bar/SliderArrowRight.png",
 		Bottom = "/Blocks/Conduits/Crafting Conduit/UI/Window/Horizontal Scroll Bar/SliderArrowLeft.png",
-	},"Horizontal",100,0.5);
-	HorizontalTestBar.ChangePosition({0,10});
-	TestMask = Argon.CreateElement("Mask","RecipeCanvas",{10,10,60,60});
-	TestInsideMask = Argon.CreateElement("Mask","RecipeCanvas",{10,10,30,30});
-	ImageMask1 = Argon.CreateElement("Image","RecipeCanvas","/Blocks/Conduits/Crafting Conduit/UI/Window/Test/ImageTestMask1.png");
-	ImageMask2 = Argon.CreateElement("Image","RecipeCanvas","/Blocks/Conduits/Crafting Conduit/UI/Window/Test/ImageTestMask2.png");
+	},"Horizontal",100,0.5);--]]
+	--HorizontalTestBar.ChangePosition({0,10});
+	--TestMask = Argon.CreateElement("Mask","RecipeCanvas",{10,10,60,60});
+	--TestInsideMask = Argon.CreateElement("Mask","RecipeCanvas",{10,10,30,30});
+	--ImageMask1 = Argon.CreateElement("Image","RecipeCanvas","/Blocks/Conduits/Crafting Conduit/UI/Window/Test/ImageTestMask1.png");
+	--ImageMask2 = Argon.CreateElement("Image","RecipeCanvas","/Blocks/Conduits/Crafting Conduit/UI/Window/Test/ImageTestMask2.png");
 
-	TestMask.AddChild(ImageMask1);
-	TestInsideMask.AddChild(ImageMask2);
+	--TestMask.AddChild(ImageMask1);
+	--TestInsideMask.AddChild(ImageMask2);
 	--sb.logInfo("Test Mask Position = " .. sb.print(TestMask.GetPosition()));
 	--sb.logInfo("Horizontal Test Bar ID = " .. sb.print(HorizontalTestBar.GetID()));
-	TestMask.AddChild(TestInsideMask);
-	TestMask.AddChild(HorizontalTestBar);
-	TestImage.AddChild(TestMask,true);
+	--TestMask.AddChild(TestInsideMask);
+	--TestMask.AddChild(HorizontalTestBar);
+	--TestImage.AddChild(TestMask,true);
 
 end
 local Deleted = false;
@@ -104,7 +108,8 @@ local Timer2 = 0;
 local MaskParent = true;
 function update(dt)
 	Argon.Update(dt);
-	Timer = Timer + dt;
+	--RecipeScrollbar.SetToMousePosition();
+	--[[Timer = Timer + dt;
 	Timer2 = Timer2 + dt;
 	TestImage.ChangePosition({0.05,0.05});
 	if Timer > 0 then
@@ -123,7 +128,7 @@ function update(dt)
 			sb.logInfo("Switching to Second Mask");
 			TestInsideMask.AddChild(HorizontalTestBar,true);
 		end
-	end
+	end--]]
 end
 
 local AllRecipes = {};
