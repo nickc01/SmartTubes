@@ -78,6 +78,15 @@ function Core.DeleteElement(CanvasName,Element)
 	end
 end
 
+function Argon.SetClickCallback(AliasName,FunctionName)
+	_ENV[FunctionName] = function(Position,ButtonType,IsDown)
+		--sb.logInfo("Clicked");
+		for k,i in ipairs(Canvases[AliasName].Elements) do
+			i.OnClick(Position,ButtonType,IsDown);
+		end
+	end
+end
+
 function Argon.CreateElement(Type,CanvasAlias,...)
 	if ElementCreators[Type] ~= nil then
 		CreateElement = ElementCreatorFunction;
