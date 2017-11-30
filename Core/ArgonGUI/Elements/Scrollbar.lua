@@ -171,6 +171,11 @@ function Creator.Create(CanvasName,Rect,Scroller,ScrollerBackground,Arrows,Mode,
 		Element.Value = NewValue;
 		RecalculateScrollValues()
 	end);
+	Element.AddControllerValue("ChangeSliderValue",function(Diff)
+		Element.GetController().SetSliderValue(Element.GetController().GetSliderValue() + Diff);
+	end);
+
+
 	Element.AddControllerValue("GetSliderValue",function()
 		return Element.Value;
 	end);
@@ -195,6 +200,8 @@ function Creator.Create(CanvasName,Rect,Scroller,ScrollerBackground,Arrows,Mode,
 
 	local ScrollerClicked = false;
 	local ScrollerOffset;
+	local TopArrowClicked = false;
+	local BottomArrowClicked = false;
 
 	Element.SetUpdateFunction(function(dt)
 		if ScrollerClicked == true then
@@ -203,27 +210,59 @@ function Creator.Create(CanvasName,Rect,Scroller,ScrollerBackground,Arrows,Mode,
 			Element.GetController().SetToMousePosition(-ScrollerOffset);
 			--sb.logInfo("Value = " .. sb.print(Element.Value));
 		end
+		if TopArrowClicked == true then
+			Element.GetController().ChangeSliderValue((1 / Element.GetController().GetSliderSize()) * dt);
+		end
+		if BottomArrowClicked == true then
+			Element.GetController().ChangeSliderValue(-(1 / Element.GetController().GetSliderSize()) * dt);
+		end
 	end);
 
 	Element.SetSpriteClickFunction("Scroller",function(Position,MouseType,IsDown)
 		--sb.logInfo("Clicked! " .. sb.print(IsDown));
-		ScrollerOffset = Element.GetController().GetValueAtMousePosition() - Element.GetController().GetSliderValue();
-		ScrollerClicked = IsDown;
-		if IsDown == true then
-			if Scroller.ScrollerHL ~= nil then
-				Element.SetSpriteImage("Scroller",Scroller.ScrollerHL);
+		if MouseType == 0 then
+			ScrollerOffset = Element.GetController().GetValueAtMousePosition() - Element.GetController().GetSliderValue();
+			ScrollerClicked = IsDown;
+			if IsDown == true then
+				if Scroller.ScrollerHL ~= nil then
+					Element.SetSpriteImage("Scroller",Scroller.ScrollerHL);
+				end
+				if Scroller.ScrollerBottomHL ~= nil then
+					Element.SetSpriteImage("ScrollerBottom",Scroller.ScrollerBottomHL);
+				end
+				if Scroller.ScrollerTopHL ~= nil then
+					Element.SetSpriteImage("ScrollerTop",Scroller.ScrollerTopHL);
+				end
+			else
+				Element.SetSpriteImage("Scroller",Scroller.Scroller);
+				Element.SetSpriteImage("ScrollerBottom",Scroller.ScrollerBottom);
+				Element.SetSpriteImage("ScrollerTop",Scroller.ScrollerTop);
 			end
-			if Scroller.ScrollerBottomHL ~= nil then
-				Element.SetSpriteImage("ScrollerBottom",Scroller.ScrollerBottomHL);
+		end
+	end);
+	Element.SetSpriteClickFunction("TopArrow",function(Position,MouseType,IsDown)
+		if MouseType == 0 then
+			TopArrowClicked = IsDown;
+			if IsDown == true then
+				if Arrows.TopHL ~= nil then
+					Element.SetSpriteImage("TopArrow",Arrows.TopHL);
+				end
+			else
+				Element.SetSpriteImage("TopArrow",Arrows.Top);
 			end
-			if Scroller.ScrollerTopHL ~= nil then
-				Element.SetSpriteImage("ScrollerTop",Scroller.ScrollerTopHL);
+		end
+	end);
+
+	Element.SetSpriteClickFunction("BottomArrow",function(Position,MouseType,IsDown)
+		if MouseType == 0 then
+			BottomArrowClicked = IsDown;
+			if IsDown == true then
+				if Arrows.TopHL ~= nil then
+					Element.SetSpriteImage("BottomArrow",Arrows.BottomHL);
+				end
+			else
+				Element.SetSpriteImage("BottomArrow",Arrows.Bottom);
 			end
-		else
-			sb.logInfo("Setting Not Highlighted");
-			Element.SetSpriteImage("Scroller",Scroller.Scroller);
-			Element.SetSpriteImage("ScrollerBottom",Scroller.ScrollerBottom);
-			Element.SetSpriteImage("ScrollerTop",Scroller.ScrollerTop);
 		end
 	end);
 
