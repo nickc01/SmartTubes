@@ -17,13 +17,20 @@ function CreateElement(CanvasName)
 	local Children;
 	local ClippingBounds;
 	local Clippable = false;
+	local Active = true;
 	local UpdateFunc;
+	local FinishFunc;
+	local Core;
 
 	local Controller = setmetatable({},{__index = function()
 		error("This Element hasn't been finished yet");
 	end});
 
 	local ControllerBase = {};
+
+	Element.SetCore = function(value)
+		Core = value;
+	end
 
 	Element.GetClippingBoundaries = function()
 		if Element.Parent ~= nil then
@@ -67,39 +74,41 @@ function CreateElement(CanvasName)
 	end
 
 	local function UpdateClips()
-		local Boundaries = Element.GetClippingBoundaries();
-		--sb.logInfo("Boundaries = " .. sb.print(Boundaries));
-		--sb.logInfo("Sprites Here = " .. sb.print(Sprites));
-		for k,i in ipairs(Sprites) do
-			--sb.logInfo("Clip Index = " .. sb.print(k));
-			--sb.logInfo("CLipping = " .. sb.print(i.Name));
-			if Boundaries == nil then
-				--sb.logInfo("1");
-				i.Rejected = false;
-				i.Rect = i.OriginalRect;
-				--sb.logInfo("I = " .. sb.printJson(i,1));
-				--sb.logInfo("Setting Rect To " .. sb.print(i.OriginalRect));
-				i.TextureRect = i.OriginalTextureRect;
-			elseif Boundaries == "none" then
-				i.Rejected = true;
-				--sb.logInfo("2");
-			else
-				if rect.isInverted(Boundaries) then
+		if Active == true then
+			local Boundaries = Element.GetClippingBoundaries();
+			--sb.logInfo("Boundaries = " .. sb.print(Boundaries));
+			--sb.logInfo("Sprites Here = " .. sb.print(Sprites));
+			for k,i in ipairs(Sprites) do
+				--sb.logInfo("Clip Index = " .. sb.print(k));
+				--sb.logInfo("CLipping = " .. sb.print(i.Name));
+				if Boundaries == nil then
+					--sb.logInfo("1");
+					i.Rejected = false;
+					i.Rect = i.OriginalRect;
+					--sb.logInfo("I = " .. sb.printJson(i,1));
+					--sb.logInfo("Setting Rect To " .. sb.print(i.OriginalRect));
+					i.TextureRect = i.OriginalTextureRect;
+				elseif Boundaries == "none" then
 					i.Rejected = true;
-					--sb.logInfo("3");
+					--sb.logInfo("2");
 				else
-					local Final,Offset = rect.cut(Boundaries,rect.vecAdd(i.OriginalRect,Element.GetController().GetAbsolutePosition()));
-					if rect.isInverted(Final) then
+					if rect.isInverted(Boundaries) then
 						i.Rejected = true;
-						--sb.logInfo("4");
+						--sb.logInfo("3");
 					else
-						Final = rect.vecSub(Final,Element.GetController().GetAbsolutePosition());
-						--sb.logInfo("5");
-						i.Rejected = false;
-						i.Rect = Final;
-						i.TextureRect = rect.vecAdd(rect.minimize(Final),{Offset[1],Offset[2]});
-						if i.IsTiled == true then
-							i.TextureOffset = {-Offset[1],-Offset[2]};
+						local Final,Offset = rect.cut(Boundaries,rect.vecAdd(i.OriginalRect,Element.GetController().GetAbsolutePosition()));
+						if rect.isInverted(Final) then
+							i.Rejected = true;
+							--sb.logInfo("4");
+						else
+							Final = rect.vecSub(Final,Element.GetController().GetAbsolutePosition());
+							--sb.logInfo("5");
+							i.Rejected = false;
+							i.Rect = Final;
+							i.TextureRect = rect.vecAdd(rect.minimize(Final),{Offset[1],Offset[2]});
+							if i.IsTiled == true then
+								i.TextureOffset = {-Offset[1],-Offset[2]};
+							end
 						end
 					end
 				end
@@ -108,10 +117,12 @@ function CreateElement(CanvasName)
 	end
 
 	Element.UpdateClips = function()
-		UpdateClips();
-		if ParentMode == true then
-			for k,i in ipairs(Children) do
-				i.UpdateClips();
+		if Active == true then
+			UpdateClips();
+			if ParentMode == true then
+				for k,i in ipairs(Children) do
+					i.UpdateClips();
+				end
 			end
 		end
 	end
@@ -290,38 +301,40 @@ function CreateElement(CanvasName)
 	local ClickedSprites = nil;
 
 	Element.OnClick = function(Position,ButtonType,IsDown)
-		if IsDown == true then
-			if ClickedSprites ~= nil then
-				for k,i in ipairs(ClickedSprites) do
-					i.ClickFunc(Position,ButtonType,false);
-				end
-			end
-			ClickedSprites = {};
-			for k,i in ipairs(Sprites) do
-				if i.Rejected == false and i.ClickFunc ~= nil then
-					if rect.isPosWithin(rect.vecAdd(i.Rect,Element.GetAbsolutePosition()),Position) then
-						ClickedSprites[#ClickedSprites + 1] = i;
-						i.ClickFunc(Position,ButtonType,IsDown);
+		if Active == true then
+			if IsDown == true then
+				if ClickedSprites ~= nil then
+					for k,i in ipairs(ClickedSprites) do
+						i.ClickFunc(Position,ButtonType,false);
 					end
 				end
-			end
-			
-		else
-			if ClickedSprites == nil then
+				ClickedSprites = {};
 				for k,i in ipairs(Sprites) do
-					ClickedSprites = {};
-					if i.ClickFunc ~= nil then
+					if i.Rejected == false and i.ClickFunc ~= nil then
 						if rect.isPosWithin(rect.vecAdd(i.Rect,Element.GetAbsolutePosition()),Position) then
 							ClickedSprites[#ClickedSprites + 1] = i;
 							i.ClickFunc(Position,ButtonType,IsDown);
 						end
 					end
 				end
+			
 			else
-				for k,i in ipairs(ClickedSprites) do
-					i.ClickFunc(Position,ButtonType,IsDown);
+				if ClickedSprites == nil then
+					for k,i in ipairs(Sprites) do
+						ClickedSprites = {};
+						if i.ClickFunc ~= nil then
+							if rect.isPosWithin(rect.vecAdd(i.Rect,Element.GetAbsolutePosition()),Position) then
+								ClickedSprites[#ClickedSprites + 1] = i;
+								i.ClickFunc(Position,ButtonType,IsDown);
+							end
+						end
+					end
+				else
+					for k,i in ipairs(ClickedSprites) do
+						i.ClickFunc(Position,ButtonType,IsDown);
+					end
+					ClickedSprites = nil;
 				end
-				ClickedSprites = nil;
 			end
 		end
 	end
@@ -359,22 +372,24 @@ function CreateElement(CanvasName)
 	end
 
 	Element.Draw = function()
-		for k,i in ipairs(Sprites) do
-			--sb.logInfo("Rendering Sprite of " .. sb.print(i.Name));
-			if i.Rejected == false then
-				--[[if i.Name == "Scroller" then
-					sb.logInfo("Scroller's Rect = " .. sb.print(i.Rect));
-				end--]]
-				if i.IsTiled == true then
-					Canvas:drawTiledImage(i.Image,i.TextureOffset,rect.vecAdd(i.Rect,Controller.GetAbsolutePosition()),nil,i.Color);
-				else
-					Canvas:drawImageRect(i.Image,i.TextureRect,rect.vecAdd(i.Rect,Controller.GetAbsolutePosition()),i.Color);
+		if Active == true then
+			for k,i in ipairs(Sprites) do
+				--sb.logInfo("Rendering Sprite of " .. sb.print(i.Name));
+				if i.Rejected == false then
+					--[[if i.Name == "Scroller" then
+						sb.logInfo("Scroller's Rect = " .. sb.print(i.Rect));
+					end--]]
+					if i.IsTiled == true then
+						Canvas:drawTiledImage(i.Image,i.TextureOffset,rect.vecAdd(i.Rect,Controller.GetAbsolutePosition()),nil,i.Color);
+					else
+						Canvas:drawImageRect(i.Image,i.TextureRect,rect.vecAdd(i.Rect,Controller.GetAbsolutePosition()),i.Color);
+					end
 				end
 			end
-		end
-		if ParentMode == true then
-			for k,i in ipairs(Children) do
-				i.Draw();
+			if ParentMode == true then
+				for k,i in ipairs(Children) do
+					i.Draw();
+				end
 			end
 		end
 	end
@@ -387,13 +402,15 @@ function CreateElement(CanvasName)
 		end
 	end
 	Element.Update = function(dt)
-		if ParentMode == true then
-			for k,i in ipairs(Children) do
-				i.Update(dt);
+		if Active == true then
+			if ParentMode == true then
+				for k,i in ipairs(Children) do
+					i.Update(dt);
+				end
 			end
-		end
-		if UpdateFunc ~= nil then
-			UpdateFunc(dt);
+			if UpdateFunc ~= nil then
+				UpdateFunc(dt);
+			end
 		end
 	end
 
@@ -460,7 +477,7 @@ function CreateElement(CanvasName)
 					Position = element.GetController().GetAbsolutePosition();
 				end
 				element.Parent = Element;
-				element.Core.RemoveElement(CanvasAlias,element);
+				Core.RemoveElement(CanvasAlias,element);
 				if RetainPosition == true then
 					element.GetController().SetAbsolutePosition(Position);
 				end
@@ -491,7 +508,7 @@ function CreateElement(CanvasName)
 					Position = element.GetController().GetAbsolutePosition();
 				end
 				element.Parent = nil;
-				element.Core.AddElement(CanvasAlias,element);
+				Core.AddElement(CanvasAlias,element);
 				if RetainPosition == true then
 					element.GetController().SetAbsolutePosition(Position);
 				end
@@ -502,12 +519,51 @@ function CreateElement(CanvasName)
 		return false;
 	end
 
+	Element.GetChildCount = function()
+		if Children == nil then
+			return 0;
+		else
+			return #Children;
+		end
+	end
+	ControllerBase.GetChildCount = function()
+		return Element.GetChildCount();
+	end
+
+	ControllerBase.GetFirstChild = function()
+		local Child = Element.GetFirstChild();
+		if Child ~= nil then
+			return Child.GetController();
+		end
+	end
+
+	ControllerBase.GetLastChild = function()
+		local Child = Element.GetLastChild();
+		if Child ~= nil then
+			return Child.GetController();
+		end
+	end
+
+	Element.GetFirstChild = function()
+		if Children ~= nil and #Children > 0 then
+			return Children[1];
+		end
+		return nil;
+	end
+
+	Element.GetLastChild = function()
+		if Children ~= nil and #Children > 0 then
+			return Children[#Children];
+		end
+		return nil;
+	end
+
 	ParentingController.AddChild = function(controller,RetainPosition)
-		Element.AddChild(Element.Core.GetElementByController(controller),RetainPosition);
+		return Element.AddChild(Core.GetElementByController(controller),RetainPosition);
 	end
 	
 	ParentingController.RemoveChild = function(controller,RetainPosition)
-		Element.RemoveChild(Element.Core.GetElementByController(controller),RetainPosition);
+		return Element.RemoveChild(Core.GetElementByController(controller),RetainPosition);
 	end
 
 	Element.RemoveAllChildren = function()
@@ -539,6 +595,8 @@ function CreateElement(CanvasName)
 	Element.AddControllerValue = function(name,value)
 		ControllerBase[name] = value;
 	end
+
+	local OnDelete = {};
 	
 	ControllerBase.Delete = function()
 		if Element.Parent ~= nil then
@@ -549,7 +607,41 @@ function CreateElement(CanvasName)
 				Children[i].GetController().Delete();
 			end
 		end
-		Element.Core.DeleteElement(CanvasAlias,Element);
+		Core.DeleteElement(CanvasAlias,Element);
+		for _,func in ipairs(OnDelete) do
+			func();
+		end
+	end
+
+	Element.Delete = function()
+		Element.GetController().Delete();
+	end
+
+	ControllerBase.OnDelete = function(func)
+		OnDelete[#OnDelete + 1] = func;
+	end
+
+	Element.OnFinish = function(func)
+		FinishFunc = func;
+	end
+
+	ControllerBase.SetActive = function(bool)
+		Active = bool;
+		if Active == true then
+			UpdateClips();
+		else
+			if ClickedSprites ~= nil then
+				for k,i in ipairs(ClickedSprites) do
+					i.ClickFunc(Position,ButtonType,false);
+				end
+				ClickedSprites = nil;
+			end
+		end
+		if Children ~= nil then
+			for k,i in ipairs(Children) do
+				i.GetController().SetActive(bool);
+			end
+		end
 	end
 
 	Element.Finish = function()
@@ -564,6 +656,10 @@ function CreateElement(CanvasName)
 			ID = sb.makeUuid();
 			Finished = true;
 			Element.UpdateClips();
+			Element.SetCore = nil;
+			if FinishFunc ~= nil then
+				FinishFunc();
+			end
 			return Element;
 		end
 	end

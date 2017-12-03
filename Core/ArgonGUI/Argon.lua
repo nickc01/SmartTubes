@@ -86,17 +86,23 @@ function Argon.SetClickCallback(AliasName,FunctionName)
 		end
 	end
 end
-
+local RefCounter = 0;
 function Argon.CreateElement(Type,CanvasAlias,...)
 	if ElementCreators[Type] ~= nil then
 		CreateElement = ElementCreatorFunction;
+		RefCounter = RefCounter + 1;
 		local Element = ElementCreators[Type](CanvasAlias,...);
-		Element.Core = Core;
+		sb.logInfo("Setting Core for type " .. sb.print(Type));
+		--Element.Core = Core;
+		Element.SetCore(Core);
 		Element.Type = Type;
 		Element.Finish();
 		AddElement(CanvasAlias,Element);
 		ControllerIndex[Element.GetController()] = Element;
-		CreateElement = nil;
+		RefCounter = RefCounter - 1;
+		if RefCounter == 0 then
+			CreateElement = nil;
+		end
 		return Element.GetController();
 	else
 		error("Element Type of " .. sb.print(Type) .. "doesn't exist");
