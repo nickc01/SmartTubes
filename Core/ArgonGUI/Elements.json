@@ -15,6 +15,10 @@
     {
       "Name": "Anchor Point",
       "Script": "Elements/Anchor Point.lua"
+    },
+    {
+      "Name": "List",
+      "Script": "Elements/List.lua"
     }
   ]
 }
