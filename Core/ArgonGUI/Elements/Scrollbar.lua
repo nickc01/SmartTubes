@@ -145,9 +145,6 @@ function Creator.Create(CanvasName,Rect,Scroller,ScrollerBackground,Arrows,Mode,
 		Element.SetSpriteRect("ScrollerBottom",ScrollerBottom);
 		--sb.logInfo("Scroller = " .. sb.print(ScrollRect));
 		Element.SetSpriteRect("Scroller",ScrollRect);
-		if OnValueChange ~= nil then
-			OnValueChange(Element.Value);
-		end
 	end
 	Element.Size = InitialSize;
 	Element.Value = InitialValue;
@@ -162,8 +159,13 @@ function Creator.Create(CanvasName,Rect,Scroller,ScrollerBackground,Arrows,Mode,
 		if NewSize < 1 then
 			NewSize = 1;
 		end
-		Element.Size = NewSize;
-		RecalculateScrollValues()
+		if NewSize ~= Element.Size then
+			Element.Size = NewSize;
+			RecalculateScrollValues();
+			--[[if OnValueChange ~= nil then
+				OnValueChange(Element.Value);
+			end--]]
+		end
 	end);
 
 	Element.AddControllerValue("SetSliderValue",function(NewValue)
@@ -174,7 +176,10 @@ function Creator.Create(CanvasName,Rect,Scroller,ScrollerBackground,Arrows,Mode,
 		end
 		if NewValue ~= Element.Value then
 			Element.Value = NewValue;
-			RecalculateScrollValues()
+			RecalculateScrollValues();
+			if OnValueChange ~= nil then
+				OnValueChange(Element.Value);
+			end
 		end
 	end);
 	Element.AddControllerValue("ChangeSliderValue",function(Diff)
