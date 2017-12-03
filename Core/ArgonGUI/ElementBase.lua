@@ -596,7 +596,7 @@ function CreateElement(CanvasName)
 		ControllerBase[name] = value;
 	end
 
-	local OnDelete = {};
+	local OnDelete = nil;
 	
 	ControllerBase.Delete = function()
 		if Element.Parent ~= nil then
@@ -608,8 +608,8 @@ function CreateElement(CanvasName)
 			end
 		end
 		Core.DeleteElement(CanvasAlias,Element);
-		for _,func in ipairs(OnDelete) do
-			func();
+		if OnDelete ~= nil then
+			OnDelete();
 		end
 	end
 
@@ -618,7 +618,7 @@ function CreateElement(CanvasName)
 	end
 
 	ControllerBase.OnDelete = function(func)
-		OnDelete[#OnDelete + 1] = func;
+		OnDelete = func;
 	end
 
 	Element.OnFinish = function(func)
