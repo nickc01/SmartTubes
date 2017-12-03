@@ -33,6 +33,7 @@ end
 	Scrollbar - (Optional) will bind a scrollbar so you can navigate around the list
 ]]
 function Creator.Create(CanvasName,Rect,ListImages,Direction,Scrollbar)
+	local Scrollbar = Scrollbar;
 	local ListArea = rect.copy(Rect);
 	local Element = CreateElement(CanvasName);
 	Element.SetPosition({Rect[1],Rect[2]});
@@ -49,7 +50,7 @@ function Creator.Create(CanvasName,Rect,ListImages,Direction,Scrollbar)
 
 	local Offset;
 
-	--local WindowLength;
+	local WindowLength;
 
 
 	Direction = Direction or "down";
@@ -73,11 +74,11 @@ function Creator.Create(CanvasName,Rect,ListImages,Direction,Scrollbar)
 		Value = 1;
 	end--]]
 
-	--[[if Direction == "up" or Direction == "down" then
+	if Direction == "up" or Direction == "down" then
 		WindowLength = Rect[4] - Rect[2];
 	else
 		WindowLength = Rect[3] - Rect[1];
-	end--]]
+	end
 
 	local function RecalculatePosition()
 		local TopRect;
@@ -101,6 +102,9 @@ function Creator.Create(CanvasName,Rect,ListImages,Direction,Scrollbar)
 		local Final = rect.vecSub(RectLerp(TopRect,BottomRect,1 - Value),Element.GetAbsolutePosition());
 		if Direction == "up" or Direction == "down" then
 			AnchorPoint.SetPosition({Final[1],-Final[2],Final[3],(Final[4] - Final[2]) - Final[2]});
+			if Scrollbar ~= nil then
+				Scrollbar.SetSliderSize((Final[4] - Final[2]) / WindowLength);
+			end
 		else
 			--AnchorPoint.SetPosition({Final[1],-Final[2],Final[3],(Final[4] - Final[2]) - Final[2]});
 		end
@@ -128,10 +132,12 @@ function Creator.Create(CanvasName,Rect,ListImages,Direction,Scrollbar)
 		local NextElementPosition = vec.add(Position,Offset);
 		sb.logInfo("Next Element Position = " .. sb.print(NextElementPosition));
 		local NewChild = Argon.CreateElement("Mask",CanvasName,{NextElementPosition[1],NextElementPosition[2],NextElementPosition[1] + ElementSize[1],NextElementPosition[2] + ElementSize[2]});
+		AnchorPoint.SetPosition({0,0});
 		AnchorPoint.AddChild(NewChild,true);
 		NewChild.AddChild(Argon.CreateElement("Image",CanvasName,ListImages.Active,{0,0}));
 		sb.logInfo("Rel Pos = " .. sb.print(NewChild.GetPosition()));
 		sb.logInfo("Abs Pos = " .. sb.print(NewChild.GetAbsolutePosition()));
+		RecalculatePosition();
 		return NewChild;
 	end);
 	Element.AddControllerValue("RemoveElement",function(controller)
@@ -146,8 +152,35 @@ function Creator.Create(CanvasName,Rect,ListImages,Direction,Scrollbar)
 		return Value;
 	end);
 
-	Element.AddControllerValue("SetValue",function()
-		
+	Element.AddControllerValue("SetValue",function(value)
+		if value > 1 then
+			value = 1;
+		elseif value < 0 then
+			value = 0;
+		end
+		Value = value;
+		RecalculatePosition();
+	end);
+
+	Element.AddControllerValue("SetScrollbar",function(scrollbar)
+		Scrollbar = scrollbar;
+		if Scrollbar ~= nil then
+			Scrollbar.OnValueChange(function(value)
+				Value = value;
+				RecalculatePosition();
+			end);
+			Scrollbar.OnDelete(function()
+				Scrollbar = nil;
+			end);
+		end
+	end);
+
+	Element.AddControllerValue("RemoveScrollbar",function()
+		if Scrollbar ~= nil then
+			Scrollbar.OnDelete(nil);
+			Scrollbar.OnValueChange(nil);
+			Scrollbar = nil;
+		end
 	end);
 
 	Element.OnFinish(function()
@@ -160,6 +193,9 @@ function Creator.Create(CanvasName,Rect,ListImages,Direction,Scrollbar)
 		Scrollbar.OnValueChange(function(value)
 			Value = value;
 			RecalculatePosition();
+		end);
+		Scrollbar.OnDelete(function()
+			Scrollbar = nil;
 		end);
 	end
 
