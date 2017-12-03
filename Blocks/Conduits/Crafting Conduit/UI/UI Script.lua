@@ -86,7 +86,7 @@ function init()
 		Active = "/Blocks/Conduits/Crafting Conduit/UI/Window/ListItemNormal.png",
 		Selected = "/Blocks/Conduits/Crafting Conduit/UI/Window/ListItemSelected.png"
 	},"Down",RecipeScrollbar);
-	for i=1,3 do
+	for i=1,50 do
 		AddListElement();
 	end
 	--[[HorizontalTestBar = Argon.CreateElement("Scrollbar","RecipeCanvas",{0,0,1000,9},{

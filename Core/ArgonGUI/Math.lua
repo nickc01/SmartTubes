@@ -3,6 +3,10 @@ local vec = vec;
 rect = {};
 local rect = rect;
 
+local function Lerp(A,B,T)
+	return ((A - B) * T) + B;
+end
+
 function vec.add(A,B)
 	return {A[1] + B[1],A[2] + B[2]};
 end
@@ -28,6 +32,10 @@ function rect.intersection(A,B)
 end
 function rect.copy(A)
 	return {A[1],A[2],A[3],A[4]};
+end
+
+function rect.center(A)
+	return {Lerp(A[3],A[1],0.5),Lerp(A[4],A[2],0.5)};
 end
 
 function rect.isWithin(Source,Target)
