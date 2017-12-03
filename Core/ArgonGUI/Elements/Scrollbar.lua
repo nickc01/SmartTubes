@@ -126,7 +126,7 @@ function Creator.Create(CanvasName,Rect,Scroller,ScrollerBackground,Arrows,Mode,
 	Element.AddSprite("ScrollerTop",ScrollerTop,Scroller.ScrollerTop);
 	Element.AddSprite("ScrollerBottom",ScrollerBottom,Scroller.ScrollerBottom);
 	Element.AddSprite("Scroller",ScrollRect,Scroller.Scroller,true);
-
+	local OnValueChange;
 	local function RecalculateScrollValues()
 		local ScrollRect;
 		local ScrollerBottom;
@@ -145,10 +145,14 @@ function Creator.Create(CanvasName,Rect,Scroller,ScrollerBackground,Arrows,Mode,
 		Element.SetSpriteRect("ScrollerBottom",ScrollerBottom);
 		--sb.logInfo("Scroller = " .. sb.print(ScrollRect));
 		Element.SetSpriteRect("Scroller",ScrollRect);
+		if OnValueChange ~= nil then
+			OnValueChange(Element.Value);
+		end
 	end
 	Element.Size = InitialSize;
 	Element.Value = InitialValue;
 	--Add Controller Functions
+
 
 	Element.AddControllerValue("GetSliderSize",function()
 		return Element.Size;
@@ -168,8 +172,10 @@ function Creator.Create(CanvasName,Rect,Scroller,ScrollerBackground,Arrows,Mode,
 		elseif NewValue > 1 then
 			NewValue = 1;
 		end
-		Element.Value = NewValue;
-		RecalculateScrollValues()
+		if NewValue ~= Element.Value then
+			Element.Value = NewValue;
+			RecalculateScrollValues()
+		end
 	end);
 	Element.AddControllerValue("ChangeSliderValue",function(Diff)
 		Element.GetController().SetSliderValue(Element.GetController().GetSliderValue() + Diff);
@@ -196,6 +202,10 @@ function Creator.Create(CanvasName,Rect,Scroller,ScrollerBackground,Arrows,Mode,
 		elseif Mode == "Horizontal" then
 			return (vec.sub(Element.GetCanvas():mousePosition(),Element.GetController().GetAbsolutePosition())[1] - (Element.Length / 2)) / ((ScrollRectArea[3] - ScrollRectArea[1]) - Element.Length);
 		end
+	end);
+
+	Element.AddControllerValue("OnValueChange",function(func)
+		OnValueChange = func;
 	end);
 
 	local ScrollerClicked = false;

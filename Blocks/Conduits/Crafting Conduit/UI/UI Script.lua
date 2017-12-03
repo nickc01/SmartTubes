@@ -14,6 +14,7 @@ local TestImage;
 local TestAnchor;
 local ImageMask1;
 local ImageMask2;
+local TestList;
 
 local ItemImageSpacing = 2;
 
@@ -32,6 +33,11 @@ end
 
 local function vecAdd(A,B)
 	return {A[1] + B[1],A[2] + B[2]};
+end
+
+local function AddListElement()
+	local Test = TestList.AddElement();
+	Test.AddChild(Argon.CreateElement("Image","RecipeCanvas","/Blocks/Conduits/Crafting Conduit/UI/Window/Test/ImageTest.png"));
 end
  
 local function GetItemImage(ItemName)
@@ -75,6 +81,14 @@ function init()
 		TopHL = "/Blocks/Conduits/Crafting Conduit/UI/Window/Vertical Scroll Bar/SliderArrowUpHL.png",
 		BottomHL = "/Blocks/Conduits/Crafting Conduit/UI/Window/Vertical Scroll Bar/SliderArrowDownHL.png"
 	},"Vertical",5,0);
+	TestList = Argon.CreateElement("List","RecipeCanvas",{0,10,121,172},{
+		Inactive = "/Blocks/Conduits/Crafting Conduit/UI/Window/ListItemDisabled.png",
+		Active = "/Blocks/Conduits/Crafting Conduit/UI/Window/ListItemNormal.png",
+		Selected = "/Blocks/Conduits/Crafting Conduit/UI/Window/ListItemSelected.png"
+	},"Down",RecipeScrollbar);
+	for i=1,10 do
+		AddListElement();
+	end
 	--[[HorizontalTestBar = Argon.CreateElement("Scrollbar","RecipeCanvas",{0,0,1000,9},{
 		ScrollerTop = "/Blocks/Conduits/Crafting Conduit/UI/Window/Horizontal Scroll Bar/SliderRight.png",
 		Scroller = "/Blocks/Conduits/Crafting Conduit/UI/Window/Horizontal Scroll Bar/SliderMid.png",
