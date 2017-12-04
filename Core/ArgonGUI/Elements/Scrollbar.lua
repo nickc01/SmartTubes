@@ -317,5 +317,9 @@ function Creator.Create(CanvasName,Rect,Scroller,ScrollerBackground,Arrows,Mode,
 		end
 	end);
 
+	Element.OnFinish(function()
+		RecalculateScrollValues();
+	end);
+
 	return Element;
 end

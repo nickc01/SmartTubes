@@ -49,6 +49,10 @@ function Core.RemoveElement(CanvasName,Element)
 	end
 end
 
+function Argon.GetArgonDirectory()
+	return CurrentDirectory;
+end
+
 function Core.GetElementByController(controller)
 	return ControllerIndex[controller];
 end
