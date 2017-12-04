@@ -37,7 +37,7 @@ function Creator.Create(CanvasName,Rect,ListImages,Direction,Scrollbar)
 	local ListArea = rect.copy(Rect);
 	local Element = CreateElement(CanvasName);
 	Element.SetPosition({Rect[1],Rect[2]});
-	Element.SetParentMode(true);
+	Element.SetParentMode(true,true);
 	Element.SetClippingBounds(rect.minimize(Rect));
 
 	local InactiveSize = root.imageSize(ListImages.Inactive);
@@ -51,6 +51,8 @@ function Creator.Create(CanvasName,Rect,ListImages,Direction,Scrollbar)
 	local Offset;
 
 	local WindowLength;
+
+	local SelectedElement;
 
 
 	Direction = Direction or "down";
@@ -81,6 +83,7 @@ function Creator.Create(CanvasName,Rect,ListImages,Direction,Scrollbar)
 	end
 
 	local function RecalculatePosition()
+		AnchorPoint.SetPosition({0,0});
 		local TopRect;
 		local BottomRect;
 		local FirstChildPos;
@@ -94,21 +97,41 @@ function Creator.Create(CanvasName,Rect,ListImages,Direction,Scrollbar)
 			LastChildPos = LastChild.GetPosition();
 		end
 		if Direction == "up" or Direction == "down" then
-			TopRect = {ListArea[1],ListArea[4] - ElementSize[2] - (math.max(FirstChildPos[2],LastChildPos[2]) - math.min(FirstChildPos[2],LastChildPos[2]) ),ListArea[3],ListArea[4] - ElementSize[2]};
-			BottomRect = {ListArea[1],ListArea[2],ListArea[3],ListArea[2] + (TopRect[4] - TopRect[2])};
+			local LowPoint = math.min(FirstChildPos[2],LastChildPos[2]);
+			local HighPoint = math.max(FirstChildPos[2],LastChildPos[2]);
+			BottomRect = {0,LowPoint,ListArea[3] - ListArea[1],LowPoint + ListArea[4] - ListArea[2]};
+			TopRect = {0,(HighPoint + ElementSize[2]) - (BottomRect[4] - BottomRect[2]),ListArea[3] - ListArea[1],HighPoint + ElementSize[2]};
 		else
-			
+			----------------------------------------------------------------------------------------
+			local LowPoint = math.min(FirstChildPos[1],LastChildPos[1]);
+			local HighPoint = math.max(FirstChildPos[1],LastChildPos[1]);
+			BottomRect = {LowPoint,0,LowPoint + ListArea[3] - ListArea[1],ListArea[4] - ListArea[2]};
+			TopRect = {(HighPoint + ElementSize[1]) - (BottomRect[3] - BottomRect[1]),0,HighPoint + ElementSize[1],ListArea[4] - ListArea[2]};
 		end
-		local Final = rect.vecSub(RectLerp(TopRect,BottomRect,1 - Value),Element.GetAbsolutePosition());
+		sb.logInfo("FirstChildPos = " .. sb.print(FirstChildPos));
+		sb.logInfo("LastChildPos = " .. sb.print(LastChildPos));
+		sb.logInfo("TopRect = " .. sb.print(TopRect));
+		sb.logInfo("BottomRect = " .. sb.print(BottomRect));
+		local Final = RectLerp(TopRect,BottomRect,Value);
+		sb.logInfo("FInal = " .. sb.print(Final));
 		if Direction == "up" or Direction == "down" then
-			AnchorPoint.SetPosition({Final[1],-Final[2],Final[3],(Final[4] - Final[2]) - Final[2]});
+			--AnchorPoint.SetPosition({Final[1],-Final[2],Final[3],(Final[4] - Final[2]) - Final[2]});
+			AnchorPoint.SetPosition({0,-Final[2]});
+			--AnchorPoint.SetPosition(Final);
 			if Scrollbar ~= nil then
-				Scrollbar.SetSliderSize((Final[4] - Final[2]) / WindowLength);
+				Scrollbar.SetSliderSize((math.max(FirstChildPos[2],LastChildPos[2]) - math.min(FirstChildPos[2],LastChildPos[2]) + ElementSize[2]) / WindowLength);
 			end
 		else
 			--AnchorPoint.SetPosition({Final[1],-Final[2],Final[3],(Final[4] - Final[2]) - Final[2]});
+			AnchorPoint.SetPosition({-Final[1],0});
+			--AnchorPoint.SetPosition(Final);
+			if Scrollbar ~= nil then
+				Scrollbar.SetSliderSize((math.max(FirstChildPos[1],LastChildPos[1]) - math.min(FirstChildPos[1],LastChildPos[1]) + ElementSize[1]) / WindowLength);
+			end
 		end
 	end
+
+	local StartPos;
 
 	local function GetLastElementPosition()
 		if AnchorPoint.GetChildCount() > 0 then
@@ -117,11 +140,33 @@ function Creator.Create(CanvasName,Rect,ListImages,Direction,Scrollbar)
 			if Direction == "up" then
 				return {0,-ElementSize[2]};
 			elseif Direction == "down" then
-				return {0,ListArea[4]};
+				return {0,ListArea[4] - ListArea[2]};
 			elseif Direction == "left" then
-				return {0,ListArea[3]};
+				return {ElementSize[1],0};
 			elseif Direction == "right" then
 				return {-ElementSize[1],0};
+			end
+		end
+	end
+
+	local function PositionElements()
+		local Pos = vec.copy(StartPos);
+		for k,i in Element.ChildrenIter() do
+			Pos = vec.add(Pos,Offset);
+			i.SetPosition(Pos);
+		end
+	end
+
+	local OnSelectedElementChange;
+
+	Element.SetSelectedElement = function(value)
+		if SelectedElement ~= value then
+			if SelectedElement ~= nil then
+				SelectedElement.SetImageType("active");
+			end
+			SelectedElement = value;
+			if OnSelectedElementChange ~= nil then
+				OnSelectedElementChange(value.Parent.GetController());
 			end
 		end
 	end
@@ -132,20 +177,51 @@ function Creator.Create(CanvasName,Rect,ListImages,Direction,Scrollbar)
 		local NextElementPosition = vec.add(Position,Offset);
 		sb.logInfo("Next Element Position = " .. sb.print(NextElementPosition));
 		local NewChild = Argon.CreateElement("Mask",CanvasName,{NextElementPosition[1],NextElementPosition[2],NextElementPosition[1] + ElementSize[1],NextElementPosition[2] + ElementSize[2]});
-		AnchorPoint.SetPosition({0,0});
-		AnchorPoint.AddChild(NewChild,true);
-		NewChild.AddChild(Argon.CreateElement("Image",CanvasName,ListImages.Active,{0,0}));
+		--AnchorPoint.SetPosition({0,0});
+		AnchorPoint.AddChild(NewChild);
+		NewChild.AddChild(Argon.CreateElement("ListImage",CanvasName,nil,ListImages,Element));
 		sb.logInfo("Rel Pos = " .. sb.print(NewChild.GetPosition()));
 		sb.logInfo("Abs Pos = " .. sb.print(NewChild.GetAbsolutePosition()));
 		RecalculatePosition();
+		sb.logInfo("Anchor Position = " .. sb.print(AnchorPoint.GetPosition()));
+		sb.logInfo("Element Position = " .. sb.print(Element.GetPosition()));
 		return NewChild;
 	end);
 	Element.AddControllerValue("RemoveElement",function(controller)
-		if Element.GetController().RemoveChild(controller) == false then
+		sb.logInfo("Controller = " .. sb.print(AnchorPoint));
+		if AnchorPoint.RemoveChild(controller) == false then
 			error("This List Element wasn't able to be removed");
 		else
 			controller.Delete();
+			PositionElements();
+			RecalculatePosition();
 		end
+	end);
+
+	Element.AddControllerValue("GetSelectedElement",function()
+		if SelectedElement ~= nil then
+			return SelectedElement.Parent.GetController();
+		end
+	end);
+
+	Element.AddControllerValue("OnSelectedElementChange",function(func)
+		OnSelectedElementChange = func;
+	end);
+
+	Element.AddControllerValue("RemoveLast",function()
+		if AnchorPoint.GetChildCount() > 0 then
+			local LastChild = AnchorPoint.GetLastChild();
+			if LastChild ~= nil then
+				Element.GetController().RemoveElement(LastChild);
+				--[[AnchorPoint.RemoveChild(LastChild);
+				LastChild.Delete();
+				PositionElements();--]]
+			end
+		end
+	end);
+
+	Element.AddControllerValue("ElementCount",function()
+		return AnchorPoint.GetChildCount();
 	end);
 
 	Element.AddControllerValue("GetValue",function()
@@ -185,7 +261,8 @@ function Creator.Create(CanvasName,Rect,ListImages,Direction,Scrollbar)
 
 	Element.OnFinish(function()
 		AnchorPoint = Argon.CreateElement("Anchor Point",CanvasName,{0,0});
-		Element.GetController().AddChild(AnchorPoint);
+		Element.AddChild(AnchorPoint);
+		StartPos = GetLastElementPosition();
 		RecalculatePosition();
 	end);
 

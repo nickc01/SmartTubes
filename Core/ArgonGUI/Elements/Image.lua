@@ -9,5 +9,10 @@ function Creator.Create(CanvasName,Image,Position)
 	Element.SetPosition(Position or {0,0});
 	Element.SetParentMode(true);
 	Element.SetClippingBounds(Rect);
+
+	Element.AddControllerValue("SetColor",function(color)
+		Element.SetSpriteColor("Image",color);
+	end);
+
 	return Element;
 end
