@@ -16,6 +16,16 @@ local ImageMask1;
 local ImageMask2;
 local TestList;
 
+--[[local Colors = {
+	{255,255,255},
+	{255,0,255},
+	{255,255,0},
+	{0,255,255},
+	{255,0,0},
+	{0,255,0},
+	{0,0,255}
+};--]]
+
 local ItemImageSpacing = 2;
 
 local ItemConfigs = setmetatable({},{ __mode = 'v'})
@@ -35,9 +45,48 @@ local function vecAdd(A,B)
 	return {A[1] + B[1],A[2] + B[2]};
 end
 
-local function AddListElement()
+local function AddListElement(index)
 	local Test = TestList.AddElement();
-	Test.AddChild(Argon.CreateElement("Image","RecipeCanvas","/Blocks/Conduits/Crafting Conduit/UI/Window/Test/ImageTest.png"));
+	local Image = Argon.CreateElement("Image","RecipeCanvas","/Blocks/Conduits/Crafting Conduit/UI/Window/Test/ImageTest.png");
+
+	local Scrollbar = Argon.CreateElement("Scrollbar","RecipeCanvas",{10,1,19,60},{
+		ScrollerTop = "/Blocks/Conduits/Crafting Conduit/UI/Window/Vertical Scroll Bar/SliderTop.png",
+		Scroller = "/Blocks/Conduits/Crafting Conduit/UI/Window/Vertical Scroll Bar/SliderMid.png",
+		ScrollerBottom = "/Blocks/Conduits/Crafting Conduit/UI/Window/Vertical Scroll Bar/SliderBottom.png",
+		ScrollerHL = "/Blocks/Conduits/Crafting Conduit/UI/Window/Vertical Scroll Bar/SliderMidHL.png",
+		ScrollerTopHL = "/Blocks/Conduits/Crafting Conduit/UI/Window/Vertical Scroll Bar/SliderTopHL.png",
+		ScrollerBottomHL = "/Blocks/Conduits/Crafting Conduit/UI/Window/Vertical Scroll Bar/SliderBottomHL.png"
+	},
+	{
+		ScrollerTop = "/Blocks/Conduits/Crafting Conduit/UI/Window/Vertical Scroll Bar/SliderBackgroundTop.png",
+		Scroller = "/Blocks/Conduits/Crafting Conduit/UI/Window/Vertical Scroll Bar/SliderBackgroundMid.png",
+		ScrollerBottom = "/Blocks/Conduits/Crafting Conduit/UI/Window/Vertical Scroll Bar/SliderBackgroundBottom.png"
+	},
+	{
+		Top = "/Blocks/Conduits/Crafting Conduit/UI/Window/Vertical Scroll Bar/SliderArrowUp.png",
+		Bottom = "/Blocks/Conduits/Crafting Conduit/UI/Window/Vertical Scroll Bar/SliderArrowDown.png",
+		TopHL = "/Blocks/Conduits/Crafting Conduit/UI/Window/Vertical Scroll Bar/SliderArrowUpHL.png",
+		BottomHL = "/Blocks/Conduits/Crafting Conduit/UI/Window/Vertical Scroll Bar/SliderArrowDownHL.png"
+	},"Vertical",5,0);
+
+	--[[local Scrollbar = Argon.CreateElement("Scrollbar","RecipeCanvas",{0,0,80,9},{
+		ScrollerTop = "/Blocks/Conduits/Crafting Conduit/UI/Window/Horizontal Scroll Bar/SliderRight.png",
+		Scroller = "/Blocks/Conduits/Crafting Conduit/UI/Window/Horizontal Scroll Bar/SliderMid.png",
+		ScrollerBottom = "/Blocks/Conduits/Crafting Conduit/UI/Window/Horizontal Scroll Bar/SliderLeft.png"
+	},
+	{
+		ScrollerTop = "/Blocks/Conduits/Crafting Conduit/UI/Window/Horizontal Scroll Bar/SliderBackgroundRight.png",
+		Scroller = "/Blocks/Conduits/Crafting Conduit/UI/Window/Horizontal Scroll Bar/SliderBackgroundMid.png",
+		ScrollerBottom = "/Blocks/Conduits/Crafting Conduit/UI/Window/Horizontal Scroll Bar/SliderBackgroundLeft.png"
+	},
+	{
+		Top = "/Blocks/Conduits/Crafting Conduit/UI/Window/Horizontal Scroll Bar/SliderArrowRight.png",
+		Bottom = "/Blocks/Conduits/Crafting Conduit/UI/Window/Horizontal Scroll Bar/SliderArrowLeft.png",
+	},"Horizontal",4,0);--]]
+	Image.ChangePosition({2 * index,0});
+	Test.AddChild(Image);
+	Test.AddChild(Scrollbar);
+	--Image.SetColor(Colors[i]);
 end
  
 local function GetItemImage(ItemName)
@@ -85,24 +134,11 @@ function init()
 		Inactive = "/Blocks/Conduits/Crafting Conduit/UI/Window/ListItemDisabled.png",
 		Active = "/Blocks/Conduits/Crafting Conduit/UI/Window/ListItemNormal.png",
 		Selected = "/Blocks/Conduits/Crafting Conduit/UI/Window/ListItemSelected.png"
-	},"Down",RecipeScrollbar);
-	for i=1,50 do
-		AddListElement();
+	},"down",RecipeScrollbar);
+	for i=1,7 do
+		AddListElement(i);
 	end
-	--[[HorizontalTestBar = Argon.CreateElement("Scrollbar","RecipeCanvas",{0,0,1000,9},{
-		ScrollerTop = "/Blocks/Conduits/Crafting Conduit/UI/Window/Horizontal Scroll Bar/SliderRight.png",
-		Scroller = "/Blocks/Conduits/Crafting Conduit/UI/Window/Horizontal Scroll Bar/SliderMid.png",
-		ScrollerBottom = "/Blocks/Conduits/Crafting Conduit/UI/Window/Horizontal Scroll Bar/SliderLeft.png"
-	},
-	{
-		ScrollerTop = "/Blocks/Conduits/Crafting Conduit/UI/Window/Horizontal Scroll Bar/SliderBackgroundRight.png",
-		Scroller = "/Blocks/Conduits/Crafting Conduit/UI/Window/Horizontal Scroll Bar/SliderBackgroundMid.png",
-		ScrollerBottom = "/Blocks/Conduits/Crafting Conduit/UI/Window/Horizontal Scroll Bar/SliderBackgroundLeft.png"
-	},
-	{
-		Top = "/Blocks/Conduits/Crafting Conduit/UI/Window/Horizontal Scroll Bar/SliderArrowRight.png",
-		Bottom = "/Blocks/Conduits/Crafting Conduit/UI/Window/Horizontal Scroll Bar/SliderArrowLeft.png",
-	},"Horizontal",100,0.5);--]]
+	sb.logInfo("Added " .. TestList.ElementCount() .. " elements");
 	--HorizontalTestBar.ChangePosition({0,10});
 	--TestMask = Argon.CreateElement("Mask","RecipeCanvas",{10,10,60,60});
 	--TestInsideMask = Argon.CreateElement("Mask","RecipeCanvas",{10,10,30,30});
@@ -124,7 +160,13 @@ local Timer2 = 0;
 local MaskParent = true;
 function update(dt)
 	Argon.Update(dt);
+	--[[Timer = Timer + dt;
+	if Timer > 5 then
+		TestList.RemoveLast();
+		Timer = 0;
+	end--]]
 	--RecipeScrollbar.SetToMousePosition();
+	--HorizontalTestBar.SetToMousePosition();
 	--[[Timer = Timer + dt;
 	Timer2 = Timer2 + dt;
 	TestImage.ChangePosition({0.05,0.05});

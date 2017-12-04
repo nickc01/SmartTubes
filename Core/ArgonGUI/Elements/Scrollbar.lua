@@ -6,7 +6,7 @@ local function Lerp(A,B,T)
 end
 
 local function SetScrollerRect(RectMax,Size,Value,Mode,MinSize)
-	MinSize = MinSize or 4;
+	MinSize = MinSize or 3;
 	if Size < 1 then
 		Size = 1;
 	end
@@ -195,6 +195,8 @@ function Creator.Create(CanvasName,Rect,Scroller,ScrollerBackground,Arrows,Mode,
 		elseif NewValue > 1 then
 			NewValue = 1;
 		end
+		sb.logInfo("OldValue = " .. sb.print(Element.Value));
+		sb.logInfo("NewValue = " .. sb.print(NewValue));
 		if NewValue ~= Element.Value then
 			Element.Value = NewValue;
 			RecalculateScrollValues();
@@ -253,15 +255,15 @@ function Creator.Create(CanvasName,Rect,Scroller,ScrollerBackground,Arrows,Mode,
 
 	Element.SetUpdateFunction(function(dt)
 		if ScrollerClicked == true then
-		--	sb.logInfo("Setting");
+			sb.logInfo("Setting");
 			--sb.logInfo("Value Before = " .. sb.print(Element.Value));
 			Element.GetController().SetToMousePosition(-ScrollerOffset);
 			--sb.logInfo("Value = " .. sb.print(Element.Value));
 		end
-		if TopArrowClicked == true then
+		if TopArrowClicked == true and Element.Size > 1 then
 			Element.GetController().ChangeSliderValue((1 / Element.GetController().GetSliderSize()) * dt);
 		end
-		if BottomArrowClicked == true then
+		if BottomArrowClicked == true and Element.Size > 1 then
 			Element.GetController().ChangeSliderValue(-(1 / Element.GetController().GetSliderSize()) * dt);
 		end
 	end);
@@ -269,6 +271,7 @@ function Creator.Create(CanvasName,Rect,Scroller,ScrollerBackground,Arrows,Mode,
 	Element.SetSpriteClickFunction("Scroller",function(Position,MouseType,IsDown)
 		--sb.logInfo("Clicked! " .. sb.print(IsDown));
 		if MouseType == 0 then
+			sb.logInfo("Clicked! " .. sb.print(IsDown));
 			ScrollerOffset = Element.GetController().GetValueAtMousePosition() - Element.GetController().GetSliderValue();
 			ScrollerClicked = IsDown;
 			if IsDown == true then
