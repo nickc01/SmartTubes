@@ -15,6 +15,10 @@ function vec.sub(A,B)
 	return {A[1] - B[1],A[2] - B[2]};
 end
 
+function vec.copy(A)
+	return {A[1],A[2]};
+end
+
 function rect.vecAdd(A,B)
 	return {A[1] + B[1],A[2] + B[2],A[3] + B[1],A[4] + B[2]};
 end

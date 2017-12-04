@@ -317,7 +317,6 @@ function CreateElement(CanvasName)
 						end
 					end
 				end
-			
 			else
 				if ClickedSprites == nil then
 					for k,i in ipairs(Sprites) do
@@ -334,6 +333,11 @@ function CreateElement(CanvasName)
 						i.ClickFunc(Position,ButtonType,IsDown);
 					end
 					ClickedSprites = nil;
+				end
+			end
+			if Children ~= nil then
+				for k,i in ipairs(Children) do
+					i.OnClick(Position,ButtonType,IsDown);
 				end
 			end
 		end
@@ -424,7 +428,7 @@ function CreateElement(CanvasName)
 			return function()
 				if Returned == false then
 					Returned = true;
-					return Children[1];
+					return 1,Children[1];
 				else
 					return nil;
 				end
@@ -435,20 +439,26 @@ function CreateElement(CanvasName)
 		return function()
 			if Index <= Size then
 				Index = Index + 1;
-				return Children[Index - 1];
+				return Index -1, Children[Index - 1];
 			end
 			return nil;
 		end
 	end
-	Element.SetParentMode = function(bool)
+
+	Element.ChildrenIter = GetAllChildren;
+
+	Element.SetParentMode = function(bool,noController)
 		if bool == true then
 			Children = {};
 			ParentMode = true;
-			for k,i in pairs(ParentingController) do
-				if Finished == false then
-					ControllerBase[k] = i;
-				else
-					Controller[k] = i;
+			if noController ~= true then
+				for k,i in pairs(ParentingController) do
+					sb.logInfo("Adding Values!!!!!!");
+					if Finished == false then
+						ControllerBase[k] = i;
+					else
+						Controller[k] = i;
+					end
 				end
 			end
 		else
@@ -469,6 +479,9 @@ function CreateElement(CanvasName)
 	end
 
 	Element.AddChild = function(element,RetainPosition)
+		if element.GetController == nil then
+			element = Core.GetElementByController(element);
+		end
 		if ParentMode == true then
 			if element.Parent == nil then
 				Children[#Children + 1] = element;
@@ -500,6 +513,9 @@ function CreateElement(CanvasName)
 		end
 	end
 	Element.RemoveChild = function(element,RetainPosition)
+		if element.GetController == nil then
+			element = Core.GetElementByController(element);
+		end
 		for k,i in ipairs(Children) do
 			if i.GetID() == element.GetID() then
 				table.remove(Children,k);
@@ -526,18 +542,18 @@ function CreateElement(CanvasName)
 			return #Children;
 		end
 	end
-	ControllerBase.GetChildCount = function()
+	ParentingController.GetChildCount = function()
 		return Element.GetChildCount();
 	end
 
-	ControllerBase.GetFirstChild = function()
+	ParentingController.GetFirstChild = function()
 		local Child = Element.GetFirstChild();
 		if Child ~= nil then
 			return Child.GetController();
 		end
 	end
 
-	ControllerBase.GetLastChild = function()
+	ParentingController.GetLastChild = function()
 		local Child = Element.GetLastChild();
 		if Child ~= nil then
 			return Child.GetController();
@@ -564,6 +580,24 @@ function CreateElement(CanvasName)
 	
 	ParentingController.RemoveChild = function(controller,RetainPosition)
 		return Element.RemoveChild(Core.GetElementByController(controller),RetainPosition);
+	end
+
+	--[[ParentingController.RemoveLastChild = function(RetainPosition)
+		return Element.RemoveChild(Core.GetElementByController(Element.GetLastChild()),RetainPosition);
+	end--]]
+
+	ParentingController.GetLastChild = function()
+		local LastElement = Element.GetLastChild();
+		if LastElement ~= nil then
+			return LastElement.GetController();
+		end
+	end
+
+	ParentingController.GetFirstChild = function()
+		local LastElement = Element.GetFirstChild();
+		if LastElement ~= nil then
+			return LastElement.GetController();
+		end
 	end
 
 	Element.RemoveAllChildren = function()
