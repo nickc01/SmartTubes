@@ -48,6 +48,8 @@ end
 local function AddListElement(index)
 	local Test = TestList.AddElement();
 	local Image = Argon.CreateElement("Image","RecipeCanvas","/Blocks/Conduits/Crafting Conduit/UI/Window/Test/ImageTest.png");
+	local Text = Argon.CreateElement("Text","RecipeCanvas",{5,5});
+	Text.SetString("This is a test!?!thjeklshfgjk;sdbnvioserah;giobrsd");
 
 	local Scrollbar = Argon.CreateElement("Scrollbar","RecipeCanvas",{10,1,19,60},{
 		ScrollerTop = "/Blocks/Conduits/Crafting Conduit/UI/Window/Vertical Scroll Bar/SliderTop.png",
@@ -86,6 +88,7 @@ local function AddListElement(index)
 	Image.ChangePosition({2 * index,0});
 	Test.AddChild(Image);
 	Test.AddChild(Scrollbar);
+	Test.AddChild(Text);
 	--Image.SetColor(Colors[i]);
 end
  
