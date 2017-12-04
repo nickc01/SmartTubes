@@ -106,6 +106,7 @@ function CreateElement(CanvasName)
 							i.Rejected = false;
 							i.Rect = Final;
 							i.TextureRect = rect.vecAdd(rect.minimize(Final),{Offset[1],Offset[2]});
+							i.TextureRect = rect.vecAdd(i.TextureRect,{i.OriginalTextureRect[1],i.OriginalTextureRect[2]});
 							if i.IsTiled == true then
 								i.TextureOffset = {-Offset[1],-Offset[2]};
 							end
@@ -181,7 +182,7 @@ function CreateElement(CanvasName)
 		return Element.GetController().GetAbsolutePosition();
 	end
 
-	Element.AddSprite = function(Name,Rect,Image,IsTiled,Color)
+	Element.AddSprite = function(Name,Rect,Image,IsTiled,Color,ImageRect)
 		if SpritesByName[Name] ~= nil then
 			error("Sprite of " .. sb.print(Name) .. " already exists");
 		end
@@ -190,7 +191,7 @@ function CreateElement(CanvasName)
 			Rect = Rect,
 			OriginalRect = rect.copy(Rect),
 			Image = Image,
-			IsTiled = IsTiled,
+			IsTiled = IsTiled or false,
 			Color = Color,
 			TextureRect = rect.minimize(Rect),
 			OriginalTextureRect = rect.minimize(Rect),
@@ -199,6 +200,10 @@ function CreateElement(CanvasName)
 		SpritesByName[Name] = #Sprites;
 		if IsTiled == true then
 			Sprites[#Sprites].TextureOffset = {0,0};
+		end
+		if ImageRect ~= nil then
+			Sprites[#Sprites].TextureRect = rect.copy(ImageRect);
+			Sprites[#Sprites].OriginalTextureRect = rect.copy(ImageRect);
 		end
 		if Finished == true then
 			Element.UpdateClips();
@@ -235,6 +240,11 @@ function CreateElement(CanvasName)
 			return true;
 		end
 		return false;
+	end
+
+	Element.RemoveAllSprites = function()
+		Sprites = {};
+		SpritesByName = {};
 	end
 
 	Element.SetPosition = function(pos)

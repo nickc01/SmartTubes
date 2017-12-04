@@ -23,6 +23,10 @@
     {
       "Name": "ListImage",
       "Script": "Elements/ListImage.lua"
+    },
+    {
+      "Name": "Text",
+      "Script": "Elements/Text/Text.lua"
     }
   ]
 }
