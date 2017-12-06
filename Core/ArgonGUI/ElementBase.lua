@@ -552,6 +552,26 @@ function CreateElement(CanvasName)
 			return #Children;
 		end
 	end
+
+	Element.GetChild = function(index)
+		if type(index) == "number" then
+			return Children[index];
+		elseif type(index) == "string" then
+			for k,i in ipairs(Children) do
+				if i.GetID() == index then
+					return i;
+				end
+			end
+		end
+	end
+
+	ParentingController.GetChild = function(index)
+		local Child = Element.GetChild(index);
+		if Child ~= nil then
+			return Child.GetController();
+		end
+	end
+
 	ParentingController.GetChildCount = function()
 		return Element.GetChildCount();
 	end
@@ -610,14 +630,21 @@ function CreateElement(CanvasName)
 		end
 	end
 
-	Element.RemoveAllChildren = function()
+	Element.RemoveAllChildren = function(AndDelete)
 		for k,i in ipairs(Children) do
 			local Position = i.GetController().GetAbsolutePosition();
 			i.Parent = nil;
 			i.GetController().SetAbsolutePosition(Position);
+			if AndDelete == true then
+				i.GetController().Delete();
+			end
 		end
 		Children = {};
 		Element.UpdateClips();
+	end
+
+	ParentingController.RemoveAllChildren = function(AndDelete)
+		Element.RemoveAllChildren(AndDelete);
 	end
 
 	ControllerBase.GetID = function()
@@ -686,6 +713,10 @@ function CreateElement(CanvasName)
 				i.GetController().SetActive(bool);
 			end
 		end
+	end
+
+	ControllerBase.Active = function()
+		return Active;
 	end
 
 	Element.Finish = function()
