@@ -12,7 +12,7 @@ for k,i in ipairs(MapConfig.Maps) do
 	end
 end
 
-function Creator.Create(CanvasName,Position,Font)
+function Creator.Create(CanvasName,Position,Font,CenterPos)
 	if Font == nil then
 		Font = Maps["Default"];
 	else
@@ -24,6 +24,7 @@ function Creator.Create(CanvasName,Position,Font)
 	local Element = CreateElement(CanvasName);
 	Element.SetPosition(Position);
 	local String = "";
+	local Size = 0;
 
 	Element.AddControllerValue("GetString",function()
 		return String;
@@ -34,6 +35,16 @@ function Creator.Create(CanvasName,Position,Font)
 			String = value;
 			Element.RemoveAllSprites();
 			local StartPos = {0,0};
+			if CenterPos ~= nil then
+				StartPos[1] = CenterPos;
+				for word in string.gmatch(String,".") do
+					if Font.BigCharacters[word] ~= nil then
+						StartPos[1] = StartPos[1] - ((Font.TextSize[1] + Font.TextOffset[1]) / 2);
+					elseif Font.SmallCharacters[word] ~= nil then
+						StartPos[1] = StartPos[1] - ((Font.SmallSize[1] + Font.SmallOffset[1]) / 2);
+					end
+				end
+			end
 			local index = 1;
 			for word in string.gmatch(String,".") do
 				if word == " " then
@@ -47,15 +58,23 @@ function Creator.Create(CanvasName,Position,Font)
 					if Font.BigCharacters[word] ~= nil then
 						Element.AddSprite(index,{StartPos[1],StartPos[2],StartPos[1] + Font.TextSize[1],StartPos[2] + Font.TextSize[2]},Image,nil,nil,{Font.BigCharacters[word][1],Font.BigCharacters[word][2],Font.BigCharacters[word][1] + Font.TextSize[1],Font.BigCharacters[word][2] + Font.TextSize[2]});
 						index = index + 1;
-						StartPos[1] = StartPos[1] + Font.TextSize[1];
+						StartPos[1] = StartPos[1] + Font.TextSize[1] + Font.TextOffset[1];
 					elseif Font.SmallCharacters[word] ~= nil then
 						Element.AddSprite(index,{StartPos[1],StartPos[2],StartPos[1] + Font.SmallSize[1],StartPos[2] + Font.SmallSize[2]},Image,nil,nil,{Font.SmallCharacters[word][1],Font.SmallCharacters[word][2],Font.SmallCharacters[word][1] + Font.SmallSize[1],Font.SmallCharacters[word][2] + Font.SmallSize[2]});
 						index = index + 1;
-						StartPos[1] = StartPos[1] + Font.SmallSize[1];
+						StartPos[1] = StartPos[1] + Font.SmallSize[1] + Font.SmallOffset[1];
 					end
 				end
 			end
+			Size = index - 1;
 		end
 	end);
+
+	Element.AddControllerValue("SetColor",function(color)
+		for i=1,Size do
+			Element.SetSpriteColor(i,color);
+		end
+	end);
+
 	return Element;
 end

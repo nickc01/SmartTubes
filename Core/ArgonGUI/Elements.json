@@ -27,6 +27,14 @@
     {
       "Name": "Text",
       "Script": "Elements/Text/Text.lua"
+    },
+    {
+      "Name": "Radio",
+      "Script": "Elements/Radio.lua"
+    },
+    {
+      "Name": "Button",
+      "Script": "Elements/Button.lua"
     }
   ]
 }
