@@ -176,6 +176,8 @@ function Creator.Create(CanvasName,Rect,Scroller,ScrollerBackground,Arrows,Mode,
 		return Element.Size;
 	end);
 
+	local HideWhenNecessary = false;
+
 	Element.AddControllerValue("SetSliderSize",function(NewSize)
 		if NewSize < 1 then
 			NewSize = 1;
@@ -183,6 +185,13 @@ function Creator.Create(CanvasName,Rect,Scroller,ScrollerBackground,Arrows,Mode,
 		if NewSize ~= Element.Size then
 			Element.Size = NewSize;
 			RecalculateScrollValues();
+			if HideWhenNecessary == true then
+				if Element.Size > 1 then
+					Element.SetActive(true);
+				else
+					Element.SetActive(false);
+				end
+			end
 			--[[if OnValueChange ~= nil then
 				OnValueChange(Element.Value);
 			end--]]
@@ -242,6 +251,10 @@ function Creator.Create(CanvasName,Rect,Scroller,ScrollerBackground,Arrows,Mode,
 			return (MousePosition[1] - ((ScrollRect[3] - ScrollRect[1]) / 2) - BackgroundScrollerPos[1]) / (ScrollRectTopCenter[1] - ScrollRectBottomCenter[1]);
 			--return (vec.sub(Element.GetCanvas():mousePosition(),Element.GetController().GetAbsolutePosition())[1]--[[ - (Element.Length / 2)--]]) / ((ScrollRectArea[3] - ScrollRectArea[1]) - Element.Length);
 		end
+	end);
+
+	Element.AddControllerValue("HideWhenNecessary",function(bool)
+	
 	end);
 
 	Element.AddControllerValue("OnValueChange",function(func)

@@ -2,6 +2,8 @@
   "Map": {
     "TextSize": [ 7, 7 ],
     "SmallSize": [ 3, 7 ],
+    "TextOffset": [ -1, 0 ],
+    "SmallOffset": [ -1, 0 ],
     "Image": "Elements/Text/Default.png",
     "WidthOfSpace": 3,
     "BigCharacters": {

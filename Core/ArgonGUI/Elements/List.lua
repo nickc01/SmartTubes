@@ -78,6 +78,7 @@ function Creator.Create(CanvasName,Rect,ListImages,Direction,Scrollbar)
 
 	if Direction == "up" or Direction == "down" then
 		WindowLength = Rect[4] - Rect[2];
+		Value = 1;
 	else
 		WindowLength = Rect[3] - Rect[1];
 	end
@@ -91,6 +92,9 @@ function Creator.Create(CanvasName,Rect,ListImages,Direction,Scrollbar)
 		local FirstChild = AnchorPoint.GetFirstChild();
 		local LastChild = AnchorPoint.GetLastChild();
 		if FirstChild == nil or LastChild == nil then
+			if Scrollbar ~= nil then
+				Scrollbar.SetSliderSize(1);
+			end
 			return nil;
 		else
 			FirstChildPos = FirstChild.GetPosition();
@@ -152,8 +156,10 @@ function Creator.Create(CanvasName,Rect,ListImages,Direction,Scrollbar)
 	local function PositionElements()
 		local Pos = vec.copy(StartPos);
 		for k,i in Element.ChildrenIter() do
-			Pos = vec.add(Pos,Offset);
-			i.SetPosition(Pos);
+			if i.GetController().Active() == true then
+				Pos = vec.add(Pos,Offset);
+				i.SetPosition(Pos);
+			end
 		end
 	end
 
@@ -217,6 +223,17 @@ function Creator.Create(CanvasName,Rect,ListImages,Direction,Scrollbar)
 				LastChild.Delete();
 				PositionElements();--]]
 			end
+		end
+	end);
+	Element.AddControllerValue("ClearList",function()
+		AnchorPoint.RemoveAllChildren(true);
+	end);
+
+	Element.AddControllerValue("SetElementActive",function(controller,active)
+		if controller.Active() ~= active then
+			controller.SetActive(active);
+			PositionElements();
+			RecalculatePosition();
 		end
 	end);
 
