@@ -17,6 +17,15 @@ local Rarities = {
 	essential = "/interface/inventory/itemborderessential.png"
 }
 
+local CraftingGroups;
+
+local function GetCraftingGroup(group)
+	if CraftingGroups[group] ~= nil then
+		return CraftingGroups[group];
+	end
+	return nil;
+end
+
 
 local ItemConfigs = setmetatable({},{ __mode = 'v'})
 
@@ -28,13 +37,26 @@ local function GetConfig(ItemName)
 end
 
 local function GetItemRarity(ItemName)
-	sb.logInfo("Item Config = " .. sb.printJson(GetConfig(ItemName),1));
+	--sb.logInfo("Item Config = " .. sb.print(GetConfig(ItemName)));
 	--local Config = GetConfig(ItemName);
 	--return Config.rarity;
 	return string.lower(GetConfig(ItemName).rarity or "Common");
 end
 
+local function GetPosFromImage(Image,CenterPos)
+	local Scale = 1;
+	local ImageSize = root.imageSize(Image);
+	if math.max(ImageSize[1],ImageSize[2]) > 16 then
+		Scale = 16 / math.max(ImageSize[1],ImageSize[2]);
+		ImageSize[1] = ImageSize[1] * Scale;
+		ImageSize[2] = ImageSize[2] * Scale;
+		Image = Image .. "?scalenearest=" .. tostring(Scale);
+	end
+	return Image,{CenterPos[1] - ImageSize[1] / 2, CenterPos[2] - ImageSize[2] / 2};
+end
+
 local function GetItemImage(ItemName,CenterPos)
+	local IMG;
 	local Config;
 	if ItemConfigs[ItemName] == nil then
 		Config = root.itemConfig(ItemName);
@@ -51,7 +73,16 @@ local function GetItemImage(ItemName,CenterPos)
 			IMG = Directory .. IMG;
 		end
 	end
-	return IMG,{CenterPos[1] - root.imageSize(IMG)[1] / 2, CenterPos[2] - root.imageSize(IMG)[2] / 2};
+	return GetPosFromImage(IMG,CenterPos);
+	--[[local Scale = 1;
+	local ImageSize = root.imageSize(IMG);
+	if math.max(ImageSize[1],ImageSize[2]) > 16 then
+		Scale = 16 / math.max(ImageSize[1],ImageSize[2]);
+		ImageSize[1] = ImageSize[1] * Scale;
+		ImageSize[2] = ImageSize[2] * Scale;
+		IMG = IMG .. "?scalenearest=" .. tostring(Scale);
+	end
+	return IMG,{CenterPos[1] - ImageSize[1] / 2, CenterPos[2] - ImageSize[2] / 2};--]]
 end
 --[[local HorizontalTestScrollbar;
 local TestMask;
@@ -84,24 +115,36 @@ local function vecAdd(A,B)
 end
 
 local function AddRecipeToList(Item,Recipe)
+
+	local GroupIndex = 0;
+	local Group;
+	for GroupIndex=1,#Recipe.groups do
+		Group = GetCraftingGroup(Recipe.groups[GroupIndex]);
+		if Group ~= nil then
+			break;
+		end
+	end
+	if Group == nil then
+		return nil;
+	end
 	local Element = RecipeList.AddElement();
 
 	--Output Item Rarity Image
-	local SourceItemRarity = Argon.CreateElement("Image","RecipeCanvas",Rarities[GetItemRarity(Recipe.output.name)],{98,58});
+	local SourceItemRarity = Argon.CreateElement("Image","RecipeCanvas",Rarities[GetItemRarity(Recipe.output.name)],{98,64});
 	Element.AddChild(SourceItemRarity);
 
 	--Output Item Image
-	local SourceItemImage,SourceItemPos = GetItemImage(Recipe.output.name,{107,67});
+	local SourceItemImage,SourceItemPos = GetItemImage(Recipe.output.name,{107,73});
 	local SourceItem = Argon.CreateElement("Image","RecipeCanvas",SourceItemImage,SourceItemPos);
 	Element.AddChild(SourceItem);
 	--Output Item Amount
-	local OutputAmountText = Argon.CreateElement("Text","RecipeCanvas",{99,48},"Thin",7);
+	local OutputAmountText = Argon.CreateElement("Text","RecipeCanvas",{99,54},"Thin",7);
 	OutputAmountText.SetString(tostring(Recipe.output.count));
 	Element.AddChild(OutputAmountText);
 
 
 	--Required Items Scrollbar
-	local Scrollbar = Argon.CreateElement("Scrollbar","RecipeCanvas",{1,30,95,39},{
+	local RequiredItemsScrollbar = Argon.CreateElement("Scrollbar","RecipeCanvas",{1,38,95,47},{
 		ScrollerTop = "/Blocks/Conduits/Crafting Conduit/UI/Window/Horizontal Scroll Bar/SliderRight.png",
 		Scroller = "/Blocks/Conduits/Crafting Conduit/UI/Window/Horizontal Scroll Bar/SliderMid.png",
 		ScrollerBottom = "/Blocks/Conduits/Crafting Conduit/UI/Window/Horizontal Scroll Bar/SliderLeft.png",
@@ -120,18 +163,14 @@ local function AddRecipeToList(Item,Recipe)
 		TopHL = "/Blocks/Conduits/Crafting Conduit/UI/Window/Horizontal Scroll Bar/SliderArrowRightHL.png",
 		BottomHL = "/Blocks/Conduits/Crafting Conduit/UI/Window/Horizontal Scroll Bar/SliderArrowLeftHL.png"
 	},"Horizontal",5,0);
-	Element.AddChild(Scrollbar);
-	--Requirements Text
-	local Text = Argon.CreateElement("Text","RecipeCanvas",{1,71});
-	Text.SetString("Requirements");
-	Element.AddChild(Text);
+	Element.AddChild(RequiredItemsScrollbar);
 
 	--Required Items List
-	local RequiredItems = Argon.CreateElement("List","RecipeCanvas",{1,42,95,85},{
+	local RequiredItems = Argon.CreateElement("List","RecipeCanvas",{1,48,95,90},{
 		Inactive = "/Blocks/Conduits/Crafting Conduit/UI/Window/Slot With Text.png",
 		Active =  "/Blocks/Conduits/Crafting Conduit/UI/Window/Slot With Text.png",
 		Selected =  "/Blocks/Conduits/Crafting Conduit/UI/Window/Slot With Text.png",
-	},"Right",Scrollbar);
+	},"Right",RequiredItemsScrollbar);
 	-- Add Required Items
 	for i=1,#Recipe.input do
 		local Element = RequiredItems.AddElement();
@@ -148,10 +187,156 @@ local function AddRecipeToList(Item,Recipe)
 		local RequiredItemImage,RequiredItemPos = GetItemImage(Recipe.input[i].name,{9,18});
 		local RequiredItem = Argon.CreateElement("Image","RecipeCanvas",RequiredItemImage,RequiredItemPos);
 		Element.AddChild(RequiredItem);
+	end
+	for k,i in pairs(Recipe.currencyInputs) do
+		if i <= 9999 then
+			local Element = RequiredItems.AddElement();
+			--Currency Amount
+			local AmountText = Argon.CreateElement("Text","RecipeCanvas",{1,0},"Thin",7);
+			AmountText.SetString(tostring(i));
+			Element.AddChild(AmountText);
+			--Required Currency Image
+			local RequiredCurrencyImage,RequiredCurrencyPos = GetItemImage(k,{9,18});
+			local RequiredCurrency = Argon.CreateElement("Image","RecipeCanvas",RequiredCurrencyImage,RequiredCurrencyPos);
+			Element.AddChild(RequiredCurrency);
+		else
+			local CurrencyRequired = i;
+			repeat
+				local Element = RequiredItems.AddElement();
+				--Currency Amount
+				local SubtractedCurrency = nil;
+				if CurrencyRequired <= 9999 then
+					SubtractedCurrency = CurrencyRequired;
+					CurrencyRequired = 0;
+				else
+					SubtractedCurrency = 9999;
+					CurrencyRequired = CurrencyRequired - SubtractedCurrency;
+				end
 
+				local AmountText = Argon.CreateElement("Text","RecipeCanvas",{1,0},"Thin",7);
+				AmountText.SetString(tostring(SubtractedCurrency));
+				Element.AddChild(AmountText);
+				--Required Currency Image
+				local RequiredCurrencyImage,RequiredCurrencyPos = GetItemImage(k,{9,18});
+				local RequiredCurrency = Argon.CreateElement("Image","RecipeCanvas",RequiredCurrencyImage,RequiredCurrencyPos);
+				Element.AddChild(RequiredCurrency);
+			until (CurrencyRequired == 0);
+
+
+		end
 	end
 
 	Element.AddChild(RequiredItems);
+
+	--Crafted At Text
+	--[[local AmountText = Argon.CreateElement("Text","RecipeCanvas",{1,0},"Default");
+	AmountText.SetString(Recipe.groups);
+	Element.AddChild(AmountText);--]]
+
+	--Crafted At Scrollbar
+	--[[local CraftedAtScrollbar = Argon.CreateElement("Scrollbar","RecipeCanvas",{86,1,95,28},{
+		ScrollerTop = "/Blocks/Conduits/Crafting Conduit/UI/Window/Vertical Scroll Bar/SliderTop.png",
+		Scroller = "/Blocks/Conduits/Crafting Conduit/UI/Window/Vertical Scroll Bar/SliderMid.png",
+		ScrollerBottom = "/Blocks/Conduits/Crafting Conduit/UI/Window/Vertical Scroll Bar/SliderBottom.png",
+		ScrollerHL = "/Blocks/Conduits/Crafting Conduit/UI/Window/Vertical Scroll Bar/SliderMidHL.png",
+		ScrollerTopHL = "/Blocks/Conduits/Crafting Conduit/UI/Window/Vertical Scroll Bar/SliderTopHL.png",
+		ScrollerBottomHL = "/Blocks/Conduits/Crafting Conduit/UI/Window/Vertical Scroll Bar/SliderBottomHL.png"
+	},
+	{
+		ScrollerTop = "/Blocks/Conduits/Crafting Conduit/UI/Window/Vertical Scroll Bar/SliderBackgroundTop.png",
+		Scroller = "/Blocks/Conduits/Crafting Conduit/UI/Window/Vertical Scroll Bar/SliderBackgroundMid.png",
+		ScrollerBottom = "/Blocks/Conduits/Crafting Conduit/UI/Window/Vertical Scroll Bar/SliderBackgroundBottom.png"
+	},
+	{
+		Top = "/Blocks/Conduits/Crafting Conduit/UI/Window/Vertical Scroll Bar/SliderArrowUp.png",
+		Bottom = "/Blocks/Conduits/Crafting Conduit/UI/Window/Vertical Scroll Bar/SliderArrowDown.png",
+		TopHL = "/Blocks/Conduits/Crafting Conduit/UI/Window/Vertical Scroll Bar/SliderArrowUpHL.png",
+		BottomHL = "/Blocks/Conduits/Crafting Conduit/UI/Window/Vertical Scroll Bar/SliderArrowDownHL.png"
+	},"Vertical",5,0);
+	CraftedAtScrollbar.HideWhenNecessary(true);
+	Element.AddChild(CraftedAtScrollbar);
+
+	--CraftedAtList
+
+	CraftedAtList = Argon.CreateElement("List","RecipeCanvas",{0,10,121,172},{
+		Inactive = "/Blocks/Conduits/Crafting Conduit/UI/Window/CraftedAtItem.png",
+		Active = "/Blocks/Conduits/Crafting Conduit/UI/Window/CraftedAtItem.png",
+		Selected = "/Blocks/Conduits/Crafting Conduit/UI/Window/CraftedAtItem.png"
+	},"Down");
+
+	Element.AddChild(CraftedAtList);--]]
+	--if Group ~= nil then
+	--[[	local CraftedAtText = Argon.CreateElement("Text","RecipeCanvas",{1,22},"Default");
+		local String = Recipe.groups[GroupIndex];
+		if string.len(String) >= 20 then
+			String = string.sub(String,1,-1);
+			String = String .. "...";
+		end
+		CraftedAtText.SetString(String);
+		Element.AddChild(CraftedAtText);
+	else--]]
+	local CraftedAtText = Argon.CreateElement("Text","RecipeCanvas",{1,2},"Default");
+	CraftedAtText.SetString(Group.Name);
+	--CraftedAtText.SetColor({255,255,255});
+	Element.AddChild(CraftedAtText);
+
+	if Group.SlotItem ~= nil then
+		--Item Slot
+		local ItemSlot = Argon.CreateElement("Image","RecipeCanvas","/interface/actionbar/actionbarcover.png",{2,9});
+		Element.AddChild(ItemSlot);
+
+		--Item Image
+		sb.logInfo("Group = " .. sb.print(Group));
+		local CrafterItemImage,CrafterItemPos = nil,nil;
+		if string.match(Group.SlotItem,"^/") == nil then
+			CrafterItemImage,CrafterItemPos	= GetItemImage(Group.SlotItem,{11,18});
+		else
+			CrafterItemImage,CrafterItemPos = GetPosFromImage(Group.SlotItem,{11,18});
+		end
+		local CrafterItem = Argon.CreateElement("Image","RecipeCanvas",CrafterItemImage,CrafterItemPos);
+		Element.AddChild(CrafterItem);
+	end
+
+	--end
+	--Crafting Scrollbar
+	--[[local CraftingScrollbar = Argon.CreateElement("Scrollbar","RecipeCanvas",{110,2,119,29},{
+		ScrollerTop = "/Blocks/Conduits/Crafting Conduit/UI/Window/Vertical Scroll Bar/SliderTop.png",
+		Scroller = "/Blocks/Conduits/Crafting Conduit/UI/Window/Vertical Scroll Bar/SliderMid.png",
+		ScrollerBottom = "/Blocks/Conduits/Crafting Conduit/UI/Window/Vertical Scroll Bar/SliderBottom.png",
+		ScrollerHL = "/Blocks/Conduits/Crafting Conduit/UI/Window/Vertical Scroll Bar/SliderMidHL.png",
+		ScrollerTopHL = "/Blocks/Conduits/Crafting Conduit/UI/Window/Vertical Scroll Bar/SliderTopHL.png",
+		ScrollerBottomHL = "/Blocks/Conduits/Crafting Conduit/UI/Window/Vertical Scroll Bar/SliderBottomHL.png"
+	},
+	{
+		ScrollerTop = "/Blocks/Conduits/Crafting Conduit/UI/Window/Vertical Scroll Bar/SliderBackgroundTop.png",
+		Scroller = "/Blocks/Conduits/Crafting Conduit/UI/Window/Vertical Scroll Bar/SliderBackgroundMid.png",
+		ScrollerBottom = "/Blocks/Conduits/Crafting Conduit/UI/Window/Vertical Scroll Bar/SliderBackgroundBottom.png"
+	},
+	{
+		Top = "/Blocks/Conduits/Crafting Conduit/UI/Window/Vertical Scroll Bar/SliderArrowUp.png",
+		Bottom = "/Blocks/Conduits/Crafting Conduit/UI/Window/Vertical Scroll Bar/SliderArrowDown.png",
+		TopHL = "/Blocks/Conduits/Crafting Conduit/UI/Window/Vertical Scroll Bar/SliderArrowUpHL.png",
+		BottomHL = "/Blocks/Conduits/Crafting Conduit/UI/Window/Vertical Scroll Bar/SliderArrowDownHL.png"
+	},"Vertical",5,0);
+	CraftingScrollbar.HideWhenNecessary(true);
+	Element.AddChild(CraftingScrollbar);
+
+	--Crafting List
+	CraftingList = Argon.CreateElement("List","RecipeCanvas",{0,2,106,29},{
+		Inactive = "/Blocks/Conduits/Crafting Conduit/UI/Window/CraftingInfo.png",
+		Active = "/Blocks/Conduits/Crafting Conduit/UI/Window/CraftingInfo.png",
+		Selected = "/Blocks/Conduits/Crafting Conduit/UI/Window/CraftingInfo.png"
+	},"Down",CraftingScrollbar);
+	for i=1,#Recipe.groups do
+		local CraftingElement = CraftingList.AddElement();
+		local CraftingText = Argon.CreateElement("Text","RecipeCanvas",{1,0},"Default");
+		CraftingText.SetString(Recipe.groups[i]);
+		CraftingElement.AddChild(CraftingText);
+	end
+
+	Element.AddChild(CraftingList);--]]
+
+
 	
 end
 
@@ -226,11 +411,12 @@ function init()
 		TopHL = "/Blocks/Conduits/Crafting Conduit/UI/Window/Vertical Scroll Bar/SliderArrowUpHL.png",
 		BottomHL = "/Blocks/Conduits/Crafting Conduit/UI/Window/Vertical Scroll Bar/SliderArrowDownHL.png"
 	},"Vertical",5,0);
-	RecipeList = Argon.CreateElement("List","RecipeCanvas",{0,10,121,172},{
+	RecipeList = Argon.CreateElement("List","RecipeCanvas",{0,0,121,172},{
 		Inactive = "/Blocks/Conduits/Crafting Conduit/UI/Window/List Item/RecipesItemNormal.png",
 		Active = "/Blocks/Conduits/Crafting Conduit/UI/Window/List Item/RecipesItemNormal.png",
 		Selected = "/Blocks/Conduits/Crafting Conduit/UI/Window/List Item/RecipesItemNormal.png"
 	},"Down",RecipeScrollbar);
+	CraftingGroups = root.assetJson("/Blocks/Conduits/Crafting Conduit/CraftingGroups.json").Groups;
 	--[[RecipeList = Argon.CreateElement("List","RecipeCanvas",{0,10,121,172},{
 		Inactive = "/Blocks/Conduits/Crafting Conduit/UI/Window/List Item/ListItemDisabled.png",
 		Active = "/Blocks/Conduits/Crafting Conduit/UI/Window/List Item/ListItemNormal.png",
@@ -326,10 +512,12 @@ function UpdateRecipesForItem(item)
 	RecipeList.ClearList();
 	if item ~= nil then
 		local Recipes = root.recipesForItem(item.name);
+		sb.logInfo("Item = " .. sb.printJson(item,1))
 		sb.logInfo("Recipes = " .. sb.printJson(Recipes,1));
 		for k,i in ipairs(Recipes) do
 			AddRecipeToList(item,i);
 		end
+		RecipeScrollbar.SetSliderValue(1);
 	end
 end
 
