@@ -227,6 +227,8 @@ function Creator.Create(CanvasName,Rect,ListImages,Direction,Scrollbar)
 	end);
 	Element.AddControllerValue("ClearList",function()
 		AnchorPoint.RemoveAllChildren(true);
+		PositionElements();
+		RecalculatePosition();
 	end);
 
 	Element.AddControllerValue("SetElementActive",function(controller,active)

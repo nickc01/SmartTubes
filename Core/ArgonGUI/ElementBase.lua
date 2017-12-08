@@ -387,9 +387,14 @@ function CreateElement(CanvasName)
 
 	Element.Draw = function()
 		if Active == true then
+			local FullyRejected = true;
+			if #Sprites == 0 then
+				FullyRejected = false;
+			end
 			for k,i in ipairs(Sprites) do
 				--sb.logInfo("Rendering Sprite of " .. sb.print(i.Name));
 				if i.Rejected == false then
+					FullyRejected = false;
 					--[[if i.Name == "Scroller" then
 						sb.logInfo("Scroller's Rect = " .. sb.print(i.Rect));
 					end--]]
@@ -400,7 +405,7 @@ function CreateElement(CanvasName)
 					end
 				end
 			end
-			if ParentMode == true then
+			if FullyRejected == false and ParentMode == true then
 				for k,i in ipairs(Children) do
 					i.Draw();
 				end
@@ -713,6 +718,10 @@ function CreateElement(CanvasName)
 				i.GetController().SetActive(bool);
 			end
 		end
+	end
+
+	Element.SetActive = function(bool)
+		Element.GetController().SetActive(bool);
 	end
 
 	ControllerBase.Active = function()
