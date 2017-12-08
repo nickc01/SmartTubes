@@ -204,8 +204,8 @@ function Creator.Create(CanvasName,Rect,Scroller,ScrollerBackground,Arrows,Mode,
 		elseif NewValue > 1 then
 			NewValue = 1;
 		end
-		sb.logInfo("OldValue = " .. sb.print(Element.Value));
-		sb.logInfo("NewValue = " .. sb.print(NewValue));
+		--sb.logInfo("OldValue = " .. sb.print(Element.Value));
+		--sb.logInfo("NewValue = " .. sb.print(NewValue));
 		if NewValue ~= Element.Value then
 			Element.Value = NewValue;
 			RecalculateScrollValues();
@@ -254,7 +254,14 @@ function Creator.Create(CanvasName,Rect,Scroller,ScrollerBackground,Arrows,Mode,
 	end);
 
 	Element.AddControllerValue("HideWhenNecessary",function(bool)
-	
+		HideWhenNecessary = bool;
+		if HideWhenNecessary == true then
+			if Element.Size > 1 then
+				Element.SetActive(true);
+			else
+				Element.SetActive(false);
+			end
+		end
 	end);
 
 	Element.AddControllerValue("OnValueChange",function(func)
