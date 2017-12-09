@@ -47,6 +47,7 @@ function Creator.Create(CanvasName,Rect,ListImages,Direction,Scrollbar)
 	local ElementSize = {math.max(InactiveSize[1],ActiveSize[1],SelectedSize[1]),math.max(InactiveSize[2],ActiveSize[2],SelectedSize[2])};
 
 	local AnchorPoint;
+	local AnchorElement;
 
 	local Offset;
 
@@ -112,12 +113,12 @@ function Creator.Create(CanvasName,Rect,ListImages,Direction,Scrollbar)
 			BottomRect = {LowPoint,0,LowPoint + ListArea[3] - ListArea[1],ListArea[4] - ListArea[2]};
 			TopRect = {(HighPoint + ElementSize[1]) - (BottomRect[3] - BottomRect[1]),0,HighPoint + ElementSize[1],ListArea[4] - ListArea[2]};
 		end
-		sb.logInfo("FirstChildPos = " .. sb.print(FirstChildPos));
-		sb.logInfo("LastChildPos = " .. sb.print(LastChildPos));
-		sb.logInfo("TopRect = " .. sb.print(TopRect));
-		sb.logInfo("BottomRect = " .. sb.print(BottomRect));
+		--sb.logInfo("FirstChildPos = " .. sb.print(FirstChildPos));
+		--sb.logInfo("LastChildPos = " .. sb.print(LastChildPos));
+		--sb.logInfo("TopRect = " .. sb.print(TopRect));
+		--sb.logInfo("BottomRect = " .. sb.print(BottomRect));
 		local Final = RectLerp(TopRect,BottomRect,Value);
-		sb.logInfo("FInal = " .. sb.print(Final));
+		--sb.logInfo("FInal = " .. sb.print(Final));
 		if Direction == "up" or Direction == "down" then
 			--AnchorPoint.SetPosition({Final[1],-Final[2],Final[3],(Final[4] - Final[2]) - Final[2]});
 			AnchorPoint.SetPosition({0,-Final[2]});
@@ -172,12 +173,17 @@ function Creator.Create(CanvasName,Rect,ListImages,Direction,Scrollbar)
 			end
 			SelectedElement = value;
 			if OnSelectedElementChange ~= nil then
-				OnSelectedElementChange(value.Parent.GetController());
+				if value == nil then
+					OnSelectedElementChange(nil);
+				else
+					OnSelectedElementChange(value.Parent.GetController());
+				end
 			end
 		end
 	end
 
 	Element.AddControllerValue("AddElement",function()
+		Element.SetSelectedElement(nil);
 		local Position = GetLastElementPosition();
 		sb.logInfo("Last Element Position = " .. sb.print(Position));
 		local NextElementPosition = vec.add(Position,Offset);
@@ -198,9 +204,20 @@ function Creator.Create(CanvasName,Rect,ListImages,Direction,Scrollbar)
 		if AnchorPoint.RemoveChild(controller) == false then
 			error("This List Element wasn't able to be removed");
 		else
+			--if SelectedElement ~= nil and SelectedElement.GetController() == controller then
+				Element.SetSelectedElement(nil);
+			--end
 			controller.Delete();
 			PositionElements();
 			RecalculatePosition();
+		end
+	end);
+
+	Element.AddControllerValue("GetElementIndex",function(controller)
+		for k,i in AnchorElement.ChildrenIter() do
+			if i.GetController() == controller then
+				return k;
+			end
 		end
 	end);
 
@@ -218,6 +235,9 @@ function Creator.Create(CanvasName,Rect,ListImages,Direction,Scrollbar)
 		if AnchorPoint.GetChildCount() > 0 then
 			local LastChild = AnchorPoint.GetLastChild();
 			if LastChild ~= nil then
+				--if SelectedElement == LastChild then
+					Element.SetSelectedElement(nil);
+				--end
 				Element.GetController().RemoveElement(LastChild);
 				--[[AnchorPoint.RemoveChild(LastChild);
 				LastChild.Delete();
@@ -225,7 +245,23 @@ function Creator.Create(CanvasName,Rect,ListImages,Direction,Scrollbar)
 			end
 		end
 	end);
+
+	Element.AddControllerValue("MoveElementUp",function(controller)
+		Element.SetSelectedElement(nil);
+		AnchorPoint.MoveChildUp(controller);
+		PositionElements();
+		RecalculatePosition();
+	end);
+
+	Element.AddControllerValue("MoveElementDown",function(controller)
+		Element.SetSelectedElement(nil);
+		AnchorPoint.MoveChildDown(controller);
+		PositionElements();
+		RecalculatePosition();
+	end);
+
 	Element.AddControllerValue("ClearList",function()
+		Element.SetSelectedElement(nil);
 		AnchorPoint.RemoveAllChildren(true);
 		PositionElements();
 		RecalculatePosition();
@@ -281,6 +317,7 @@ function Creator.Create(CanvasName,Rect,ListImages,Direction,Scrollbar)
 	Element.OnFinish(function()
 		AnchorPoint = Argon.CreateElement("Anchor Point",CanvasName,{0,0});
 		Element.AddChild(AnchorPoint);
+		AnchorElement = Element.GetLastChild();
 		StartPos = GetLastElementPosition();
 		RecalculatePosition();
 	end);
