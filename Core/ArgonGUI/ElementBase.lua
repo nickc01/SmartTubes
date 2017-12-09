@@ -609,6 +609,44 @@ function CreateElement(CanvasName)
 		return nil;
 	end
 
+	Element.MoveChildUp = function(element)
+		for k,i in ipairs(Children) do
+			if i == element then
+				table.remove(Children,k);
+				table.insert(Children,k - 1,element);
+			end
+		end
+	end
+
+	Element.MoveChildDown = function(element)
+		for k,i in ipairs(Children) do
+			if i == element then
+				table.remove(Children,k);
+				table.insert(Children,k + 1,element);
+			end
+		end
+	end
+
+	ParentingController.MoveChildUp = function(controller)
+		for k,i in ipairs(Children) do
+			if i.GetController() == controller then
+				sb.logInfo("MOVING UP");
+				table.remove(Children,k);
+				table.insert(Children,k - 1,i);
+			end
+		end
+	end
+
+	ParentingController.MoveChildDown = function(controller)
+		for k,i in ipairs(Children) do
+			if i.GetController() == controller then
+				sb.logInfo("MOVING DOWN");
+				table.remove(Children,k);
+				table.insert(Children,k + 1,i);
+			end
+		end
+	end
+
 	ParentingController.AddChild = function(controller,RetainPosition)
 		return Element.AddChild(Core.GetElementByController(controller),RetainPosition);
 	end
