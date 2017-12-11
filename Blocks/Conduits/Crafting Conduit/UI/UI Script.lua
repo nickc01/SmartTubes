@@ -238,6 +238,7 @@ function init()
 	if SourceID == nil then
 		SourceID = pane.sourceEntity();
 	end
+	ContainerCore.Init(SourceID);
 	Argon.Init();
 	AddedRecipeCanvas = Argon.AddCanvas("addedRecipeCanvas","AddedRecipeCanvas");
 	RecipeCanvas = Argon.AddCanvas("recipeCanvas","RecipeCanvas");
@@ -331,9 +332,11 @@ function init()
 	end
 	AddedRecipeScrollbar.SetSliderValue(0);
 	AddedRecipeScrollbar.SetSliderValue(1);
+	ContainerCore.Update();
 end
 function update(dt)
 	Argon.Update(dt);
+	ContainerCore.Update();
 end
 
 

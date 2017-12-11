@@ -16,7 +16,7 @@ local CableAmount = 0;
 local SourceObject = {};
 local DefaultConnections = {{0,1},{0,-1},{-1,0},{1,0}};
 
-Test = {};
+--Test = {};
 
 --[[function Test.testingfunction()
 	return "This is a test!";

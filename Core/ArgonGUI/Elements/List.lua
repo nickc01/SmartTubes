@@ -156,7 +156,7 @@ function Creator.Create(CanvasName,Rect,ListImages,Direction,Scrollbar)
 
 	local function PositionElements()
 		local Pos = vec.copy(StartPos);
-		for k,i in Element.ChildrenIter() do
+		for k,i in AnchorElement.ChildrenIter() do
 			if i.GetController().Active() == true then
 				Pos = vec.add(Pos,Offset);
 				i.SetPosition(Pos);
