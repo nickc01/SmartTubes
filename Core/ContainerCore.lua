@@ -355,6 +355,9 @@ end
 function ContainerCore.LeftClick(_,_,slot,player,currentSwapItem)
 	local Index = tostring(slot + 1);
 	if currentSwapItem == nil then
+		if Container[Index] == nil then
+			return nil;
+		end
 		local Item;
 		Item,Container[Index] = Container[Index],nil;
 		world.sendEntityMessage(player,"SetSwapItem",Item);
@@ -367,25 +370,23 @@ end
 function ContainerCore.RightClick(_,_,slot,player,currentSwapItem)
 	local Index = tostring(slot + 1);
 	if currentSwapItem == nil then
+		if Container[Index] == nil then
+			return nil;
+		end
 		local TakenItem = ContainerCore.ContainerTakeNumItemsAt(slot,1);
 		if TakenItem ~= nil then
 			world.sendEntityMessage(player,"SetSwapItem",TakenItem);
 		end
 	else
-		--[[local ItemConfig = root.itemConfig(currentSwapItem);
-		local MaxStack;
-		if ItemConfig == nil then
-			error("The Item is invalid");
-		else
-			MaxStack = ItemConfig.config.maxStack or 1000;
-		end--]]
-		local ItemConfig = GetConfig(Item);
-		local MaxStack = ItemConfig.maxStack or 1000;
-		if root.itemDescriptorsMatch(currentSwapItem,Container[Index],true) and currentSwapItem.count < MaxStack then
-			local TakenItem = ContainerCore.ContainerTakeNumItemsAt(slot,1);
-			if TakenItem ~= nil then
-				currentSwapItem.count = currentSwapItem.count + TakenItem.count;
-				world.sendEntityMessage(player,"SetSwapItem",currentSwapItem);
+		if Container[Index] ~= nil then
+			local ItemConfig = GetConfig(Container[Index]);
+			local MaxStack = ItemConfig.maxStack or 1000;
+			if root.itemDescriptorsMatch(currentSwapItem,Container[Index],true) and currentSwapItem.count < MaxStack then
+				local TakenItem = ContainerCore.ContainerTakeNumItemsAt(slot,1);
+				if TakenItem ~= nil then
+					currentSwapItem.count = currentSwapItem.count + TakenItem.count;
+					world.sendEntityMessage(player,"SetSwapItem",currentSwapItem);
+				end
 			end
 		end
 	end
