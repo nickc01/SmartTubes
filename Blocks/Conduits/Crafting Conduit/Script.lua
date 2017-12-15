@@ -9,6 +9,11 @@ local TableCompare;
 local OnCableUpdate;
 local OnInteractData;
 
+local Speeds = 0;
+local CableUpdateInterval = 0.4;
+local CableUpdateTimer = 0;
+local RecipeTimers = {};
+
 local Reset = false;
 
 local Craft;
@@ -39,6 +44,11 @@ function init()
 		object.setConfigParameter("Recipes",value);
 		Reset = true;
 	end);
+	message.setHandler("SetSpeed",function(_,_,speed)
+		Speeds = speed;
+		object.setConfigParameter("Speed",speed);
+	end);
+	Speeds = config.getParameter("Speed",0);
 	Recipes = config.getParameter("Recipes",{});
 	sb.logInfo("INIT RECIPE = " .. sb.print(Recipes));
 	CraftIndex = 0;
@@ -117,7 +127,12 @@ function update(dt)
 		First = true;
 		Cables.Initialize();
 	else
-		Cables.Update();
+		if CableUpdateTimer >= CableUpdateInterval then
+			CableUpdateTimer = 0;
+			Cables.Update();
+		else
+			CableUpdateTimer = CableUpdateTimer + dt;
+		end
 		Craft(dt);
 	end
 end
@@ -137,6 +152,15 @@ end
 local function ItemsAvailable(Items)
 	for k,i in ipairs(Items) do
 		if ContainerCore.ContainerAvailable(i) == 0 then
+			return false;
+		end
+	end
+	return true;
+end
+
+local function ConsumeItems(Items)
+	for k,i in ipairs(Items) do
+		if ContainerCore.ContainerConsume(i) == false then
 			return false;
 		end
 	end
@@ -164,13 +188,18 @@ Craft = function(dt)
 		if CraftersHaveFilters(Recipes[CraftIndex].Recipe.groups) and ContainerCore.ContainerItemsCanFit(Recipes[CraftIndex].Recipe.output) > 0 and ItemsAvailable(Recipes[CraftIndex].Recipe.input) then
 			--sb.logInfo("B");
 			--CONSUME THE ITEMS
-			RecipeInfo[CraftIndex].Value = RecipeInfo[CraftIndex].Value + ((1 / Recipes[CraftIndex].Recipe.duration) * dt);
-			if RecipeInfo[CraftIndex].Value > 1 then
-				--sb.logInfo("Crafted : " .. sb.print(Recipes[CraftIndex].Recipe.output));
-				--world.spawnItem(Recipes[CraftIndex].Recipe.output,entity.position());
-				ContainerCore.ContainerAddItems(Recipes[CraftIndex].Recipe.output);
+				RecipeInfo[CraftIndex].Value = RecipeInfo[CraftIndex].Value + ((1 / Recipes[CraftIndex].Recipe.duration) * (dt * ((Speeds + 1) / 2)));
+				if RecipeInfo[CraftIndex].Value > 1 then
+					--sb.logInfo("Crafted : " .. sb.print(Recipes[CraftIndex].Recipe.output));
+					--world.spawnItem(Recipes[CraftIndex].Recipe.output,entity.position());
+					if ConsumeItems(Recipes[CraftIndex].Recipe.input) then
+						ContainerCore.ContainerAddItems(Recipes[CraftIndex].Recipe.output);
+					end
+					ResetAndNext();
+				end
+			--[[else
 				ResetAndNext();
-			end
+			end--]]
 		else
 			ResetAndNext();
 		end

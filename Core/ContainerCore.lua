@@ -137,6 +137,8 @@ function ContainerCore.ContainerItemsCanFit(Item)
 		if Container[Index] == nil then
 			Times = Times + (math.floor(MaxStack / Item.count));
 		else
+			sb.logInfo("Item = " .. sb.print(Item));
+			sb.logInfo("Container Item = " .. sb.print(Container[Index]));
 			if root.itemDescriptorsMatch(Item,Container[Index],true) then
 				Times = Times + (math.floor((MaxStack - Container[Index].count) / Item.count));
 			end
@@ -284,7 +286,7 @@ function ContainerCore.ContainerSwapItems(Item,slot)
 	if Container[Index] ~= nil and root.itemDescriptorsMatch(Item,Container[Index],true) and Container[Index].count < MaxStack then
 		if Container[Index].count + Count > MaxStack then
 			Count = Container[Index].count + Count - MaxStack;
-			Container[Index] = MaxStack;
+			Container[Index].count = MaxStack;
 			return {name = Item.name,count = Count,parameters = Item.parameters};
 		else
 			Container[Index].count = Container[Index].count + Count;
@@ -362,7 +364,10 @@ function ContainerCore.LeftClick(_,_,slot,player,currentSwapItem)
 		Item,Container[Index] = Container[Index],nil;
 		world.sendEntityMessage(player,"SetSwapItem",Item);
 	else
+		sb.logInfo("Item Container Before = " .. sb.print(Container[Index]));
 		local Item = ContainerCore.ContainerSwapItems(currentSwapItem,slot);
+		sb.logInfo("Swapping");
+		sb.logInfo("Item Container After = " .. sb.print(Container[Index]));
 		world.sendEntityMessage(player,"SetSwapItem",Item);
 	end
 end
