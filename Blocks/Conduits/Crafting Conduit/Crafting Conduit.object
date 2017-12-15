@@ -29,7 +29,7 @@
     "cables": "Cable/Cable.png"
   },
   "conduitType": "crafting",
-  "scriptDelta": 10,
+  "scriptDelta": 2,
   "scripts": [ "/Core/ContainerCore.lua", "Script.lua", "/Core/CableCore.lua" ]
 
 }
