@@ -4,6 +4,8 @@ local AddedRecipesList = "addedRecipeArea.itemList";
 local UpdateRecipesForItem;
 local SourceID;
 local Recipes;
+local Speeds = 0;
+local SpeedMax = 20;
 --Canvases
 local RecipeCanvas;
 local AddedRecipeCanvas;
@@ -17,6 +19,8 @@ local AddedRecipeList;
 local SelectedRecipeElement;
 local SelectedAddedRecipeElement;
 
+local SpeedItem = {name = "speedupgrade",count = 1};
+
 local Rarities = {
 	common = "/interface/inventory/itembordercommon.png",
 	uncommon = "/interface/inventory/itemborderuncommon.png",
@@ -24,6 +28,13 @@ local Rarities = {
 	legendary = "/interface/inventory/itemborderlegendary.png",
 	essential = "/interface/inventory/itemborderessential.png"
 }
+
+local function UniIter(tbl)
+	for k,i in ipairs(tbl) do
+		return ipairs(tbl);
+	end
+	return pairs(tbl);
+end
 
 local CraftingGroups;
 
@@ -332,6 +343,8 @@ function init()
 	end
 	AddedRecipeScrollbar.SetSliderValue(0);
 	AddedRecipeScrollbar.SetSliderValue(1);
+	Speeds = world.getObjectParameter(SourceID,"Speed",0);
+	widget.setText("speedUpgrades",tostring(Speeds));
 	ContainerCore.Update();
 end
 function update(dt)
@@ -431,5 +444,22 @@ function orderDown()
 			--AddedRecipeList.MoveElementDown(SelectedAddedRecipeElement);
 			world.sendEntityMessage(SourceID,"SetRecipes",Recipes);
 		end
+	end
+end
+
+function SpeedAdd()
+	if Speeds < SpeedMax and player.consumeItem(SpeedItem) then
+		Speeds = Speeds + 1;
+		widget.setText("speedUpgrades",tostring(Speeds));
+		world.sendEntityMessage(SourceID,"SetSpeed",Speeds);
+	end
+end
+
+function SpeedRemove()
+	if Speeds > 0 then
+		Speeds = Speeds - 1;
+		player.giveItem(SpeedItem);
+		widget.setText("speedUpgrades",tostring(Speeds));
+		world.sendEntityMessage(SourceID,"SetSpeed",Speeds);
 	end
 end
