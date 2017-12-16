@@ -277,7 +277,7 @@ function Creator.Create(CanvasName,Rect,Scroller,ScrollerBackground,Arrows,Mode,
 
 	Element.SetUpdateFunction(function(dt)
 		if ScrollerClicked == true then
-			sb.logInfo("Setting");
+			--sb.logInfo("Setting");
 			--sb.logInfo("Value Before = " .. sb.print(Element.Value));
 			Element.GetController().SetToMousePosition(-ScrollerOffset);
 			--sb.logInfo("Value = " .. sb.print(Element.Value));
@@ -293,7 +293,7 @@ function Creator.Create(CanvasName,Rect,Scroller,ScrollerBackground,Arrows,Mode,
 	Element.SetSpriteClickFunction("Scroller",function(Position,MouseType,IsDown)
 		--sb.logInfo("Clicked! " .. sb.print(IsDown));
 		if MouseType == 0 then
-			sb.logInfo("Clicked! " .. sb.print(IsDown));
+			--sb.logInfo("Clicked! " .. sb.print(IsDown));
 			ScrollerOffset = Element.GetController().GetValueAtMousePosition() - Element.GetController().GetSliderValue();
 			ScrollerClicked = IsDown;
 			if IsDown == true then

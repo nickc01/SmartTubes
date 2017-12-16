@@ -152,7 +152,7 @@ local LiquidBuffers = setmetatable({},{__mode = "v"});
 
 Pump = function()
 	--sb.logInfo("Test");
-	sb.logInfo("Input Positions = " .. sb.print(InputPositions));
+	--sb.logInfo("Input Positions = " .. sb.print(InputPositions));
 	for k,i in LoopBackIter(InputPositions,InputIndex) do
 		InputIndex = k;
 		--sb.logInfo("Looping");
@@ -161,7 +161,7 @@ Pump = function()
 			local LiquidConfig = GetFluidConfig(Liquid[1]);
 			if ContainerCore.ContainerItemsCanFit({name = LiquidConfig.itemDrop,count = 1}) > 0 then
 				world.destroyLiquid(i);
-				sb.logInfo("Liquid = " .. sb.print(Liquid));
+				--sb.logInfo("Liquid = " .. sb.print(Liquid));
 				local LiquidName = root.liquidName(Liquid[1]);
 				if LiquidBuffers[LiquidName] == nil then
 					LiquidBuffers[LiquidName] = 0;
@@ -170,7 +170,7 @@ Pump = function()
 					Buffer = 0;
 					BufferLiquid = Liquid[1];
 				end--]]
-				sb.logInfo(sb.printJson(GetFluidConfig(Liquid[1])));
+				--sb.logInfo(sb.printJson(GetFluidConfig(Liquid[1])));
 				local OriginalBuffer = LiquidBuffers[LiquidName];
 				LiquidBuffers[LiquidName] = LiquidBuffers[LiquidName] + Liquid[2];
 				if LiquidBuffers[LiquidName] >= 1 then

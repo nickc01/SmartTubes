@@ -53,7 +53,7 @@ function ContainerCore.Update()
 				widget.setItemSlotItem(ItemSlots[tonumber(k)],i);
 			end--]]
 			local UpdatedContainer = ContainerUpdatePromise:result();
-			sb.logInfo("Container = " .. sb.print(UpdatedContainer));
+		--	sb.logInfo("Container = " .. sb.print(UpdatedContainer));
 			if UpdatedContainer ~= nil then
 				for i=1,#ItemSlots do
 					widget.setItemSlotItem(ItemSlots[i],UpdatedContainer[tostring(i)]);
@@ -86,11 +86,11 @@ end--]]
 end--]]
 
 function ContainerCore.SlotCallback(slotLink)
-	sb.logInfo("Left");
+	--sb.logInfo("Left");
 	world.sendEntityMessage(SourceID,"ContainerCore.LeftClick",SlotToIndex(slotLink) - 1,player.id(),player.swapSlotItem());
 end
 
 function ContainerCore.SlotRightClickCallback(slotLink)
-	sb.logInfo("Right");
+	--sb.logInfo("Right");
 	world.sendEntityMessage(SourceID,"ContainerCore.RightClick",SlotToIndex(slotLink) - 1,player.id(),player.swapSlotItem());
 end

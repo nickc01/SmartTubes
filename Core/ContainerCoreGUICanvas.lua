@@ -44,21 +44,21 @@ function ContainerCore.SetCanvasAsInventory(Canvas,Width,Height,SpacingVec,Start
 	else
 		LeftOverSpaceWidth = (InvSize[1] - StartCorner[1]) / Width;
 	end--]]
-	sb.logInfo("Width = " .. sb.print(Width));
-	sb.logInfo("InvSize = " .. sb.print(InvSize[1] - SpacingVec[1]));
-	sb.logInfo("Space Per Piece = " .. sb.print((ImageSize[1] + SpacingVec[1])));
-	sb.logInfo("Space Consumed = " .. sb.print(Width * (ImageSize[1] + SpacingVec[1])));
-	sb.logInfo("Left Over 2 = " .. sb.print((InvSize[1] - SpacingVec[1]) - (Width * (ImageSize[1] + SpacingVec[1]))));
+	--sb.logInfo("Width = " .. sb.print(Width));
+	--sb.logInfo("InvSize = " .. sb.print(InvSize[1] - SpacingVec[1]));
+	--sb.logInfo("Space Per Piece = " .. sb.print((ImageSize[1] + SpacingVec[1])));
+	--sb.logInfo("Space Consumed = " .. sb.print(Width * (ImageSize[1] + SpacingVec[1])));
+	--sb.logInfo("Left Over 2 = " .. sb.print((InvSize[1] - SpacingVec[1]) - (Width * (ImageSize[1] + SpacingVec[1]))));
 	local LeftOverSpace;
 	if StartCorner == nil then
 		LeftOverSpace = { (InvSize[1] + SpacingVec[1]) - (Width * (ImageSize[1] + SpacingVec[1])), (InvSize[2] + SpacingVec[2]) - (Height * (ImageSize[2] + SpacingVec[2])) };
 	else
 		LeftOverSpace = { (InvSize[1] + SpacingVec[1] - StartCorner[1]) - (Width * (ImageSize[1] + SpacingVec[1])), (InvSize[2] + SpacingVec[2] - StartCorner[2]) - (Height * (ImageSize[2] + SpacingVec[2])) };
 	end
-	sb.logInfo("LeftOverSpace = " .. sb.print(LeftOverSpace));
+	--sb.logInfo("LeftOverSpace = " .. sb.print(LeftOverSpace));
 --	local MaxSizeWidth = 
 	--local MaxSizeHeight = math.floor((InvSize[2] - StartCorner[2]) / (ImageSize[2] + SpacingVec[2]));
-	sb.logInfo("Max Size Width = " .. sb.print(MaxSizeWidth));
+	--sb.logInfo("Max Size Width = " .. sb.print(MaxSizeWidth));
 	--Width = Width or (Inventory:size()[1])
 	--Width = Width or 1;
 	--Width = MaxSizeWidth;
@@ -76,7 +76,7 @@ function ContainerCore.SetCanvasAsInventory(Canvas,Width,Height,SpacingVec,Start
 			Inventory:drawImage(Image,{StartCorner[1] + (ImageSize[1] * i) + (SpacingVec[1] * i),(StartCorner[2] + (ImageSize[2] * j) + (SpacingVec[2] * j))});
 		end
 	end
-	_ENV[Canvas .. "C"] = function(A,B,C)
+	--[[_ENV[Canvas .. "C"] = function(A,B,C)
 		sb.logInfo("Click");
 		sb.logInfo("A = " .. sb.print(A));
 		sb.logInfo("B = " .. sb.print(B));
@@ -87,7 +87,7 @@ function ContainerCore.SetCanvasAsInventory(Canvas,Width,Height,SpacingVec,Start
 		sb.logInfo("A = " .. sb.print(A));
 		sb.logInfo("B = " .. sb.print(B));
 		sb.logInfo("C = " .. sb.print(C));
-	end
+	end--]]
 end
 
 function ContainerCore.Update()

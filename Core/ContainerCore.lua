@@ -364,10 +364,10 @@ function ContainerCore.LeftClick(_,_,slot,player,currentSwapItem)
 		Item,Container[Index] = Container[Index],nil;
 		world.sendEntityMessage(player,"SetSwapItem",Item);
 	else
-		sb.logInfo("Item Container Before = " .. sb.print(Container[Index]));
+		--sb.logInfo("Item Container Before = " .. sb.print(Container[Index]));
 		local Item = ContainerCore.ContainerSwapItems(currentSwapItem,slot);
-		sb.logInfo("Swapping");
-		sb.logInfo("Item Container After = " .. sb.print(Container[Index]));
+		--sb.logInfo("Swapping");
+		--sb.logInfo("Item Container After = " .. sb.print(Container[Index]));
 		world.sendEntityMessage(player,"SetSwapItem",Item);
 	end
 end

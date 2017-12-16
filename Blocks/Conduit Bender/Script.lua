@@ -44,7 +44,7 @@ end
 function update(dt)
 	if AbleToCraft == true then
 		Progress = Progress + (dt * (Speed + 1));
-		sb.logInfo("Progress = " .. sb.print(Progress));
+		--sb.logInfo("Progress = " .. sb.print(Progress));
 		object.setConfigParameter("Progress",Progress);
 		if Progress >= 1 then
 			world.containerConsumeAt(EntityID,0,RequiredConduits);
