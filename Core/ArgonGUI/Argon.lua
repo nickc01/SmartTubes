@@ -96,7 +96,7 @@ function Argon.CreateElement(Type,CanvasAlias,...)
 		CreateElement = ElementCreatorFunction;
 		RefCounter = RefCounter + 1;
 		local Element = ElementCreators[Type](CanvasAlias,...);
-		sb.logInfo("Setting Core for type " .. sb.print(Type));
+		--sb.logInfo("Setting Core for type " .. sb.print(Type));
 		--Element.Core = Core;
 		Element.SetCore(Core);
 		Element.Type = Type;
@@ -153,7 +153,7 @@ function Argon.Init()
 			end
 		end
 	end
-	sb.logInfo("Loaded Scripts After = " .. sb.printJson(_SBLOADED,1));
+	--sb.logInfo("Loaded Scripts After = " .. sb.printJson(_SBLOADED,1));
 end
 
 function Argon.Update(dt)

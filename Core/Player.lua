@@ -20,7 +20,7 @@ function init()
 		return Config;
 	end);
 	message.setHandler("SetConfig",function(_,_,value)
-		sb.logInfo("Setting Config to " .. sb.print(value));
+		--sb.logInfo("Setting Config to " .. sb.print(value));
 		Config = value;
 	end);
 	message.setHandler("SetSwapItem",function(_,_,item)

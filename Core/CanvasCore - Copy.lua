@@ -217,7 +217,7 @@ function CanvasCore.CreateScrollbar(Canvas,BottomPosition,TopPosition,TopArrow,B
 	ScrollMeta);
 	local OnClick = function(Position,Button,IsButtonDown)
 		--sb.logInfo("You Clicked The Scrollbar");
-		sb.logInfo("Button = " .. sb.print(Button));
+		--sb.logInfo("Button = " .. sb.print(Button));
 		if Button == 0 then
 			ScrollMeta.Clicking == IsButtonDown;
 			LastMousePos = Canvas:mousePosition();
