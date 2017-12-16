@@ -185,22 +185,22 @@ function Creator.Create(CanvasName,Rect,ListImages,Direction,Scrollbar)
 	Element.AddControllerValue("AddElement",function()
 		Element.SetSelectedElement(nil);
 		local Position = GetLastElementPosition();
-		sb.logInfo("Last Element Position = " .. sb.print(Position));
+		--sb.logInfo("Last Element Position = " .. sb.print(Position));
 		local NextElementPosition = vec.add(Position,Offset);
-		sb.logInfo("Next Element Position = " .. sb.print(NextElementPosition));
+		--sb.logInfo("Next Element Position = " .. sb.print(NextElementPosition));
 		local NewChild = Argon.CreateElement("Mask",CanvasName,{NextElementPosition[1],NextElementPosition[2],NextElementPosition[1] + ElementSize[1],NextElementPosition[2] + ElementSize[2]});
 		--AnchorPoint.SetPosition({0,0});
 		AnchorPoint.AddChild(NewChild);
 		NewChild.AddChild(Argon.CreateElement("ListImage",CanvasName,nil,ListImages,Element));
-		sb.logInfo("Rel Pos = " .. sb.print(NewChild.GetPosition()));
-		sb.logInfo("Abs Pos = " .. sb.print(NewChild.GetAbsolutePosition()));
+		--sb.logInfo("Rel Pos = " .. sb.print(NewChild.GetPosition()));
+		--sb.logInfo("Abs Pos = " .. sb.print(NewChild.GetAbsolutePosition()));
 		RecalculatePosition();
-		sb.logInfo("Anchor Position = " .. sb.print(AnchorPoint.GetPosition()));
-		sb.logInfo("Element Position = " .. sb.print(Element.GetPosition()));
+		--sb.logInfo("Anchor Position = " .. sb.print(AnchorPoint.GetPosition()));
+		--sb.logInfo("Element Position = " .. sb.print(Element.GetPosition()));
 		return NewChild;
 	end);
 	Element.AddControllerValue("RemoveElement",function(controller)
-		sb.logInfo("Controller = " .. sb.print(AnchorPoint));
+		--sb.logInfo("Controller = " .. sb.print(AnchorPoint));
 		if AnchorPoint.RemoveChild(controller) == false then
 			error("This List Element wasn't able to be removed");
 		else

@@ -2,10 +2,13 @@ require ("/Core/ArgonGUI/Argon.lua");
 local RecipesList = "recipeArea.itemList";
 local AddedRecipesList = "addedRecipeArea.itemList";
 local UpdateRecipesForItem;
+local UpdateCurrencySlot;
 local SourceID;
 local Recipes;
 local Speeds = 0;
 local SpeedMax = 20;
+local Currencies = {};
+local CurrencyIndex = 1;
 --Canvases
 local RecipeCanvas;
 local AddedRecipeCanvas;
@@ -227,7 +230,7 @@ local function AddRecipeToList(Item,Recipe,Canvas,List)
 		Element.AddChild(ItemSlot);
 
 		--Item Image
-		sb.logInfo("Group = " .. sb.print(Group));
+		--sb.logInfo("Group = " .. sb.print(Group));
 		local CrafterItemImage,CrafterItemPos = nil,nil;
 		if string.match(Group.SlotItem,"^/") == nil then
 			CrafterItemImage,CrafterItemPos	= GetItemImage(Group.SlotItem,{11,18});
@@ -245,6 +248,12 @@ local function AddRecipeToList(Item,Recipe,Canvas,List)
 end
 
 function init()
+	local CurrencyConfig = root.assetJson("/currencies.config");
+	for k,i in pairs(CurrencyConfig) do
+		Currencies[#Currencies + 1] = i.representativeItem;
+	end
+	UpdateCurrencySlot("currencyToAddSlot");
+	--sb.logInfo("Currencies = " .. sb.print(Currencies));
 	SourceID = config.getParameter("MainObject");
 	if SourceID == nil then
 		SourceID = pane.sourceEntity();
@@ -330,8 +339,8 @@ function init()
 	widget.setButtonEnabled("orderUp",false);
 	widget.setButtonEnabled("orderDown",false);
 	local ReceivedRecipes = world.getObjectParameter(SourceID,"Recipes",{});
-	sb.logInfo("RETRIVED Recipes = " .. sb.print(Recipes));
-	sb.logInfo("Recipes = " .. sb.printJson(Recipes,1));
+	--sb.logInfo("RETRIVED Recipes = " .. sb.print(Recipes));
+	--sb.logInfo("Recipes = " .. sb.printJson(Recipes,1));
 	Recipes = {};
 	--[[for i=1,#Recipes do
 		sb.logInfo("Adding Recipe");
@@ -357,8 +366,8 @@ function UpdateRecipesForItem(item)
 	RecipeList.ClearList();
 	if item ~= nil then
 		local Recipes = root.recipesForItem(item.name);
-		sb.logInfo("Item = " .. sb.printJson(item,1))
-		sb.logInfo("Recipes = " .. sb.printJson(Recipes,1));
+		--sb.logInfo("Item = " .. sb.printJson(item,1))
+		--sb.logInfo("Recipes = " .. sb.printJson(Recipes,1));
 		for k,i in ipairs(Recipes) do
 			AddRecipeToList(item,i);
 		end
@@ -419,14 +428,14 @@ function orderUp()
 	if SelectedAddedRecipeElement ~= nil then
 		local Index = AddedRecipeList.GetElementIndex(SelectedAddedRecipeElement);
 		if Index ~= nil and Index > 1 then
-			sb.logInfo("Recipes BEFORE = " .. sb.print(Recipes));
-			sb.logInfo("INDEX = " .. sb.print(Index));
+			--sb.logInfo("Recipes BEFORE = " .. sb.print(Recipes));
+			--sb.logInfo("INDEX = " .. sb.print(Index));
 			local recipe = Recipes[Index];
 			table.remove(Recipes,Index);
 			table.insert(Recipes,Index - 1,recipe);
 			--AddedRecipeList.MoveElementUp(SelectedAddedRecipeElement);
 			UpdateAddedRecipeList();
-			sb.logInfo("Recipes AFTER = " .. sb.print(Recipes));
+			--sb.logInfo("Recipes AFTER = " .. sb.print(Recipes));
 			world.sendEntityMessage(SourceID,"SetRecipes",Recipes);
 		end
 	end
@@ -436,7 +445,7 @@ function orderDown()
 	if SelectedAddedRecipeElement ~= nil then
 		local Index = AddedRecipeList.GetElementIndex(SelectedAddedRecipeElement);
 		if Index ~= nil and Index < #Recipes then
-			sb.logInfo("INDEX = " .. sb.print(Index));
+			--sb.logInfo("INDEX = " .. sb.print(Index));
 			local recipe = Recipes[Index];
 			table.remove(Recipes,Index);
 			table.insert(Recipes,Index + 1,recipe);
@@ -462,4 +471,34 @@ function SpeedRemove()
 		widget.setText("speedUpgrades",tostring(Speeds));
 		world.sendEntityMessage(SourceID,"SetSpeed",Speeds);
 	end
+end
+
+currencySpinner = {};
+
+function currencySpinner.up()
+	local text = widget.getText("currencyNumberBox");
+	if text == "" then
+		text = "0";
+	end
+	local value = tonumber(text);
+	if value < 9999 then
+		value = value + 1;
+		widget.setText("currencyNumberBox",value);
+	end
+end
+
+function currencySpinner.down()
+	local text = widget.getText("currencyNumberBox");
+	if text == "" then
+		text = "0";
+	end
+	local value = tonumber(text);
+	if value > 0 then
+		value = value - 1;
+		widget.setText("currencyNumberBox",value);
+	end
+end
+
+UpdateCurrencySlot = function(slot)
+	widget.setItemSlotItem(slot,{name = Currencies[CurrencyIndex],count = 1});
 end

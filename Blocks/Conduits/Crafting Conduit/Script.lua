@@ -39,7 +39,7 @@ function init()
 		return false;
 	end);
 	message.setHandler("SetRecipes",function(_,_,value)
-		sb.logInfo("VALUE = " .. sb.print(value));
+		--sb.logInfo("VALUE = " .. sb.print(value));
 		NewRecipes = value;
 		object.setConfigParameter("Recipes",value);
 		Reset = true;
@@ -50,7 +50,7 @@ function init()
 	end);
 	Speeds = config.getParameter("Speed",0);
 	Recipes = config.getParameter("Recipes",{});
-	sb.logInfo("INIT RECIPE = " .. sb.print(Recipes));
+	--sb.logInfo("INIT RECIPE = " .. sb.print(Recipes));
 	CraftIndex = 0;
 	IncrementCraftIndexer();
 	Cables.AddAfterFunction(OnCableUpdate);
