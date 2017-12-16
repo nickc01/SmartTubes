@@ -368,10 +368,10 @@ function CreateElement(CanvasName)
 	end
 
 	Element.SetSpriteImage = function(Name,Image)
-		sb.logInfo("Test");
+		--sb.logInfo("Test");
 		if SpritesByName[Name] ~= nil then
 			Sprites[SpritesByName[Name]].Image = Image;
-			sb.logInfo("Sprite = " .. sb.print(Sprites[SpritesByName[Name]]));
+			--sb.logInfo("Sprite = " .. sb.print(Sprites[SpritesByName[Name]]));
 		else
 			error("Sprite of " .. sb.print(Name) .. " doesn't exist");
 		end
@@ -468,7 +468,7 @@ function CreateElement(CanvasName)
 			ParentMode = true;
 			if noController ~= true then
 				for k,i in pairs(ParentingController) do
-					sb.logInfo("Adding Values!!!!!!");
+					--sb.logInfo("Adding Values!!!!!!");
 					if Finished == false then
 						ControllerBase[k] = i;
 					else
@@ -630,7 +630,7 @@ function CreateElement(CanvasName)
 	ParentingController.MoveChildUp = function(controller)
 		for k,i in ipairs(Children) do
 			if i.GetController() == controller then
-				sb.logInfo("MOVING UP");
+				--sb.logInfo("MOVING UP");
 				table.remove(Children,k);
 				table.insert(Children,k - 1,i);
 			end
@@ -640,7 +640,7 @@ function CreateElement(CanvasName)
 	ParentingController.MoveChildDown = function(controller)
 		for k,i in ipairs(Children) do
 			if i.GetController() == controller then
-				sb.logInfo("MOVING DOWN");
+				--sb.logInfo("MOVING DOWN");
 				table.remove(Children,k);
 				table.insert(Children,k + 1,i);
 			end
