@@ -3,12 +3,14 @@ local RecipesList = "recipeArea.itemList";
 local AddedRecipesList = "addedRecipeArea.itemList";
 local UpdateRecipesForItem;
 local UpdateCurrencySlot;
+local UpdateCurrencyCount;
 local SourceID;
 local Recipes;
 local Speeds = 0;
 local SpeedMax = 20;
 local Currencies = {};
 local CurrencyIndex = 1;
+local CurrencyAddedIndex = 1;
 --Canvases
 local RecipeCanvas;
 local AddedRecipeCanvas;
@@ -240,6 +242,12 @@ local function AddRecipeToList(Item,Recipe,Canvas,List)
 		local CrafterItem = Argon.CreateElement("Image",Canvas,CrafterItemImage,CrafterItemPos);
 		Element.AddChild(CrafterItem);
 	end
+	--Percentage Text
+	local PercentageText = Argon.CreateElement("Text",Canvas,{1,2},"Default");
+	PercentageText.SetString("100%");
+	--CraftedAtText.SetColor({255,255,255});
+	Element.AddChild(PercentageText);
+
 	Element.Item = Item;
 	Element.Recipe = Recipe;
 	return Element;
@@ -248,23 +256,25 @@ local function AddRecipeToList(Item,Recipe,Canvas,List)
 end
 
 function init()
-	local CurrencyConfig = root.assetJson("/currencies.config");
-	for k,i in pairs(CurrencyConfig) do
-		Currencies[#Currencies + 1] = i.representativeItem;
-	end
-	UpdateCurrencySlot("currencyToAddSlot");
-	--sb.logInfo("Currencies = " .. sb.print(Currencies));
 	SourceID = config.getParameter("MainObject");
 	if SourceID == nil then
 		SourceID = pane.sourceEntity();
 	end
+	local CurrencyConfig = root.assetJson("/currencies.config");
+	for k,i in pairs(CurrencyConfig) do
+		Currencies[#Currencies + 1] = {item = i.representativeItem,currency = k};
+	end
+	UpdateCurrencySlot("currencyToAddSlot",CurrencyIndex);
+	UpdateCurrencySlot("currencyAddedSlot",CurrencyAddedIndex);
+	UpdateCurrencyCount();
+	--sb.logInfo("Currencies = " .. sb.print(Currencies));
 	ContainerCore.Init(SourceID);
 	Argon.Init();
 	AddedRecipeCanvas = Argon.AddCanvas("addedRecipeCanvas","AddedRecipeCanvas");
 	RecipeCanvas = Argon.AddCanvas("recipeCanvas","RecipeCanvas");
 	Argon.SetClickCallback("RecipeCanvas","RecipeCanvasClick");
 	Argon.SetClickCallback("AddedRecipeCanvas","AddedRecipeCanvasClick");
-	RecipeScrollbar = Argon.CreateElement("Scrollbar","RecipeCanvas",{122,1,131,171},{
+	RecipeScrollbar = Argon.CreateElement("Scrollbar","RecipeCanvas",{122,1,131,180},{
 		ScrollerTop = "/Blocks/Conduits/Crafting Conduit/UI/Window/Vertical Scroll Bar/SliderTop.png",
 		Scroller = "/Blocks/Conduits/Crafting Conduit/UI/Window/Vertical Scroll Bar/SliderMid.png",
 		ScrollerBottom = "/Blocks/Conduits/Crafting Conduit/UI/Window/Vertical Scroll Bar/SliderBottom.png",
@@ -283,7 +293,7 @@ function init()
 		TopHL = "/Blocks/Conduits/Crafting Conduit/UI/Window/Vertical Scroll Bar/SliderArrowUpHL.png",
 		BottomHL = "/Blocks/Conduits/Crafting Conduit/UI/Window/Vertical Scroll Bar/SliderArrowDownHL.png"
 	},"Vertical",5,0);
-	RecipeList = Argon.CreateElement("List","RecipeCanvas",{0,0,121,172},{
+	RecipeList = Argon.CreateElement("List","RecipeCanvas",{0,0,121,181},{
 		Inactive = "/Blocks/Conduits/Crafting Conduit/UI/Window/List Item/RecipesItemNormal.png",
 		Active = "/Blocks/Conduits/Crafting Conduit/UI/Window/List Item/RecipesItemNormal.png",
 		Selected = "/Blocks/Conduits/Crafting Conduit/UI/Window/List Item/RecipesItemSelected.png"
@@ -297,7 +307,7 @@ function init()
 		end
 	end);
 	--Added Recipe LIST
-	AddedRecipeScrollbar = Argon.CreateElement("Scrollbar","AddedRecipeCanvas",{121,1,130,171},{
+	AddedRecipeScrollbar = Argon.CreateElement("Scrollbar","AddedRecipeCanvas",{121,1,130,180},{
 		ScrollerTop = "/Blocks/Conduits/Crafting Conduit/UI/Window/Vertical Scroll Bar/SliderTop.png",
 		Scroller = "/Blocks/Conduits/Crafting Conduit/UI/Window/Vertical Scroll Bar/SliderMid.png",
 		ScrollerBottom = "/Blocks/Conduits/Crafting Conduit/UI/Window/Vertical Scroll Bar/SliderBottom.png",
@@ -316,7 +326,7 @@ function init()
 		TopHL = "/Blocks/Conduits/Crafting Conduit/UI/Window/Vertical Scroll Bar/SliderArrowUpHL.png",
 		BottomHL = "/Blocks/Conduits/Crafting Conduit/UI/Window/Vertical Scroll Bar/SliderArrowDownHL.png"
 	},"Vertical",5,0);
-	AddedRecipeList = Argon.CreateElement("List","AddedRecipeCanvas",{0,0,121,172},{
+	AddedRecipeList = Argon.CreateElement("List","AddedRecipeCanvas",{0,0,121,181},{
 		Inactive = "/Blocks/Conduits/Crafting Conduit/UI/Window/List Item/RecipesItemNormal.png",
 		Active = "/Blocks/Conduits/Crafting Conduit/UI/Window/List Item/RecipesItemNormal.png",
 		Selected = "/Blocks/Conduits/Crafting Conduit/UI/Window/List Item/RecipesItemSelected.png"
@@ -359,20 +369,23 @@ end
 function update(dt)
 	Argon.Update(dt);
 	ContainerCore.Update();
+	UpdateCurrencyCount();
 end
 
 
-function UpdateRecipesForItem(item)
+function UpdateRecipesForItem(item,IsCurrency)
 	RecipeList.ClearList();
 	if item ~= nil then
 		local Recipes = root.recipesForItem(item.name);
 		--sb.logInfo("Item = " .. sb.printJson(item,1))
-		--sb.logInfo("Recipes = " .. sb.printJson(Recipes,1));
+		sb.logInfo("Recipes = " .. sb.printJson(Recipes,1));
+		--sb.logInfo("Recipes = " .. sb.print(Recipes));
 		for k,i in ipairs(Recipes) do
+			i.IsCurrency = (IsCurrency == true);
 			AddRecipeToList(item,i);
 		end
-		AddedRecipeScrollbar.SetSliderValue(0);
-		AddedRecipeScrollbar.SetSliderValue(1);
+		RecipeScrollbar.SetSliderValue(0);
+		RecipeScrollbar.SetSliderValue(1);
 	end
 end
 
@@ -499,6 +512,114 @@ function currencySpinner.down()
 	end
 end
 
-UpdateCurrencySlot = function(slot)
-	widget.setItemSlotItem(slot,{name = Currencies[CurrencyIndex],count = 1});
+UpdateCurrencySlot = function(slot,index)
+	widget.setItemSlotItem(slot,{name = Currencies[index].item,count = 1});
+end
+
+UpdateCurrencyCount = function(count)
+	if count == nil then
+		local CurrencyCounts = world.getObjectParameter(SourceID,"CurrencyCount",{});
+		if CurrencyCounts[Currencies[CurrencyAddedIndex].currency] == nil then
+			widget.setText("currencyAddedAmount",tostring(0));
+		else
+			widget.setText("currencyAddedAmount",tostring(CurrencyCounts[Currencies[CurrencyAddedIndex].currency]));
+		end
+	else
+		if CurrencyIndex == CurrencyAddedIndex then
+			widget.setText("currencyAddedAmount",tostring(count));
+		end
+	end
+end
+
+function CurrencyAddRight()
+	if CurrencyIndex < #Currencies then
+		CurrencyIndex = CurrencyIndex + 1;
+	end
+	UpdateCurrencySlot("currencyToAddSlot",CurrencyIndex);
+end
+
+function CurrencyAddLeft()
+	if CurrencyIndex > 1 then
+		CurrencyIndex = CurrencyIndex - 1;
+	end
+	UpdateCurrencySlot("currencyToAddSlot",CurrencyIndex);
+end
+
+function CurrencyRight()
+	if CurrencyAddedIndex < #Currencies then
+		CurrencyAddedIndex = CurrencyAddedIndex + 1;
+	end
+	UpdateCurrencySlot("currencyAddedSlot",CurrencyAddedIndex);
+	UpdateCurrencyCount();
+end
+
+function CurrencyLeft()
+	if CurrencyAddedIndex > 1 then
+		CurrencyAddedIndex = CurrencyAddedIndex - 1;
+	end
+	UpdateCurrencySlot("currencyAddedSlot",CurrencyAddedIndex);
+	UpdateCurrencyCount();
+end
+
+function AddCurrency()
+	local CurrencyCounts = world.getObjectParameter(SourceID,"CurrencyCount",{});
+	local Count = 0;
+	local Currency = Currencies[CurrencyIndex].currency;
+	if CurrencyCounts[Currency] ~= nil then
+		Count = CurrencyCounts[Currency];
+	end
+	local Text = widget.getText("currencyNumberBox");
+	if Text == "" then
+		Text = "0";
+	end
+	local Diff = tonumber(Text);
+	--[[sb.logInfo("Num = " .. sb.print(9999999999999999999));
+	if Count + Diff > 9999999999999999999 then
+		Diff = 9999999999999999999 - Count;
+	end--]]
+	if Diff > player.currency(Currency) then
+		Diff = player.currency(Currency);
+	end
+	sb.logInfo("Diff = " .. sb.print(Diff));
+	if player.consumeCurrency(Currency,Diff) then
+		Count = Count + Diff;
+		world.sendEntityMessage(SourceID,"SetCurrencyCount",Currency,Count);
+		if CurrencyAddedIndex ~= CurrencyIndex then
+			CurrencyAddedIndex = CurrencyIndex;
+			UpdateCurrencySlot("currencyAddedSlot",CurrencyAddedIndex);
+		end
+		UpdateCurrencyCount(Count);
+	end
+end
+
+function RemoveCurrency()
+	local CurrencyCounts = world.getObjectParameter(SourceID,"CurrencyCount",{});
+	local Count = 0;
+	if CurrencyCounts[Currencies[CurrencyIndex].currency] ~= nil then
+		Count = CurrencyCounts[Currencies[CurrencyIndex].currency];
+	end
+	local Text = widget.getText("currencyNumberBox");
+	if Text == "" then
+		Text = "0";
+	end
+	local Diff = tonumber(Text);
+	if Diff > Count then
+		Diff = Count;
+	end
+	if Diff > 0 then
+		world.spawnItem({name = Currencies[CurrencyIndex].item,count = Diff},world.entityPosition(player.id()));
+		if CurrencyAddedIndex ~= CurrencyIndex then
+			CurrencyAddedIndex = CurrencyIndex;
+			UpdateCurrencySlot("currencyAddedSlot",CurrencyAddedIndex);
+		end
+	end
+	Count = Count - Diff;
+	world.sendEntityMessage(SourceID,"SetCurrencyCount",Currencies[CurrencyIndex].currency,Count);
+	UpdateCurrencyCount(Count);
+end
+
+function CraftCurrency()
+	RecipeItemSlot = {name = Currencies[CurrencyAddedIndex].item,count = 1};
+	widget.setItemSlotItem("recipeItemBox",RecipeItemSlot);
+	UpdateRecipesForItem(RecipeItemSlot);
 end

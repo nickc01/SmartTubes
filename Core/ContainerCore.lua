@@ -137,8 +137,8 @@ function ContainerCore.ContainerItemsCanFit(Item)
 		if Container[Index] == nil then
 			Times = Times + (math.floor(MaxStack / Item.count));
 		else
-			sb.logInfo("Item = " .. sb.print(Item));
-			sb.logInfo("Container Item = " .. sb.print(Container[Index]));
+			--sb.logInfo("Item = " .. sb.print(Item));
+			--sb.logInfo("Container Item = " .. sb.print(Container[Index]));
 			if root.itemDescriptorsMatch(Item,Container[Index],true) then
 				Times = Times + (math.floor((MaxStack - Container[Index].count) / Item.count));
 			end
