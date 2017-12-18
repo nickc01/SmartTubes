@@ -8,6 +8,10 @@ local TableCheck;
 local TableCompare;
 local OnCableUpdate;
 local OnInteractData;
+local Currencies = {};
+local CurrencyIndexList = {};
+local CurrencyCount = nil;
+local Position;
 
 local Speeds = 0;
 local CableUpdateInterval = 0.4;
@@ -26,6 +30,16 @@ local RecipeInfo = {};
 local FilterCache = {};
 
 function init()
+	Position = entity.position();
+	local CurrencyConfig = root.assetJson("/currencies.config");
+	CurrencyCount = config.getParameter("CurrencyCount",{});
+	for k,i in pairs(CurrencyConfig) do
+		Currencies[#Currencies + 1] = {item = i.representativeItem,currency = k};
+		CurrencyIndexList[k] = #Currencies;
+		if CurrencyCount[k] == nil then
+			CurrencyCount[k] = 0;
+		end
+	end
 	OnInteractData = {sourceId = entity.id(),sourcePosition = entity.position()};
 	ContainerCore.Init(65);
 	EntityID = entity.id();
@@ -48,6 +62,10 @@ function init()
 		Speeds = speed;
 		object.setConfigParameter("Speed",speed);
 	end);
+	message.setHandler("SetCurrencyCount",function(_,_,currency,count)
+		CurrencyCount[currency] = count;
+		object.setConfigParameter("CurrencyCount",CurrencyCount);
+	end);
 	Speeds = config.getParameter("Speed",0);
 	Recipes = config.getParameter("Recipes",{});
 	--sb.logInfo("INIT RECIPE = " .. sb.print(Recipes));
@@ -57,15 +75,17 @@ function init()
 end
 
 GetInteractionOfID = function(ID)
-	local Interaction = world.callScriptedEntity(ID,"onInteraction",OnInteractData);
-	if Interaction ~= nil then
-		return Interaction;
-	else
-		local InteractAction = world.getObjectParameter(ID,"interactAction");
-		if InteractAction ~= nil then
-			return {InteractAction,world.getObjectParameter(ID,"interactData")};
+	if world.entityExists(ID) then
+		local Interaction = world.callScriptedEntity(ID,"onInteraction",OnInteractData);
+		if Interaction ~= nil then
+			return Interaction;
 		else
-			return nil;
+			local InteractAction = world.getObjectParameter(ID,"interactAction");
+			if InteractAction ~= nil then
+				return {InteractAction,world.getObjectParameter(ID,"interactData")};
+			else
+				return nil;
+			end
 		end
 	end
 	return nil;
@@ -149,30 +169,68 @@ local function ResetAndNext()
 	IncrementCraftIndexer();
 end
 
-local function ItemsAvailable(Items)
+local function ItemsAvailable(Items,matchParameters)
 	for k,i in ipairs(Items) do
-		if ContainerCore.ContainerAvailable(i) == 0 then
+		if ContainerCore.ContainerAvailable(i,matchParameters) == 0 then
 			return false;
 		end
 	end
 	return true;
 end
 
-local function ConsumeItems(Items)
+local function ConsumeItems(Items,matchParameters)
 	for k,i in ipairs(Items) do
-		if ContainerCore.ContainerConsume(i) == false then
+		if ContainerCore.ContainerConsume(i,nil,matchParameters) == false then
 			return false;
 		end
 	end
 	return true;
 end
+
+local function CurrenciesAvailable(currencies)
+	for k,i in pairs(currencies) do
+		if CurrencyCount[k] < i then
+			return false;
+		end
+	end
+	return true;
+end
+
+local function ConsumeCurrencies(currencies)
+	for k,i in pairs(currencies) do
+		CurrencyCount[k] = CurrencyCount[k] - i;
+	end
+	object.setConfigParameter("CurrencyCount",CurrencyCount);
+	return true;
+end
+
+local function IsACurrency(ItemName)
+	sb.logInfo("ItemName = " .. sb.print(ItemName));
+	for k,i in ipairs(Currencies) do
+		sb.logInfo("Comparison = " .. sb.print(i));
+		if i.item == ItemName then
+			return i.currency;
+		end
+	end
+	return nil;
+end
+
+--[[local function GetCurrencyByItem(ItemName)
+	for k,i in ipairs(Currencies) do
+		if i.item == ItemName then
+			return i.currency;
+		end
+	end
+end--]]
 
 Craft = function(dt)
+	local SetInfo = false;
 	if Reset == true then
 		Reset = false;
 		Recipes = NewRecipes;
 		NewRecipes = nil;
 		RecipeInfo = {};
+		SetInfo = true;
 		CraftIndex = 0;
 		IncrementCraftIndexer();
 	end
@@ -181,28 +239,40 @@ Craft = function(dt)
 	if #Recipes > 0 then
 		if RecipeInfo[CraftIndex] == nil then
 			RecipeInfo[CraftIndex] = {Value = 0};
+			SetInfo = true;
 		end
 		--sb.logInfo("Recipe Groups = " .. sb.print(Recipes[CraftIndex].Recipe.groups));
 		--sb.logInfo("Can Craft : " .. sb.print(Recipes[CraftIndex].Recipe.output) .. " = " .. sb.print(CraftersHaveFilters(Recipes[CraftIndex].Recipe.groups)));
 		--sb.logInfo("A");
-		if CraftersHaveFilters(Recipes[CraftIndex].Recipe.groups) and ContainerCore.ContainerItemsCanFit(Recipes[CraftIndex].Recipe.output) > 0 and ItemsAvailable(Recipes[CraftIndex].Recipe.input) then
+		if CraftersHaveFilters(Recipes[CraftIndex].Recipe.groups) and ContainerCore.ContainerItemsCanFit(Recipes[CraftIndex].Recipe.output) > 0 and ItemsAvailable(Recipes[CraftIndex].Recipe.input,Recipes[CraftIndex].Recipe.matchInputParameters) and CurrenciesAvailable(Recipes[CraftIndex].Recipe.currencyInputs) then
 			--sb.logInfo("B");
 			--CONSUME THE ITEMS
 				RecipeInfo[CraftIndex].Value = RecipeInfo[CraftIndex].Value + ((1 / Recipes[CraftIndex].Recipe.duration) * (dt * ((Speeds + 1) / 2)));
 				if RecipeInfo[CraftIndex].Value > 1 then
 					--sb.logInfo("Crafted : " .. sb.print(Recipes[CraftIndex].Recipe.output));
 					--world.spawnItem(Recipes[CraftIndex].Recipe.output,entity.position());
-					if ConsumeItems(Recipes[CraftIndex].Recipe.input) then
-						ContainerCore.ContainerAddItems(Recipes[CraftIndex].Recipe.output);
+					if ConsumeItems(Recipes[CraftIndex].Recipe.input,Recipes[CraftIndex].Recipe.matchInputParameters) then
+						ConsumeCurrencies(Recipes[CraftIndex].Recipe.currencyInputs);
+						local Currency = IsACurrency(Recipes[CraftIndex].Recipe.output.name);
+						if Currency ~= nil then
+							CurrencyCount[Currency] = CurrencyCount[Currency] + Recipes[CraftIndex].Recipe.output.count;
+							object.setConfigParameter("CurrencyCount",CurrencyCount);
+						else
+							ContainerCore.ContainerAddItems(Recipes[CraftIndex].Recipe.output);
+						end
 					end
 					ResetAndNext();
 				end
+				SetInfo = true;
 			--[[else
 				ResetAndNext();
 			end--]]
 		else
 			ResetAndNext();
 		end
+	end
+	if SetInfo == true then
+		object.setConfigParameter("RecipeInfo",RecipeInfo);
 	end
 end
 
@@ -211,16 +281,20 @@ local Dying = false;
 function die()
 	Dying = true;
 	Cables.Uninitialize();
-	local Position;
 	if Facaded == true and GetDropPosition ~= nil then
 		Position = GetDropPosition();
+	end
+	for k,i in ipairs(Currencies) do
+		if CurrencyCount[i.currency] > 0 then
+			world.spawnItem({name = i.item,count = CurrencyCount[i.currency]},Position);
+		end
 	end
 	ContainerCore.Uninit(true,Position);
 end
 
 function uninit()
 	if Dying == false then
-		local Position;
+		object.setConfigParameter("CurrencyCount",CurrencyCount);
 		if Facaded == true and GetDropPosition ~= nil then
 			Position = GetDropPosition();
 		end
