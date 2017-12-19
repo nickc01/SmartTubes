@@ -163,6 +163,7 @@ function Argon.Update(dt)
 			if n.Update ~= nil then
 				n.Update(dt);
 			end
+			n.OnHover(i.Canvas:mousePosition());
 			n.Draw();
 		end
 	end
