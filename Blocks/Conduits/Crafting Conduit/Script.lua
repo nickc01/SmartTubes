@@ -165,7 +165,7 @@ IncrementCraftIndexer = function()
 end
 
 local function ResetAndNext()
-	RecipeInfo[CraftIndex].Value = 0;
+	RecipeInfo[CraftIndex] = 0;
 	IncrementCraftIndexer();
 end
 
@@ -238,7 +238,7 @@ Craft = function(dt)
 	--sb.logInfo("Recipe Size = " .. sb.print(#Recipes));
 	if #Recipes > 0 then
 		if RecipeInfo[CraftIndex] == nil then
-			RecipeInfo[CraftIndex] = {Value = 0};
+			RecipeInfo[CraftIndex] = 0
 			SetInfo = true;
 		end
 		--sb.logInfo("Recipe Groups = " .. sb.print(Recipes[CraftIndex].Recipe.groups));
@@ -247,8 +247,8 @@ Craft = function(dt)
 		if CraftersHaveFilters(Recipes[CraftIndex].Recipe.groups) and ContainerCore.ContainerItemsCanFit(Recipes[CraftIndex].Recipe.output) > 0 and ItemsAvailable(Recipes[CraftIndex].Recipe.input,Recipes[CraftIndex].Recipe.matchInputParameters) and CurrenciesAvailable(Recipes[CraftIndex].Recipe.currencyInputs) then
 			--sb.logInfo("B");
 			--CONSUME THE ITEMS
-				RecipeInfo[CraftIndex].Value = RecipeInfo[CraftIndex].Value + ((1 / Recipes[CraftIndex].Recipe.duration) * (dt * ((Speeds + 1) / 2)));
-				if RecipeInfo[CraftIndex].Value > 1 then
+				RecipeInfo[CraftIndex] = RecipeInfo[CraftIndex] + ((1 / Recipes[CraftIndex].Recipe.duration) * (dt * ((Speeds + 1) / 2)));
+				if RecipeInfo[CraftIndex] > 1 then
 					--sb.logInfo("Crafted : " .. sb.print(Recipes[CraftIndex].Recipe.output));
 					--world.spawnItem(Recipes[CraftIndex].Recipe.output,entity.position());
 					if ConsumeItems(Recipes[CraftIndex].Recipe.input,Recipes[CraftIndex].Recipe.matchInputParameters) then
@@ -268,11 +268,14 @@ Craft = function(dt)
 				ResetAndNext();
 			end--]]
 		else
+			if RecipeInfo[CraftIndex] ~= 0 then
+				SetInfo = true;
+			end
 			ResetAndNext();
 		end
 	end
 	if SetInfo == true then
-		object.setConfigParameter("RecipeInfo",RecipeInfo);
+		object.setConfigParameter("RecipeNumbers",RecipeInfo);
 	end
 end
 

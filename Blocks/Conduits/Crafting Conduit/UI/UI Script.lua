@@ -15,6 +15,8 @@ local CurrencyAddedIndex = 1;
 local RecipeCanvas;
 local AddedRecipeCanvas;
 
+--local AddedRecipes = {};
+
 --Elements
 local RecipeScrollbar;
 local RecipeList;
@@ -242,14 +244,51 @@ local function AddRecipeToList(Item,Recipe,Canvas,List)
 		local CrafterItem = Argon.CreateElement("Image",Canvas,CrafterItemImage,CrafterItemPos);
 		Element.AddChild(CrafterItem);
 	end
+	--Description Background
+	local DescriptionBackground = Argon.CreateElement("Image",Canvas,"/Blocks/Conduits/Crafting Conduit/UI/Window/ItemNameArea.png",{1,34});
+	Element.AddChild(DescriptionBackground);
+
+	--Description Text
+	local DescriptionText = Argon.CreateElement("Text",Canvas,{2,40},"Default");
+	DescriptionText.SetString("");
+	--Max 15
+	--CraftedAtText.SetColor({255,255,255});
+	Element.AddChild(DescriptionText);
+
+	Element.SetDescription = function(text)
+		if string.len(text) > 15 then
+			text = string.concat(1,14) .. "...";
+		end
+		DescriptionText.SetString(text);
+	end
+
+	Element.SetDescriptionActive = function(bool)
+		DescriptionText.SetActive(bool);
+		DescriptionBackground.SetActive(bool);
+	end
+	DescriptionText.SetActive(false);
+	DescriptionBackground.SetActive(false);
+
 	--Percentage Text
-	local PercentageText = Argon.CreateElement("Text",Canvas,{1,2},"Default");
-	PercentageText.SetString("100%");
+	local PercentageText = Argon.CreateElement("Text",Canvas,{96,39},"Default");
+	PercentageText.SetString("");
 	--CraftedAtText.SetColor({255,255,255});
 	Element.AddChild(PercentageText);
 
 	Element.Item = Item;
 	Element.Recipe = Recipe;
+	Element.SetPercentage = function(num)
+		num = math.floor(num * 100);
+		if num == 0 then
+			PercentageText.SetString("");
+		elseif num < 10 then
+			PercentageText.SetString("  " .. tostring(num) .. "%");
+		elseif num < 100 then
+			PercentageText.SetString(" " .. tostring(num) .. "%");
+		else
+			PercentageText.SetString(tostring(num) .. "%");
+		end
+	end
 	return Element;
 
 	
@@ -370,6 +409,15 @@ function update(dt)
 	Argon.Update(dt);
 	ContainerCore.Update();
 	UpdateCurrencyCount();
+	local RecipeNumbers = world.getObjectParameter(SourceID,"RecipeNumbers",{});
+	for k,i in AddedRecipeList.ElementIter() do
+		local Value = RecipeNumbers[k];
+		if Value == nil then
+			i.SetPercentage(0);
+		else
+			i.SetPercentage(Value);
+		end
+	end
 end
 
 
@@ -403,7 +451,11 @@ function RecipeItemBoxRight()
 end
 
 function RecipeItemBoxHelp()
-	
+	widget.setText("helpText","         Recipe Item Slot\n\nThis is where you put the item you want to craft\n\nWhen added, recipes for that item will be listed in the Recipes Pane\n\nOnce you select a recipe from the pane, you can add it so that it can be crafted\n\nIf this conduit is connected to the right crafter, and all the ingredients are stored in the conduit's inventory,  it will start crafting the item");
+end
+
+function CurrencyAreaHelp()
+	widget.setText("helpText","           Currency Area\n\nThis is where you can view, add, and remove currency\n\nYou can see how much currency is currently stored by using the top area\n\n The craft button allows you to craft the currency displayed\n\nYou can add and remove a certain amount of currency using the bottom area");
 end
 
 function AddRecipe()

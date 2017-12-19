@@ -308,7 +308,35 @@ function CreateElement(CanvasName)
 		end
 	end
 
+	Element.SetSpriteHoverFunction = function(Name,Func)
+		if SpritesByName[Name] ~= nil then
+			Sprites[SpritesByName[Name]].HoverFunc = Func;
+		else
+			error("Sprite of " .. sb.print(Name) .. " doesn't exist");
+		end
+	end
+
 	local ClickedSprites = nil;
+
+	Element.OnHover = function(Position)
+		--TODO
+		local FullyRejected = true;
+		for k,i in ipairs(Sprites) do
+			if i.Rejected == false then
+				FullyRejected = false;
+				if i.HoverFunc ~= nil then
+					if rect.isPosWithin(rect.vecAdd(i.Rect,Element.GetAbsolutePosition()),Position) then
+						i.HoverFunc(Position,IsDown);
+					end
+				end
+			end
+		end
+		if FullyRejected == false and Children ~= nil then
+			for k,i in ipairs(Children) do
+				i.OnHover(Position);
+			end
+		end
+	end
 
 	Element.OnClick = function(Position,ButtonType,IsDown)
 		if Active == true then

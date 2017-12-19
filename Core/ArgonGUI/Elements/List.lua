@@ -220,6 +220,16 @@ function Creator.Create(CanvasName,Rect,ListImages,Direction,Scrollbar)
 			end
 		end
 	end);
+	Element.AddControllerValue("ElementIter",function()
+		local Iter = AnchorElement.ChildrenIter();
+		return function()
+			local Index,Value = Iter();
+			if Value ~= nil then
+				return Index,Value.GetController();
+			end
+			return nil;
+		end
+	end);
 
 	Element.AddControllerValue("GetSelectedElement",function()
 		if SelectedElement ~= nil then
