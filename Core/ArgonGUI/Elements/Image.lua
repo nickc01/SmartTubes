@@ -14,5 +14,13 @@ function Creator.Create(CanvasName,Image,Position)
 		Element.SetSpriteColor("Image",color);
 	end);
 
+	Element.AddControllerValue("SetHoverFunction",function(func)
+		Element.SetSpriteHoverFunction("Image",func);
+	end);
+
+	Element.AddControllerValue("SetClickFunction",function(func)
+		Element.SetSpriteClickFunction("Image",func);
+	end);
+
 	return Element;
 end
