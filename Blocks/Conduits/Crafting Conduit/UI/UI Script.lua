@@ -168,36 +168,64 @@ local function AddRecipeToList(Item,Recipe,Canvas,List)
 	},"Right",RequiredItemsScrollbar);
 	-- Add Required Items
 	for i=1,#Recipe.input do
-		local Element = RequiredItems.AddElement();
+		local NewElement = RequiredItems.AddElement();
 		--Required Item Amount
 		local AmountText = Argon.CreateElement("Text",Canvas,{1,0},"Thin",7);
 		AmountText.SetString(tostring(Recipe.input[i].count));
-		Element.AddChild(AmountText);
+		NewElement.AddChild(AmountText);
 
 		--Required Item Rarity Image
 		local RequiredItemRarity = Argon.CreateElement("Image",Canvas,Rarities[GetItemRarity(Recipe.input[i].name)],{0,9});
-		Element.AddChild(RequiredItemRarity);
+		NewElement.AddChild(RequiredItemRarity);
 
 		--Required Item Image
 		local RequiredItemImage,RequiredItemPos = GetItemImage(Recipe.input[i].name,{9,18});
 		local RequiredItem = Argon.CreateElement("Image",Canvas,RequiredItemImage,RequiredItemPos);
-		Element.AddChild(RequiredItem);
+		local ItemName = Recipe.input[i].name;
+		RequiredItem.SetClickFunction(function(Position,ButtonType,Clicking)
+			--sb.logInfo("Clicking over Image = " .. sb.print(Clicking));
+			--sb.logInfo("MouseType = " .. sb.print(ButtonType));
+			if ButtonType == 0 then
+				--sb.logInfo(sb.print(i) .. " mode = " .. sb.print(Clicking));
+				if Clicking == true then
+					Element.SetDescriptionActive(Clicking);
+					Element.SetDescription(GetConfig(ItemName).shortdescription or ItemName);
+				else
+					Element.SetDescriptionActive(false);
+				end
+			end
+		end);
+		NewElement.AddChild(RequiredItem);
 	end
 	for k,i in pairs(Recipe.currencyInputs) do
 		if i <= 9999 then
-			local Element = RequiredItems.AddElement();
+			local NewElement = RequiredItems.AddElement();
 			--Currency Amount
 			local AmountText = Argon.CreateElement("Text",Canvas,{1,0},"Thin",7);
 			AmountText.SetString(tostring(i));
-			Element.AddChild(AmountText);
+			NewElement.AddChild(AmountText);
 			--Required Currency Image
 			local RequiredCurrencyImage,RequiredCurrencyPos = GetItemImage(k,{9,18});
 			local RequiredCurrency = Argon.CreateElement("Image",Canvas,RequiredCurrencyImage,RequiredCurrencyPos);
-			Element.AddChild(RequiredCurrency);
+			local ItemName = k;
+			RequiredCurrency.SetClickFunction(function(Position,ButtonType,Clicking)
+				--sb.logInfo("Clicking over Image = " .. sb.print(Clicking));
+				--sb.logInfo("MouseType = " .. sb.print(ButtonType));
+				if ButtonType == 0 then
+					--sb.logInfo(sb.print(i) .. " mode = " .. sb.print(Clicking));
+					if Clicking == true then
+						Element.SetDescriptionActive(Clicking);
+						Element.SetDescription(GetConfig(ItemName).shortdescription or ItemName);
+					else
+						Element.SetDescriptionActive(false);
+					end
+				end
+			end);
+			NewElement.AddChild(RequiredCurrency);
 		else
 			local CurrencyRequired = i;
 			repeat
-				local Element = RequiredItems.AddElement();
+				local NewElement = RequiredItems.AddElement();
 				--Currency Amount
 				local SubtractedCurrency = nil;
 				if CurrencyRequired <= 9999 then
@@ -210,11 +238,25 @@ local function AddRecipeToList(Item,Recipe,Canvas,List)
 
 				local AmountText = Argon.CreateElement("Text",Canvas,{1,0},"Thin",7);
 				AmountText.SetString(tostring(SubtractedCurrency));
-				Element.AddChild(AmountText);
+				NewElement.AddChild(AmountText);
 				--Required Currency Image
 				local RequiredCurrencyImage,RequiredCurrencyPos = GetItemImage(k,{9,18});
 				local RequiredCurrency = Argon.CreateElement("Image",Canvas,RequiredCurrencyImage,RequiredCurrencyPos);
-				Element.AddChild(RequiredCurrency);
+				local ItemName = k;
+				RequiredCurrency.SetClickFunction(function(Position,ButtonType,Clicking)
+					--sb.logInfo("Clicking over Image = " .. sb.print(Clicking));
+					--sb.logInfo("MouseType = " .. sb.print(ButtonType));
+					if ButtonType == 0 then
+						--sb.logInfo(sb.print(i) .. " mode = " .. sb.print(Clicking));
+						if Clicking == true then
+							Element.SetDescriptionActive(Clicking);
+							Element.SetDescription(GetConfig(ItemName).shortdescription or ItemName);
+						else
+							Element.SetDescriptionActive(false);
+						end
+					end
+				end);
+				NewElement.AddChild(RequiredCurrency);
 			until (CurrencyRequired == 0);
 
 
@@ -451,11 +493,11 @@ function RecipeItemBoxRight()
 end
 
 function RecipeItemBoxHelp()
-	widget.setText("helpText","         Recipe Item Slot\n\nThis is where you put the item you want to craft\n\nWhen added, recipes for that item will be listed in the Recipes Pane\n\nOnce you select a recipe from the pane, you can add it so that it can be crafted\n\nIf this conduit is connected to the right crafter, and all the ingredients are stored in the conduit's inventory,  it will start crafting the item");
+	widget.setText("helpText","             Recipe Item Slot\nThis is where you put the item you want to craft\n\nWhen added, recipes for that item will be listed in the Recipes Pane\n\nYou can click on a required item to see its name\n\nOnce you select a recipe from the pane, you can add it so that it can be crafted\n\nIf this conduit is connected to the right crafter, and all the ingredients are stored in the conduit's inventory,  it will start crafting the item");
 end
 
 function CurrencyAreaHelp()
-	widget.setText("helpText","           Currency Area\n\nThis is where you can view, add, and remove currency\n\nYou can see how much currency is currently stored by using the top area\n\n The craft button allows you to craft the currency displayed\n\nYou can add and remove a certain amount of currency using the bottom area");
+	widget.setText("helpText","               Currency Area\n\nThis is where you can view, add,  and remove currency\n\nYou can see how much currency is currently stored by using the top area\n\n The craft button allows you to craft the currency displayed\n\nYou can add and remove a certain amount of currency using the bottom area");
 end
 
 function AddRecipe()
