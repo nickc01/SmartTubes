@@ -316,17 +316,53 @@ function CreateElement(CanvasName)
 		end
 	end
 
+	local function MouseIsOutSide(MousePos,Size)
+		return MousePos[1] < 0 or MousePos[2] < 0 or MousePos[1] > Size[1] or MousePos[2] > Size[2];
+	end
+
 	local ClickedSprites = nil;
+	local HoveredSprites = {};
 
 	Element.OnHover = function(Position)
 		--TODO
+		sb.logInfo("Hovered Sprites = " .. sb.print(HoveredSprites));
+		if #HoveredSprites > 0 then
+			for i=#HoveredSprites,1,-1 do
+				sb.logInfo("Mouse Is outside = " .. sb.print(MouseIsOutSide(Position,Canvas:size())));
+				sb.logInfo("Is Not within = " .. sb.print(not rect.isPosWithin(rect.vecAdd(HoveredSprites[i].Rect,Element.GetAbsolutePosition()),Position)));
+				sb.logInfo("MousePos = " .. sb.print(Position));
+				sb.logInfo("Rect = " .. sb.print(rect.vecAdd(HoveredSprites[i].Rect,Element.GetAbsolutePosition())));
+				sb.logInfo("Size = " .. sb.print(Canvas:size()));
+				if MouseIsOutSide(Position,Canvas:size()) or not rect.isPosWithin(rect.vecAdd(HoveredSprites[i].Rect,Element.GetAbsolutePosition()),Position) then
+					HoveredSprites[i].HoverFunc(Position,false);
+					--sb.logInfo("Hovered Sprites = " .. sb.print(HoveredSprites));
+					--sb.logInfo("I = " .. sb.print(i));
+					HoveredSprites[i].Hovering = nil;
+					table.remove(HoveredSprites,i);
+					--sb.logInfo("Hovered Sprites After = " .. sb.print(HoveredSprites));
+				end
+			end
+		end
 		local FullyRejected = true;
-		for k,i in ipairs(Sprites) do
-			if i.Rejected == false then
-				FullyRejected = false;
-				if i.HoverFunc ~= nil then
-					if rect.isPosWithin(rect.vecAdd(i.Rect,Element.GetAbsolutePosition()),Position) then
-						i.HoverFunc(Position,IsDown);
+		if #Sprites == 0 then
+			FullyRejected = false;
+		else
+			for k,i in ipairs(Sprites) do
+				if i.Hovering ~= true and i.Rejected == false then
+					FullyRejected = false;
+					if i.HoverFunc ~= nil then
+						--sb.logInfo("B");
+						--sb.logInfo("Rect = " .. sb.print(rect.vecAdd(i.Rect,Element.GetAbsolutePosition())));
+						--sb.logInfo("Mouse Pos = " .. sb.print(Position));
+						--sb.logInfo("Mouse Position = " .. sb.print(Position));
+						--sb.logInfo("Size = " .. sb.print(Canvas:size()));
+						--sb.logInfo("MouseIsOutSide = " .. sb.print( MouseIsOutSide(Position,Canvas:size())));
+						if not MouseIsOutSide(Position,Canvas:size()) and rect.isPosWithin(rect.vecAdd(i.Rect,Element.GetAbsolutePosition()),Position) then
+							--sb.logInfo("A");
+							HoveredSprites[#HoveredSprites + 1] = i;
+							i.Hovering = true;
+							i.HoverFunc(Position,true);
+						end
 					end
 				end
 			end
