@@ -23,6 +23,10 @@ UpdateLooks = function()
 	object.setProcessingDirectives("?hueshift=" .. Hue .. "?saturation=" .. Saturation);
 end
 
+function ResetPathCache()
+	
+end
+
 function update(dt)
 	Hue = Hue + 1;
 	if Hue > 360 then
