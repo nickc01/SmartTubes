@@ -46,14 +46,6 @@ function update(dt)
 	ContainerCore.Update();
 end
 
-function die()
-	
-end
-
-function uninit()
-	
-end
-
 function SetToLevel()
 	SetMode("ToLevel");
 	SetModeText("To Level");
@@ -136,4 +128,12 @@ end
 
 SendState = function(Side)
 	world.sendEntityMessage(SourceID,"SetState",Side,ButtonStates[Side]);
+end
+
+function ConfigButtonsHelp()
+	widget.setText("helpText","            Configuration\n\nThe Five Buttons allow you to set how the liquid is controlled\n\nEach Button can in one of three modes, Disabled (the default),Input, and Output\n\nClicking on them will change their mode\n\nFor Example, to output a liquid to the right of the conduit, you would set the \"Right\" Button to Output Mode");
+end
+
+function OutputModeHelp()
+	widget.setText("helpText","             Output Mode\n\nLets you change how liquids are outputted\n\nThe \"To Level\" Option will make sure the liquid level doesn't go above the conduit\n\n The \"Fill\" Option will let the liquid level go above the conduit");
 end

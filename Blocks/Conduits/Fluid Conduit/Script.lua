@@ -15,6 +15,7 @@ local InputIndex = 1;
 local OutputIndex = 1;
 --local UpdateSlotItem;
 local Mode = "Fill";
+local Active = true;
 
 local function GetLiquidConfig(Liquid)
 	if type(Liquid) == "number" then Liquid = root.liquidName(Liquid) end;
@@ -136,11 +137,22 @@ function update(dt)
 		First = true;
 		Cables.Initialize();
 	else
-		Pump();
+		if Active == true then
+			Pump();
+		end
 		--script.setUpdateDelta(1);
 		--ContainerCore.ContainerAddItems({name = "coalore",count = 1});
 		--sb.logInfo("ContainerItems = " .. sb.print(ContainerCore.ContainerItemsRef()));
 	end
+end
+
+function onInputNodeChange(args)
+	sb.logInfo("Active = " .. sb.print(not args.level));
+	Active = not args.level;
+end
+
+function onNodeConnectionChange()
+	Active = not object.getInputNodeLevel(0);
 end
 
 --local SlotItem = nil;

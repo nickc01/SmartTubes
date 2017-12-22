@@ -33,6 +33,7 @@
   },
   "conduitType": "fluid",
   "scriptDelta": 10,
-  "scripts": [ "/Core/ContainerCore.lua","Script.lua", "/Core/CableCore.lua" ]
+  "inputNodes": [ [ 0.0, 0.0 ] ],
+  "scripts": [ "/Core/ContainerCore.lua", "Script.lua", "/Core/CableCore.lua" ]
 
 }
