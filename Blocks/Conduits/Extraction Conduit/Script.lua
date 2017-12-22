@@ -784,53 +784,31 @@ FindInsertionConduit = function()
 			ValidInsertionConduits = Retrieve("InsertID");
 		else
 			CheckInsertIDs();
-			--[[ValidInsertionConduits = {};
-			ValidInsertionConduits.Valid = {};
-			ValidInsertionConduits.Invalid = {};
-			for str in string.gmatch(Config[ConfigIndex].insertID,"[%w_%^!]+,-") do
-				if string.find(str,"^%s*%^") ~= nil then
-					ValidInsertionConduits.Invalid[#ValidInsertionConduits.Invalid + 1] = string.match(str,"^%s*%^(.*)") or "";
-				else
-					ValidInsertionConduits.Valid[#ValidInsertionConduits.Valid + 1] = str;
-				end
-			end
-			--sb.logInfo("ValidInsertionConduits = " .. sb.printJson(ValidInsertionConduits));
-			Store("InsertID",ValidInsertionConduits);--]]
 		end
 		local SelfID = entity.id();
 		Findings = {{ID = SelfID,Occluded = config.getParameter("IsOccluded",false)}};
 		local Next = {};
 		InsertConduits = {};
-		--local InsertID = world.getObjectParameter(SelfID,"insertID");
 		local InsertID = config.getParameter("insertID");
 		if InsertID ~= nil and SelfContainerCount() > 0 then
-			--if ValidInsertionConduits == "any" then
-				--InsertConduits[#InsertConduits + 1] = Findings[1];
-			--else
-				local Valid = false;
-				for _,v in ipairs(ValidInsertionConduits.Valid) do
+			local Valid = false;
+			for _,v in ipairs(ValidInsertionConduits.Valid) do
+				if v == "any" or v == InsertID or v == "!self" then
+					Valid = true;
+					break;
+				end
+			end
+			if Valid == true then
+				for _,v in ipairs(ValidInsertionConduits.Invalid) do
 					if v == "any" or v == InsertID or v == "!self" then
-						Valid = true;
+						Valid = false;
 						break;
 					end
-					--[[if InsertID == v or (v == "!self" and InsertID == SelfIID) then
-						Valid = true;
-						break;
-					end--]]
 				end
 				if Valid == true then
-					for _,v in ipairs(ValidInsertionConduits.Invalid) do
-						if v == "any" or v == InsertID or v == "!self" then
-							Valid = false;
-							break;
-						end
-					end
-					if Valid == true then
-						InsertConduits[#InsertConduits + 1] = Findings[1];
-					end
-					--InsertConduits[#InsertConduits + 1] = Findings[1];
+					InsertConduits[#InsertConduits + 1] = Findings[1];
 				end
-			--end
+			end
 		end
 		if Cables.CableTypes.Conduits ~= nil then
 			for i=1,4 do
