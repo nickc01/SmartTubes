@@ -281,6 +281,7 @@ function CableCore.Initialize()
 	message.setHandler("UpdateConnections",function(_,_,ToOthers,sourceID,sourcePos,excluded,config)
 		--sb.logInfo("Recieving Update");
 		--sb.logInfo("Self Connections = " .. sb.print(CableConnections));
+		--sb.logInfo(sb.print(entity.id()) .. " has recieved update from " .. sb.print(sourceID));
 		SourceObject = {ID = sourceID,Position = sourcePos,Excluded = excluded,Config = config};
 		CableCore.Update();
 		if ToOthers == true then 
@@ -302,6 +303,8 @@ function CableCore.Initialize()
 				SelfConfig = root.itemConfig({name = object.name(),count = 1}).config;
 				SelfConfig.CableConnections = CableConnections;
 			end
+			--sb.logInfo("I = " .. sb.print(i) .. " : Value = " .. sb.print(CableCore.CablesFound[i]));
+			--sb.logInfo("Updating " .. sb.print(CableCore.CablesFound[i]) .. " from " .. sb.print(entity.id()));
 			world.sendEntityMessage(CableCore.CablesFound[i],"UpdateConnections",false,entity.id(),object.position(),false,SelfConfig);
 		end
 	end
@@ -350,6 +353,7 @@ function CableCore.Update()
 	CableCore.CableTypes = {};
 	for i=1,CableAmount do
 		CableCore.CablesFound[i] = SatisfiesConditions(ObjectAt(vecAdd(object.position(),CableConnections[i])),i);
+		--sb.logInfo("i = " .. i .. " : Value = " .. sb.print(CableCore.CablesFound[i]));
 	end
 	local Equals = true;
 	for i=1,CableAmount do
