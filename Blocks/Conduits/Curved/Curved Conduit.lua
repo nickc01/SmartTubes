@@ -156,98 +156,8 @@ function GetCurveFunction(StartPoint,EndPoint,Speed,UseEdge)
 	--local FinalPoint = Lerp({0,0},Direction,ConduitSize);
 
 end
---[[function GetCurveFunction(StartPoint,EndPoint,Speed,UseEdge)
-	local EntityPos = entity.position();
-	if EndPoint == nil then
-		local StartDistances = {Distance(StartPoint,vecAdd(CableConnections[1],entity.position())),Distance(StartPoint,vecAdd(CableConnections[2],entity.position()))};
-		if StartDistances[1] > StartDistances[2] then
-			EndPoint = vecAdd(CableConnections[1],entity.position());
-		else
-			EndPoint = vecAdd(CableConnections[2],entity.position());
-		end
-		EndPoint = vecAdd(EndPoint,{0.5,0.5});
-	end
-	local OtherCorners = {{StartPoint[1],EndPoint[2]},{EndPoint[1],StartPoint[2]}};
-	local Distances = {Distance(OtherCorners[1],CenterPoint),Distance(OtherCorners[2],CenterPoint)};
-	local MainCenter = nil;
-	if Distances[1] < Distances[2] then
-		MainCenter = OtherCorners[1];
-	else
-		MainCenter = OtherCorners[2];
-	end
-	sb.logInfo("Main Center = " .. sb.print(MainCenter));
-	local First = vecNormalize(vecSub(StartPoint,MainCenter));
-	local Second = vecNormalize(vecSub(EndPoint,MainCenter));
-	local Angles = {math.atan(First[2],First[1]),math.atan(Second[2],Second[1])};
-	local AngleMultipler = AngleDirection(Angles[1],Angles[2]);
-
-	local StartingPheta = Angles[1];
-	local EndPheta = Angles[2];
-
-	local Pheta = StartingPheta;
-
-	local HighY = nil;
-
-	HighY = math.abs(StartPoint[2] - MainCenter[2]);
-	if math.abs(EndPoint[2] - MainCenter[2]) > HighY then
-		HighY = math.abs(EndPoint[2] - MainCenter[2]);
-	end
-
-	local HighX = nil;
-
-	HighX = math.abs(StartPoint[1] - MainCenter[1]);
-	if math.abs(EndPoint[1] - MainCenter[1]) > HighX then
-		HighX = math.abs(EndPoint[1] - MainCenter[1]);
-	end
-
-	local FinalReturn = false;
-	sb.logInfo("Returning");
-	sb.logInfo("Main Center = " .. sb.print(MainCenter));
-	sb.logInfo("HighPoints = " .. sb.print({HighX,HighY}));
-	sb.logInfo("____STARTPOINT = " .. sb.print(StartPoint));
-	sb.logInfo("End Point = " .. sb.print(EndPoint));
-	sb.logInfo("Multiplier = " .. sb.print(AngleMultipler));
-	return function()
-		local Neutralizer = Distance({math.cos(Pheta) * HighX,math.sin(Pheta) * HighY});
-		--Pheta = Pheta + ((AngleMultipler * (DT)));
-		Pheta = Pheta + ((AngleMultipler * Speed * DT) / Neutralizer);
-		if Pheta > FullRadian then Pheta = Pheta - FullRadian end;
-		if Pheta < 0 then Pheta = Pheta + FullRadian end;
-		if AngleMultipler < 0 then
-			if Pheta <= EndPheta then
-				if FinalReturn == false then
-					Pheta = EndPheta;
-					FinalReturn = true;
-					return {(math.cos(Pheta) * HighX) + MainCenter[1],(math.sin(Pheta) * HighY) + MainCenter[2]},Pheta + ((QuarterRadian * AngleMultipler));
-				end
-				return nil;
-			end
-		else
-			if Pheta >= EndPheta then
-				if FinalReturn == false then
-					FinalReturn = true;
-					Pheta = EndPheta;
-					return {(math.cos(Pheta) * HighX) + MainCenter[1],(math.sin(Pheta) * HighY) + MainCenter[2]},Pheta + ((QuarterRadian * AngleMultipler));
-				end
-				return nil;
-			end
-		end
-		return {(math.cos(Pheta) * HighX) + MainCenter[1],(math.sin(Pheta) * HighY) + MainCenter[2]},Pheta + ((QuarterRadian * AngleMultipler));
-	end
-	
-end--]]
-
 
 function init()
-	--sb.logInfo("ANGLETEST");
-	--sb.logInfo("FULLDEBUG = " .. sb.print(_ENV));
-	--[[sb.logInfo(AngleDirection(0,90));
-	sb.logInfo(AngleDirection(90,0));
-	sb.logInfo(AngleDirection(0,179));
-	sb.logInfo(AngleDirection(0,181));
-	sb.logInfo(AngleDirection(0,180));
-	sb.logInfo(AngleDirection(0,360));
-	sb.logInfo(AngleDirection(0,270));--]]
 	Cables = CableCore;
 	OldFunc = GetConduits;
 	GetConduits = function()
@@ -285,4 +195,8 @@ end
 
 function uninit()
 	Cables.UpdateOthers();
+end
+
+function die()
+	Cables.Uninitalize();
 end
