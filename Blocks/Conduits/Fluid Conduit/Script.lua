@@ -147,7 +147,7 @@ function update(dt)
 end
 
 function onInputNodeChange(args)
-	sb.logInfo("Active = " .. sb.print(not args.level));
+	--sb.logInfo("Active = " .. sb.print(not args.level));
 	Active = not args.level;
 end
 

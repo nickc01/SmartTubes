@@ -511,6 +511,10 @@ end
 
 local function FulFillsConditions(Item)
 	if Item ~= nil then
+		--sb.logInfo("Scanning Item = " .. sb.print(Item));
+		--sb.logInfo("Config For Item = " .. sb.printJson(root.itemConfig(Item)));
+		--sb.logInfo("Item Tags = " .. sb.print(root.itemTags(Item.name)));
+		--sb.logInfo("Item Type = " .. sb.print(root.itemType(Item.name)));
 		if HasValue("Items") == true then
 			Items = Retrieve("Items");
 			local FulFills = false;
