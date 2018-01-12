@@ -268,6 +268,8 @@ local function GetCableImageInfoForNum(Num,Shrinkage)
 	return {24 * Num + Shrinkage,Shrinkage,24 * (Num + 1) - Shrinkage,24 - Shrinkage},{8 - Shrinkage,8 - Shrinkage},0,{24 - (Shrinkage * 2),24 - (Shrinkage * 2)};
 end
 
+--THIS IS A TEST
+
 function CableCore.Initialize()
 	--sb.logInfo("Started INIT of " .. sb.print(entity.id()));
 	--sb.logInfo("Animation = " .. sb.print(config.getParameter("animation")));
