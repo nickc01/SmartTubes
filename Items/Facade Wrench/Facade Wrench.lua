@@ -210,6 +210,8 @@ local function OnClick(shiftHeld)
 					ItemConsumed = {name = FacadeConfig[Config.Index].item,count = 1};
 					sb.logInfo("Consumed without parameter");
 					player.consumeItem(ItemConsumed);
+				else
+					ItemConsumed = {name = FacadeConfig[Config.Index].item,count = 1};
 				end
 			end
 			IsValid = false;

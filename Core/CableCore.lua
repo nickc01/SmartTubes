@@ -246,9 +246,22 @@ function CableCore.Initialize()
 	--sb.logInfo("Started INIT of " .. sb.print(entity.id()));
 	--sb.logInfo("Animation = " .. sb.print(config.getParameter("animation")));
 	message.setHandler("SmashCableBlockAndSpawnItem",function(_,_,ItemName,Pos,Count,Config)
-		sb.logInfo("A");
+		--sb.logInfo("A");
 		ItemName = ItemName or object.name();
 		CableCore.Smashing = true;
+		local ConduitType = config.getParameter("conduitType");
+		if ConduitType == "extraction" or ConduitType == "io" then
+			Config.description = "Color=" .. (Config.SelectedColor or 1) .. "    Speed=" .. (Config.Speed or 0) .. "\nStack=" .. (Config.Stack or 0) .. "    Configs=" .. #(Config.Configs or {});
+			if #Config.Configs > 0 then
+				Config.description = Config.description .. "\nFirstConfigName=" .. (Config.Configs[1].itemName);
+			end
+		end
+		if ConduitType == "insertion" then
+			Config.description = "InsertID=" .. sb.print(config.getParameter("insertID") or "");
+		end
+		if ConduitType == "io" then
+			Config.description = Config.description .. "\nInsertID=" .. sb.print(config.getParameter("insertID") or "");
+		end
 		object.smash(true);
 		sb.logInfo("Parameters = " .. sb.print(Config));
 		if Facaded == true then
