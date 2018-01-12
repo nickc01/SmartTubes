@@ -167,6 +167,8 @@ function init()
 	if oldInit ~= nil then
 		oldInit();
 	end
+	--sb.logInfo("INSERT INIT");
+	object.setConfigParameter("RetainingParameters",{"insertID"});
 	AddHandlers();
 	Colors = {};
 	script.setUpdateDelta(1);

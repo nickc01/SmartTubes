@@ -171,10 +171,12 @@ function init()
 	if oldinit ~= nil then
 		oldinit();
 	end
+	--sb.logInfo("Extraction INIT");
 	Cables = CableCore;
 	Speed = config.getParameter("Speed",0);
 	Stack = config.getParameter("Stack",0);
 	Config = config.getParameter("Configs",{});
+	object.setConfigParameter("RetainingParameters",{"Speed","Stack","SelectedColor","Configs"});
 	SelectedColor = config.getParameter("SelectedColor",1);
 	EntityPosition = entity.position();
 	for k, i in ipairs(root.assetJson("/Projectiles/Traversals/Colors.json").Colors) do
@@ -929,9 +931,10 @@ function die()
 	else
 		DropPos = EntityPosition;
 	end
-
-	world.spawnItem({name = "speedupgrade",count = Speed},DropPos);
-	world.spawnItem({name = "stackupgrade",count = Stack},DropPos);
+	if Cables.Smashing == false then
+		world.spawnItem({name = "speedupgrade",count = Speed},DropPos);
+		world.spawnItem({name = "stackupgrade",count = Stack},DropPos);
+	end
 	Cables.Uninitialize();
 end
 

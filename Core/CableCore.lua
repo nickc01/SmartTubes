@@ -239,9 +239,25 @@ function CableCore.UpdateOthers()
 		end
 	end
 end
+
+CableCore.Smashing = false;
+
 function CableCore.Initialize()
 	--sb.logInfo("Started INIT of " .. sb.print(entity.id()));
 	--sb.logInfo("Animation = " .. sb.print(config.getParameter("animation")));
+	message.setHandler("SmashCableBlockAndSpawnItem",function(_,_,ItemName,Pos,Count,Config)
+		sb.logInfo("A");
+		ItemName = ItemName or object.name();
+		CableCore.Smashing = true;
+		object.smash(true);
+		sb.logInfo("Parameters = " .. sb.print(Config));
+		if Facaded == true then
+			Config.ContainsStoredInfoFor = GetFacadeDropItem();
+			world.spawnItem(GetFacadeDropItem(),Pos,nil,Config);
+		else
+			world.spawnItem(ItemName,Pos,nil,Config);
+		end
+	end);
 	if config.getParameter("animation") ~= "/Animations/Cable.animation" then
 		Animated = false;
 	end
