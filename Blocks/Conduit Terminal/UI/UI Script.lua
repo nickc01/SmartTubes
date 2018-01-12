@@ -1,3 +1,4 @@
+require("/Core/ImageCore.lua");
 local TitleImage = "/Blocks/Conduit Terminal/UI/Window/Title Bar.png";
 local CloseImage = "/Blocks/Conduit Terminal/UI/Window/Close Button/Close Button.png";
 local CloseHighlightedImage = "/Blocks/Conduit Terminal/UI/Window/Close Button/Close Button Highlighted.png";
@@ -16,10 +17,11 @@ local vecLerp;
 local Animations = {};
 
 local function SetupAnimationInfoForType(ConduitType,TestObject)
-	Animations[ConduitType] = {};
+	--Animations[ConduitType] = {};
+	Animations[ConduitType] = world.getObjectParameter(TestObject,"CustomAnimations");
 	--local TypeAnimation = Animations[ConduitType];
 	--local Animation = world.getObjectParameter(TestObject,"animation");
-	local Animation = world.getObjectParameter(TestObject,"animation");
+	--[[local Animation = world.getObjectParameter(TestObject,"animation");
 	local Orientations = world.getObjectParameter(TestObject,"orientations");
 	if Animation == "/Animations/Cable.animation" then
 		--Is A Cable
@@ -28,7 +30,7 @@ local function SetupAnimationInfoForType(ConduitType,TestObject)
 		sb.logInfo("Image = " .. sb.print(Animations[ConduitType].Image));
 	else
 		--Not a Cable
-	end
+	end--]]
 	--[[local Animation = world.getObjectParameter(TestObject,"animation");
 	if Animations[ConduitType] == nil then
 		Animations[ConduitType] = {};
@@ -108,11 +110,16 @@ function init()
 		sb.logInfo("I = " .. sb.printJson(i,1));
 		SetupAnimationInfoForType(k,i[1]);
 	end
+	--ImageCore.GetFrameOfImage("/Blocks/Conduits/Curved/5x/TR/Curve.png");
 	EntityPos = world.entityPosition(SourceID);
 end
 
 local Offset = {156,84};
 local MousePos;
+
+local function RectVecSub(A,B)
+	return {A[1] - B[1],A[2] - B[2],A[3] - B[1],A[4] - B[2]};
+end
 
 function update(dt)
 	local NewHue = world.getObjectParameter(SourceID,"Hue",0);
@@ -143,7 +150,36 @@ function update(dt)
 			--sb.logInfo("Here");
 			for m,n in ipairs(i) do
 				local Pos = world.entityPosition(n);
-				MainCanvas:drawImage(Animations[k].Image,{((Pos[1] - EntityPos[1]) * 8) + Offset[1],((Pos[2] - EntityPos[2]) * 8) + Offset[2]});
+				local State = world.getObjectParameter(n,"CustomAnimationState");
+				--local Rotation = Animations[k].States[State].Rect;
+				--local Rotation = world.getObjectParameter(n,"CustomAnimationRotation");
+				--MainCanvas:drawImage(Animations[k].Image,{((Pos[1] - EntityPos[1]) * 8) + Offset[1],((Pos[2] - EntityPos[2]) * 8) + Offset[2]});
+				local X = ((Pos[1] - EntityPos[1]) * 8) + Offset[1];
+				local Y = ((Pos[2] - EntityPos[2]) * 8) + Offset[2];
+				local TexCoords = {0,0,0,0};
+				local RenderPos = RectVecSub(Animations[k].States[State].Rect,Animations[k].States[State].Offset);
+				--local RenderPos = Animations[k].States[State].Rect;
+				if world.getObjectParameter(n,"CustomFlipX",false) then
+					TexCoords[1] = X + Animations[k].States[State].Size[1];
+					TexCoords[3] = X;
+					RenderPos[1] = RenderPos[1] + Animations[k].States[State].Offset[1] * 2;
+					RenderPos[3] = RenderPos[3] + Animations[k].States[State].Offset[1] * 2;
+				else
+					TexCoords[1] = X;
+					TexCoords[3] = X + Animations[k].States[State].Size[1];
+				end
+
+				if world.getObjectParameter(n,"CustomFlipY",false) then
+					TexCoords[2] = Y + Animations[k].States[State].Size[2];
+					TexCoords[4] = Y;
+					RenderPos[2] = RenderPos[2] + Animations[k].States[State].Offset[2] * 2;
+					RenderPos[4] = RenderPos[4] + Animations[k].States[State].Offset[2] * 2;
+				else
+					TexCoords[2] = Y;
+					TexCoords[4] = Y + Animations[k].States[State].Size[2];
+				end
+
+				MainCanvas:drawImageRect(Animations[k].Image,RenderPos,TexCoords);
 			end
 		end
 	end
