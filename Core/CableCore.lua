@@ -4,6 +4,8 @@ local CableCore = CableCore;
 CableCore.Initalized = false;
 local Animated = true;
 
+CableCore.Smashing = false;
+
 function GetConduits()
 	return CableCore.CableTypes["Conduits"];
 end
@@ -239,8 +241,6 @@ function CableCore.UpdateOthers()
 		end
 	end
 end
-
-CableCore.Smashing = false;
 
 function CableCore.Initialize()
 	--sb.logInfo("Started INIT of " .. sb.print(entity.id()));
