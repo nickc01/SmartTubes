@@ -171,10 +171,12 @@ function init()
 	if oldinit ~= nil then
 		oldinit();
 	end
+	--sb.logInfo("Extraction INIT");
 	Cables = CableCore;
 	Speed = config.getParameter("Speed",0);
 	Stack = config.getParameter("Stack",0);
 	Config = config.getParameter("Configs",{});
+	object.setConfigParameter("RetainingParameters",{"Speed","Stack","SelectedColor","Configs"});
 	SelectedColor = config.getParameter("SelectedColor",1);
 	EntityPosition = entity.position();
 	for k, i in ipairs(root.assetJson("/Projectiles/Traversals/Colors.json").Colors) do
@@ -216,6 +218,7 @@ local oldupdate = update;
 local First = false;
 local Time = nil;
 local UpdateRate = 0;
+local ConfigIndexResetted = false;
 function update(dt)
 	--sb.logInfo("FPS = " .. sb.print(GetFPS()));
 	--[[if Time == nil then
@@ -252,7 +255,14 @@ function update(dt)
 		Cables.Update();
 	end
 	if First == true then
-		Extract();
+		if Extract() ~= true and #Config > 1 then
+			while(true) do
+				if Extract() == true or ConfigIndexResetted or #Config < 1 then
+					ConfigIndexResetted = false;
+					break;
+				end
+			end
+		end
 	else
 		First = true;
 		--SetDelta();
@@ -366,6 +376,7 @@ Extract = function()
 		ConfigIndex = ConfigIndex + 1;
 		if ConfigIndex > #Config then
 			ConfigIndex = 1;
+			ConfigIndexResetted = true;
 		end
 		local ExportSides;
 		if HasValue("TakeFromSides") == true then
@@ -488,6 +499,7 @@ Extract = function()
 			--sb.logInfo("Occluded = " .. sb.print(Occluded));
 			if world.entityExists(InsertionConduit) == true then
 				world.sendEntityMessage(InsertionConduit,"ExtractAndSend",FoundItem,SelectedSlot,SelectedContainer,Path,InsertIntoSides,InsertIntoSlots,nil,Colors[SelectedColor],Speed + 1,nil,Retrieve("InsertID"),Occluded--[[,Retrieve("InsertID")--]]);
+				return true;
 				--world.callScriptedEntity(InsertionConduit,"ExtractAndSend",nil,nil,FoundItem,SelectedSlot,SelectedContainer,Path,InsertIntoSides,InsertIntoSlots,nil,Colors[SelectedColor],Speed + 1,nil,Retrieve("InsertID")--[[,Retrieve("InsertID")--]]);
 			end
 			--sb.logInfo("End");
@@ -507,7 +519,7 @@ local function FulFillsConditions(Item)
 			Items = Retrieve("Items");
 			local FulFills = false;
 			local Nots = {};
-			for str in string.gmatch(Config[ConfigIndex].itemName,"[%w#&@%%_%^]+,-") do
+			for str in string.gmatch(Config[ConfigIndex].itemName,"[%w#&@%%_%^;:,<%.>]+,-") do
 				--Items[#Items + 1] = str;
 				local FirstCharacter = string.sub(str,1,1);
 				if FirstCharacter == "^" then
@@ -550,7 +562,7 @@ local function FulFillsConditions(Item)
 			Items = {};
 			local FulFills = false;
 			local Nots = {};
-			for str in string.gmatch(Config[ConfigIndex].itemName,"[%w#&@%%_%^]+,-") do
+			for str in string.gmatch(Config[ConfigIndex].itemName,"[%w#&@%%_%^;:,<%.>]+,-") do
 				Items[#Items + 1] = str;
 				local FirstCharacter = string.sub(str,1,1);
 				if FirstCharacter == "^" then
@@ -901,9 +913,10 @@ function die()
 	else
 		DropPos = EntityPosition;
 	end
-
-	world.spawnItem({name = "speedupgrade",count = Speed},DropPos);
-	world.spawnItem({name = "stackupgrade",count = Stack},DropPos);
+	if Cables.Smashing == false then
+		world.spawnItem({name = "speedupgrade",count = Speed},DropPos);
+		world.spawnItem({name = "stackupgrade",count = Stack},DropPos);
+	end
 	Cables.Uninitialize();
 end
 

@@ -33,6 +33,7 @@
   },
   "conduitType": "extraction",
   "scriptDelta": 10,
-  "scripts": ["Script.lua", "/Core/CableCore.lua"]
+  "retainObjectParametersInItem": false,
+  "scripts": [ "Script.lua", "/Core/CableCore.lua" ]
 
 }

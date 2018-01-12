@@ -16,6 +16,10 @@ function GetDropPosition()
 	return DropPosition;
 end
 
+function GetFacadeDropItem()
+	return Item;
+end
+
 function init()
 	script.setUpdateDelta(1);
 	DropPosition = entity.position();
@@ -112,7 +116,7 @@ function die()
 	if oldDie ~= nil then
 		oldDie();
 	end
-	if Item ~= nil then
+	if Item ~= nil and CableCore.Smashing == false then
 		world.spawnItem({name = Item,count = 1},DropPosition,1);
 	end
 end

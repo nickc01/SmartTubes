@@ -30,6 +30,8 @@ local UpdateAfterLimit;
 
 local Indicators = nil;
 
+local ItemConsumed = nil;
+
 local function vecEq(A,B)
 	if B == nil then return false end;
 	return A[1] == B[1] and A[2] == B[2];
@@ -173,6 +175,7 @@ local function EmbedInBlock(Position)
 	end
 	local Object,IsOccluded = GetBlock(Foreground);
 	--sb.logInfo("Material Above = " .. sb.print(world.objectAt(vecAdd(Position,{0,1}))));
+	sb.logInfo("Item = " .. sb.print(ItemConsumed));
 	local Info = 
 	{
 		--ADD OCLUDED BOOLEAN
@@ -185,6 +188,7 @@ local function EmbedInBlock(Position)
 		Object = Object,
 		IsOccluded = IsOccluded,
 		Indicator = FacadeConfig[Config.Index].indicator,
+		ExtraParameters = ItemConsumed.parameters,
 		Position = Position
 	}
 	world.damageTiles({Position},"foreground",Position,"explosive",9999,0);
@@ -195,8 +199,20 @@ end
 local function OnClick(shiftHeld)
 	if IsValid == true then
 		if Config.Breaking == false and (player.isAdmin() or player.hasItem({name = FacadeConfig[Config.Index].item,count = 1}) == true) then
-			if player.isAdmin() == false then
-				player.consumeItem({name = FacadeConfig[Config.Index].item,count = 1});
+			local ConsumedItem = player.getItemWithParameter("ContainsStoredInfoFor",FacadeConfig[Config.Index].item);
+			sb.logInfo("Contains Item with stored Info = " .. sb.print(player.hasItemWithParameter("ContainsStoredInfoFor",FacadeConfig[Config.Index].item)));
+			if ConsumedItem ~= nil then
+				player.consumeItemWithParameter("ContainsStoredInfoFor",FacadeConfig[Config.Index].item,1);
+				sb.logInfo("Consumed with parameter");
+				ItemConsumed = ConsumedItem;
+			else
+				if player.isAdmin() == false then
+					ItemConsumed = {name = FacadeConfig[Config.Index].item,count = 1};
+					sb.logInfo("Consumed without parameter");
+					player.consumeItem(ItemConsumed);
+				else
+					ItemConsumed = {name = FacadeConfig[Config.Index].item,count = 1};
+				end
 			end
 			IsValid = false;
 			SpawnCursor(false);

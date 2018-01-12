@@ -12,6 +12,15 @@ function update(dt)
 end
 
 PlaceObject = function()
-	world.placeObject(Info.Object,Info.Position,nil,{Info = Info});
+	local Params = {};
+	Params.Info = Info;
+	if Info.ExtraParameters ~= nil then
+		for k,i in ipairs(Info.ExtraParameters.RetainingParameters) do
+			if Info.ExtraParameters[i] ~= nil then
+				Params[i] = Info.ExtraParameters[i];
+			end
+		end
+	end
+	world.placeObject(Info.Object,Info.Position,nil,Params);
 	projectile.die();
 end

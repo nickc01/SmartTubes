@@ -6,6 +6,7 @@ function init()
 		oldinit();
 	end
 	object.setInteractive(true)
+	object.setConfigParameter("RetainingParameters",{"Speed","Stack","SelectedColor","Configs","insertID"});
 end
 
 local FinalJson = nil;
