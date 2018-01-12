@@ -192,5 +192,12 @@
     "value": {
       "item": "conduitstation"
     }
+  },
+  {
+    "op": "add",
+    "path": "/defaultBlueprints/tier1/145",
+    "value": {
+      "item": "objectdatatool"
+    }
   }
 ]
