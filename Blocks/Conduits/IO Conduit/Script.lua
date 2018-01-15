@@ -9,6 +9,14 @@ function init()
 	object.setConfigParameter("RetainingParameters",{"Speed","Stack","SelectedColor","Configs","insertID"});
 end
 
+local oldUpdate = update;
+
+function update(dt)
+	if oldUpdate ~= nil then
+		oldUpdate(dt);
+	end
+end
+
 local FinalJson = nil;
 function onInteraction(args)
 	if FinalJson == nil then

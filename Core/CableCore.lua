@@ -271,6 +271,11 @@ end
 --THIS IS A TEST
 
 function CableCore.Initialize()
+	sb.logInfo("CableInit");
+	if CableCore.Initalized == true then
+		return nil;
+	end
+	sb.logInfo("New Init");
 	--sb.logInfo("Started INIT of " .. sb.print(entity.id()));
 	--sb.logInfo("Animation = " .. sb.print(config.getParameter("animation")));
 	if config.getParameter("animation") ~= "/Animations/Cable.animation" then
@@ -284,7 +289,7 @@ function CableCore.Initialize()
 
 		CableCore.AddAnimationState("up",GetCableImageInfoForNum(1,1));
 
-		CableCore.AddAnimationState("right",GetCableImageInfoForNum(2,1));
+		CableCore.AddAnimationState("right",{48,0,72,24},{8,8},0,{24,24});
 
 		CableCore.AddAnimationState("corner",GetCableImageInfoForNum(3,1));
 

@@ -104,6 +104,7 @@ function init()
 	UpdateColors();
 	MainCanvas = widget.bindCanvas("mainCanvas");
 	Conduits = world.getObjectParameter(SourceID,"AllConduits",{});
+	sb.logInfo("ALLCONDUITINITIAL = " .. sb.print(Conduits));
 	for k,i in pairs(Conduits) do
 		sb.logInfo("Setting Up Type = " .. sb.print(k));
 		sb.logInfo("I[1] = " .. sb.print(i[1]));
@@ -156,30 +157,30 @@ function update(dt)
 				--MainCanvas:drawImage(Animations[k].Image,{((Pos[1] - EntityPos[1]) * 8) + Offset[1],((Pos[2] - EntityPos[2]) * 8) + Offset[2]});
 				local X = ((Pos[1] - EntityPos[1]) * 8) + Offset[1];
 				local Y = ((Pos[2] - EntityPos[2]) * 8) + Offset[2];
-				local TexCoords = {0,0,0,0};
-				local RenderPos = RectVecSub(Animations[k].States[State].Rect,Animations[k].States[State].Offset);
+				local RenderCoords = {0,0,0,0};
+				local TexCoords = Animations[k].States[State].Rect;
 				--local RenderPos = Animations[k].States[State].Rect;
 				if world.getObjectParameter(n,"CustomFlipX",false) then
-					TexCoords[1] = X + Animations[k].States[State].Size[1];
-					TexCoords[3] = X;
-					RenderPos[1] = RenderPos[1] + Animations[k].States[State].Offset[1] * 2;
-					RenderPos[3] = RenderPos[3] + Animations[k].States[State].Offset[1] * 2;
+					RenderCoords[1] = X + Animations[k].States[State].Size[1];
+					RenderCoords[3] = X;
+					--RenderPos[1] = RenderPos[1] + Animations[k].States[State].Offset[1] * 2;
+					--RenderPos[3] = RenderPos[3] + Animations[k].States[State].Offset[1] * 2;
 				else
-					TexCoords[1] = X;
-					TexCoords[3] = X + Animations[k].States[State].Size[1];
+					RenderCoords[1] = X;
+					RenderCoords[3] = X + Animations[k].States[State].Size[1];
 				end
 
 				if world.getObjectParameter(n,"CustomFlipY",false) then
-					TexCoords[2] = Y + Animations[k].States[State].Size[2];
-					TexCoords[4] = Y;
-					RenderPos[2] = RenderPos[2] + Animations[k].States[State].Offset[2] * 2;
-					RenderPos[4] = RenderPos[4] + Animations[k].States[State].Offset[2] * 2;
+					RenderCoords[2] = Y + Animations[k].States[State].Size[2];
+					RenderCoords[4] = Y;
+					--RenderPos[2] = RenderPos[2] + Animations[k].States[State].Offset[2] * 2;
+					--RenderPos[4] = RenderPos[4] + Animations[k].States[State].Offset[2] * 2;
 				else
-					TexCoords[2] = Y;
-					TexCoords[4] = Y + Animations[k].States[State].Size[2];
+					RenderCoords[2] = Y;
+					RenderCoords[4] = Y + Animations[k].States[State].Size[2];
 				end
-
-				MainCanvas:drawImageRect(Animations[k].Image,RenderPos,TexCoords);
+				RenderCoords = RectVecSub(RenderCoords,Animations[k].States[State].Offset);
+				MainCanvas:drawImageRect(Animations[k].Image,TexCoords,RenderCoords);
 			end
 		end
 	end
