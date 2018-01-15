@@ -56,6 +56,9 @@ ScanForConduits = function()
 		for i=1,#Next do
 			if world.entityExists(Next[i].ID) then
 				local Conduits = world.callScriptedEntity(Next[i].ID,"GetConduits");
+				if Next[i].ID == EntityID then
+					sb.logInfo("SELF CONDUITS = " .. sb.print(Conduits));
+				end
 				world.callScriptedEntity(Next[i].ID,"AddExtractionConduit",EntityID);
 				if Conduits ~= nil then
 					for x=1,#Conduits do

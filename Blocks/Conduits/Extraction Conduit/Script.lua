@@ -195,7 +195,7 @@ function init()
 	AddHandlers();
 	Cables.AddCondition("Conduits","conduitType",function(value) return value ~= nil end);
 	--Cables.AddCondition("Containers","objectType",function(value) return value == "container" end);
-	Cables.AddAdvancedCondition("Containers",function(ID) return world.getObjectParameter(ID,"objectType") == "container" or world.callScriptedEntity(ID,"IsContainerCore") == true end);
+	Cables.AddAdvancedCondition("Containers",function(ID) return world.entityExists(ID) and (world.getObjectParameter(ID,"objectType") == "container" or world.callScriptedEntity(ID,"IsContainerCore") == true) end);
 	AddOperator("#",function(Item,string) return root.itemType(Item.name) == string end);
 	AddOperator("&",function(Item,string) return string.find(string.lower(Item.name),string.lower(string)) ~= nil end);
 	AddOperator("@",function(Item,string) return root.itemConfig(Item).config.category == string end);
