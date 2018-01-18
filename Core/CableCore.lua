@@ -263,7 +263,7 @@ function CableCore.Initialize()
 			Config.description = Config.description .. "\nInsertID=" .. sb.print(config.getParameter("insertID") or "");
 		end
 		object.smash(true);
-		sb.logInfo("Parameters = " .. sb.print(Config));
+		--sb.logInfo("Parameters = " .. sb.print(Config));
 		if Facaded == true then
 			Config.ContainsStoredInfoFor = GetFacadeDropItem();
 			world.spawnItem(GetFacadeDropItem(),Pos,nil,Config);
