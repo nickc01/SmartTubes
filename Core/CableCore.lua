@@ -252,7 +252,7 @@ function CableCore.Initialize()
 		local ConduitType = config.getParameter("conduitType");
 		if ConduitType == "extraction" or ConduitType == "io" then
 			Config.description = "Color=" .. (Config.SelectedColor or 1) .. "    Speed=" .. (Config.Speed or 0) .. "\nStack=" .. (Config.Stack or 0) .. "    Configs=" .. #(Config.Configs or {});
-			if #Config.Configs > 0 then
+			if Config.Configs ~= nil and #Config.Configs > 0 then
 				Config.description = Config.description .. "\nFirstConfigName=" .. (Config.Configs[1].itemName);
 			end
 		end
