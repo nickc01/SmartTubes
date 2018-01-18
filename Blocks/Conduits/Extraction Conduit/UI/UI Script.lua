@@ -13,6 +13,11 @@ local ItemName;
 local SlotItem;
 local ChangeConfig = false;
 
+local UpdatePasteButton;
+
+local CanPaste = false;
+local CanPasteMessage;
+
 local function deepCopy(tbl)
 	local newtable = {};
 	for i=1,#tbl do
@@ -244,6 +249,24 @@ function itemBox()
 	world.sendEntityMessage(SourceID,"SetValue","SlotItem",SlotItem);
 end
 
+function update(dt)
+	if CanPasteMessage == nil then
+		CanPasteMessage = world.sendEntityMessage(player.id(),"PlayerHasCopy");
+	end
+	--sb.logInfo("Finished = " .. sb.print(CanPasteMessage:finished()));
+	if CanPasteMessage:finished() then
+		--sb.logInfo("Can Paste = " .. sb.print(CanPasteMessage:result()));
+		if CanPasteMessage:result() ~= CanPaste then
+			CanPaste = CanPasteMessage:result();
+		end
+	end
+	--sb.logInfo("CanPasteMessage = " .. sb.print(CanPasteMessage));
+end
+
+UpdatePasteButton = function()
+	
+end
+
 local function AddConfig(ItemName,InsertID,TakeFromSide,InsertIntoSide,TakeFromSlot,InsertIntoSlot,AmountToLeave,IsSpecific,SpecificData)
 	Configs[#Configs + 1] = {
 		itemName = ItemName,
@@ -297,10 +320,12 @@ function SelectedItemChange()
 		widget.setButtonEnabled("removeButton",true);
 		widget.setButtonEnabled("orderUp",true);
 		widget.setButtonEnabled("orderDown",true);
+		widget.setButtonEnabled("copyButton",true);
 	else
 		widget.setButtonEnabled("removeButton",false);
 		widget.setButtonEnabled("orderUp",false);
 		widget.setButtonEnabled("orderDown",false);
+		widget.setButtonEnabled("copyButton",false);
 	end
 end
 
@@ -417,6 +442,17 @@ function ColorDecrement()
 		SelectedColor = #Colors;
 	end
 	UpdateColor();
+end
+
+function Copy()
+	local SelectedItem = widget.getListSelected(ItemList);
+	local Index = 0;
+	for k,i in ipairs(ListItems) do
+		if SelectedItem == i then
+			world.sendEntityMessage(pane.sourceEntity(),"SetExtractionConfigCopy",Configs[k]);
+			break;
+		end
+	end
 end
 
 
