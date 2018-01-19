@@ -464,23 +464,6 @@ function ColorDecrement()
 	UpdateColor();
 end
 
-function Copy()
-	sb.logInfo("Copy Pressed");
-	local SelectedItem = widget.getListSelected(ItemList);
-	local Index = 0;
-	for k,i in ipairs(ListItems) do
-		if SelectedItem == i then
-			sb.logInfo("Sending " .. sb.print(Configs[k]) .. " to player");
-			world.sendEntityMessage(player.id(),"SetExtractionConfigCopy",Configs[k]);
-			break;
-		end
-	end
-end
-
-function Paste()
-	PasteMessage = world.sendEntityMessage(player.id(),"RetrieveExtractionConfigCopy");
-end
-
 
 
 
