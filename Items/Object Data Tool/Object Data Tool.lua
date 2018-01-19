@@ -74,7 +74,7 @@ function OnClick(fireMode)
 		local Object = world.objectAt(activeItem.ownerAimPosition());
 		if Object ~= nil then
 			local Params = world.getObjectParameter(Object,"RetainingParameters");
-			sb.logInfo("Params = " .. sb.print(Params));
+			--sb.logInfo("Params = " .. sb.print(Params));
 			local Pos = world.entityPosition(Object);
 			--sb.logInfo(stringTable(world,"World"));
 			local Configs = {};
@@ -82,7 +82,7 @@ function OnClick(fireMode)
 				for k,i in ipairs(Params) do
 					Configs[i] = world.getObjectParameter(Object,i);
 				end
-				sb.logInfo("Configs = " .. sb.print(Configs));
+				--sb.logInfo("Configs = " .. sb.print(Configs));
 				local R = math.random(0,255);
 				local G = math.random(0,255);
 				local B = math.random(0,255);
