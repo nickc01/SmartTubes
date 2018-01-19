@@ -26,6 +26,7 @@ function init()
 	message.setHandler("SetSwapItem",function(_,_,item)
 		player.setSwapSlotItem(item);
 	end);
+	--
 end
 
 --[[function stringTable(table,name,spacer)
