@@ -13,6 +13,8 @@ local ItemName;
 local SlotItem;
 local ChangeConfig = false;
 
+local PasteMessage;
+
 local UpdatePasteButton;
 
 local CanPaste = false;
@@ -195,6 +197,7 @@ function init()
 	widget.setChecked("specificCheckBox",world.getObjectParameter(SourceID,"SpecificValue",false));
 	UpdateConfigsArea();
 	SelectedItemChange();
+	UpdatePasteButton();
 	UpdateColor();
 	if SlotItem ~= nil then
 		widget.setItemSlotItem("itemBox",SlotItem);
@@ -255,16 +258,33 @@ function update(dt)
 	end
 	--sb.logInfo("Finished = " .. sb.print(CanPasteMessage:finished()));
 	if CanPasteMessage:finished() then
-		--sb.logInfo("Can Paste = " .. sb.print(CanPasteMessage:result()));
+		sb.logInfo("Can Paste = " .. sb.print(CanPasteMessage:result()));
 		if CanPasteMessage:result() ~= CanPaste then
 			CanPaste = CanPasteMessage:result();
+			UpdatePasteButton();
+		end
+		CanPasteMessage = nil;
+	end
+	if PasteMessage ~= nil then
+		if PasteMessage:finished() then
+			local Value = PasteMessage:result();
+			if Value ~= nil then
+				Configs[#Configs + 1] = Value;
+				ChangeConfig = true;
+				UpdateConfigsArea();
+			end
+			PasteMessage = nil;
 		end
 	end
 	--sb.logInfo("CanPasteMessage = " .. sb.print(CanPasteMessage));
 end
 
 UpdatePasteButton = function()
-	
+	if CanPaste == true then
+		widget.setButtonEnabled("pasteButton",true);
+	else
+		widget.setButtonEnabled("pasteButton",false);
+	end
 end
 
 local function AddConfig(ItemName,InsertID,TakeFromSide,InsertIntoSide,TakeFromSlot,InsertIntoSlot,AmountToLeave,IsSpecific,SpecificData)
@@ -445,14 +465,20 @@ function ColorDecrement()
 end
 
 function Copy()
+	sb.logInfo("Copy Pressed");
 	local SelectedItem = widget.getListSelected(ItemList);
 	local Index = 0;
 	for k,i in ipairs(ListItems) do
 		if SelectedItem == i then
-			world.sendEntityMessage(pane.sourceEntity(),"SetExtractionConfigCopy",Configs[k]);
+			sb.logInfo("Sending " .. sb.print(Configs[k]) .. " to player");
+			world.sendEntityMessage(player.id(),"SetExtractionConfigCopy",Configs[k]);
 			break;
 		end
 	end
+end
+
+function Paste()
+	PasteMessage = world.sendEntityMessage(player.id(),"RetrieveExtractionConfigCopy");
 end
 
 
