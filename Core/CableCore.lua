@@ -350,6 +350,7 @@ function CableCore.Initialize()
 			end
 		end
 	end);
+	--
 	CableCore.Update();
 	local SelfConfig = nil;
 	for i=1,CableAmount do
