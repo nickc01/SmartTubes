@@ -341,11 +341,13 @@ function SelectedItemChange()
 		widget.setButtonEnabled("orderUp",true);
 		widget.setButtonEnabled("orderDown",true);
 		widget.setButtonEnabled("copyButton",true);
+		widget.setButtonEnabled("editButton",true);
 	else
 		widget.setButtonEnabled("removeButton",false);
 		widget.setButtonEnabled("orderUp",false);
 		widget.setButtonEnabled("orderDown",false);
 		widget.setButtonEnabled("copyButton",false);
+		widget.setButtonEnabled("editButton",false);
 	end
 end
 
@@ -479,6 +481,27 @@ end
 
 function Paste()
 	PasteMessage = world.sendEntityMessage(player.id(),"RetrieveExtractionConfigCopy");
+end
+
+function Edit()
+	local SelectedItem = widget.getListSelected(ItemList);
+	local Index = 0;
+	for k,i in ipairs(ListItems) do
+		if SelectedItem == i then
+			local Value = Configs[k];
+			table.remove(Configs,k);
+			widget.setText("itemNameBox",Value.itemName or "");
+			widget.setText("insertIDBox",Value.insertID or "");
+			widget.setText("takeFromSideBox",Value.takeFromSide or "");
+			widget.setText("insertIntoSideBox",Value.insertIntoSide or "");
+			widget.setText("takeFromSlotBox",Value.takeFromSlot or "");
+			widget.setText("insertIntoSlotBox",Value.insertIntoSlot or "");
+			widget.setText("amountToLeaveBox",Value.amountToLeave or "");
+			break;
+		end
+	end
+	ChangeConfig = true;
+	UpdateConfigsArea();
 end
 
 
