@@ -1,4 +1,4 @@
-
+require("/Core/Debug.lua");
 local Cables;
 local Active = false;
 
@@ -157,11 +157,11 @@ function init()
 	--Active = true;
 	--</TEST>
 	--[[local TestArray = {1,2,3,4,5,6,7,8,9,10}
-	sb.logInfo("STARTARRAY");
+	DPrint("STARTARRAY");
 	for i in ShakerLoop(TestArray) do
-		sb.logInfo(sb.print(i));
+		DPrint(sb.print(i));
 	end
-	sb.logInfo("ENDARRAY");--]]
+	DPrint("ENDARRAY");--]]
 	Cables = CableCore;
 	EntityID = entity.id();
 	if oldInit ~= nil then
@@ -208,7 +208,7 @@ local function FirstUpdate()
 		local EntityPosition = entity.position();
 		StoredRegion = {EntityPosition[1] - 5,EntityPosition[2] - 5,EntityPosition[1] + 5,EntityPosition[2] + 5};
 	end
-	--sb.logInfo("REGION = " .. sb.print(StoredRegion));
+	--DPrint("REGION = " .. sb.print(StoredRegion));
 	world.loadRegion(StoredRegion);
 end
 
@@ -227,7 +227,7 @@ function update(dt)
 	if Ready == false then
 		if world.regionActive(StoredRegion) == true then
 			RemapContainers();
-			--sb.logInfo("REG_IS = " .. sb.print(StoredRegion));
+			--DPrint("REG_IS = " .. sb.print(StoredRegion));
 			AddAllPredictions();
 			Ready = true;
 		end
@@ -239,10 +239,10 @@ function update(dt)
 			T.Index,T.Clock = T.Index - 1,0;
 			if T.Index == 1 then
 				AddToInventory(_,_,T.Traversal,T.Container);
-				--sb.logInfo("Adding to Inventory of " .. sb.print(T.Container));
+				--DPrint("Adding to Inventory of " .. sb.print(T.Container));
 				table.remove(CrammedTraversals,i);
 			else
-				--sb.logInfo("Path Index = " .. sb.print(T.Path[T.Index]));
+				--DPrint("Path Index = " .. sb.print(T.Path[T.Index]));
 				if world.entityExists(T.Path[T.Index]) == false or world.getObjectParameter(T.Path[T.Index],"conduitType") == nil then
 					DropItems(_,_,T.Traversal,T.Container,T.Position);
 				else
@@ -252,16 +252,16 @@ function update(dt)
 		end
 	end
 	FPS = GetFPS();
-	--sb.logInfo("FPS = " .. sb.print(FPS));
-	--sb.logInfo("Threshold = " .. sb.print(Threshold));
-	--sb.logInfo("Less = " .. sb.print(FPS < Threshold));
-	--[[sb.logInfo("FPS = " .. sb.print(GetFPS()));
-	sb.logInfo("Threshold = " .. sb.print(Threshold));
-	sb.logInfo("Less = " .. sb.print(Threshold > GetFPS()));
-	sb.logInfo("Subtract = " .. sb.print(GetFPS() - Threshold));
-	sb.logInfo("FPS Type = " .. sb.print(type(GetFPS())));--]]
+	--DPrint("FPS = " .. sb.print(FPS));
+	--DPrint("Threshold = " .. sb.print(Threshold));
+	--DPrint("Less = " .. sb.print(FPS < Threshold));
+	--[[DPrint("FPS = " .. sb.print(GetFPS()));
+	DPrint("Threshold = " .. sb.print(Threshold));
+	DPrint("Less = " .. sb.print(Threshold > GetFPS()));
+	DPrint("Subtract = " .. sb.print(GetFPS() - Threshold));
+	DPrint("FPS Type = " .. sb.print(type(GetFPS())));--]]
 	--if FPS < Threshold then
-	--	sb.logInfo("Cramming");
+	--	DPrint("Cramming");
 	--	CramTraversal();
 	--end
 end
@@ -269,7 +269,7 @@ end
 CramTraversal = function()
 	if CrammingCoroutine == nil then
 		CrammingCoroutine = coroutine.create(function() 
-		--sb.logInfo("PredictionCount = " .. sb.print(PredictionCount));
+		--DPrint("PredictionCount = " .. sb.print(PredictionCount));
 		local Counter = 0;
 		local MaxCounter = math.ceil(NonZero(PredictionCount) / 10)
 		MaxCounter = 1;
@@ -288,9 +288,9 @@ CramTraversal = function()
 					if n.Crammed ~= true and world.entityExists(n.TraversalID) then
 						--world.sendEntityMessage(n.TraversalID,"ForceDestroy");
 						local Info = world.callScriptedEntity(n.TraversalID,"StartCramming");
-						--sb.logInfo("Path = " .. sb.print(Info.Path));
-						--sb.logInfo("PathIndex = " .. sb.print(Info.Index));
-						--sb.logInfo("Speed = " .. sb.print(Info.Speed));
+						--DPrint("Path = " .. sb.print(Info.Path));
+						--DPrint("PathIndex = " .. sb.print(Info.Index));
+						--DPrint("Speed = " .. sb.print(Info.Speed));
 						n.Crammed = true;
 						PredictionCount = PredictionCount - 1;
 						CrammedTraversals[#CrammedTraversals + 1] = {Path = Info.Path,Index = Info.Index,Speed = Info.Speed,Clock = 0,Traversal = n.TraversalID,Container = n.Container,SetPosition = Info.Position};
@@ -377,9 +377,9 @@ end--]]
 --[[AllTraversals = function()
 	local List = {};
 	for k,i in pairs(Predictions) do
-		sb.logInfo("i = " .. sb.print(i));
+		DPrint("i = " .. sb.print(i));
 		for m,n in ipairs(i) do
-			sb.logInfo("n = " .. sb.print(n));
+			DPrint("n = " .. sb.print(n));
 			List[#List + 1] = n.TraversalID;
 		end
 	end
@@ -503,14 +503,14 @@ local function GetConduitsAtContainer(ID)
 end
 
 local function ChangeController(Index,value)
-	--sb.logInfo("INDEX_____ = " .. sb.print(Index));
-	--sb.logInfo(EntityID .. " Region Loaded = " .. sb.print(world.regionActive(StoredRegion)));
+	--DPrint("INDEX_____ = " .. sb.print(Index));
+	--DPrint(EntityID .. " Region Loaded = " .. sb.print(world.regionActive(StoredRegion)));
 	if value == nil then
 		if GetController(Index) ~= nil then
 			local stringIndex = tostring(GetController(Index).Container);
-			--sb.logInfo("string index = " .. sb.print(stringIndex));
-			--sb.logInfo("Predictions INDEXER = " .. sb.printJson(Predictions,1));
-			--sb.logInfo("Predictions At index = " .. sb.print(Predictions[stringIndex]));
+			--DPrint("string index = " .. sb.print(stringIndex));
+			--DPrint("Predictions INDEXER = " .. sb.printJson(Predictions,1));
+			--DPrint("Predictions At index = " .. sb.print(Predictions[stringIndex]));
 			local Position;
 			if Predictions[stringIndex] ~= nil then
 				for k,i in ipairs(Predictions[stringIndex]) do
@@ -521,8 +521,8 @@ local function ChangeController(Index,value)
 						world.spawnItem(i.Item,Position,i.Item.count,i.Item.parameters);
 					else
 						if world.entityExists(i.TraversalID) == true and Active == true then
-							--sb.logInfo("DROPPING TRAVESAL");
-							--sb.logInfo(EntityID .. " DTC");
+							--DPrint("DROPPING TRAVESAL");
+							--DPrint(EntityID .. " DTC");
 							--[[if i.Crammed == true then
 								if Position == nil then
 									Position = entity.position();
@@ -607,11 +607,11 @@ UpdateController = function()
 		local Updated = false;
 		for i=1,4 do
 			if Cables.CableTypes.Containers[i] == -10 and GetController(i) ~= nil then
-				--sb.logInfo(EntityID .. " NIL Changing from " .. sb.print(GetController(i)) .. " to nil");
+				--DPrint(EntityID .. " NIL Changing from " .. sb.print(GetController(i)) .. " to nil");
 				ChangeController(i,nil);
 				Updated = true;
 			elseif Cables.CableTypes.Containers[i] ~= -10 and (GetController(i) == nil or GetController(i).Container ~= Cables.CableTypes.Containers[i]) then
-				--sb.logInfo(EntityID .. " Changing from " .. sb.print(GetController(i)) .. " to " .. sb.print(Cables.CableTypes.Containers[i]));
+				--DPrint(EntityID .. " Changing from " .. sb.print(GetController(i)) .. " to " .. sb.print(Cables.CableTypes.Containers[i]));
 				--ChangeController(i,nil);
 				ChangeController(i,Cables.CableTypes.Containers[i]);
 				Updated = true;
@@ -619,7 +619,7 @@ UpdateController = function()
 		end
 		if Updated == true then
 			UpdateRegion();
-			--sb.logInfo("REGION UPDATED");
+			--DPrint("REGION UPDATED");
 		end
 	end
 end
@@ -671,7 +671,7 @@ function RemoveConduit(Container,ID,predictions,predictionsForDumping,prediction
 			local controller = GetController(Index);
 			for i=1,#controller.Conduits do
 				if controller.Conduits[i] == ID then
-					--sb.logInfo("REMOVING CONDUIT: " .. sb.print(i));
+					--DPrint("REMOVING CONDUIT: " .. sb.print(i));
 					table.remove(controller.Conduits,i);
 					break;
 				end
@@ -767,7 +767,7 @@ end
 local Transferring = false;
 
 ExtractAndSend = function(_,_,Item,Slot,Container,Path,InsertIntoSides,InsertIntoSlots,InsertContainer,Color,Speed,SourceConduit,ConduitLimits,Occluded)
-	--sb.logInfo("XA");
+	--DPrint("XA");
 	if Ready == false or Transferring == true then return nil end;
 	Transferring = true;
 	if Active == false then
@@ -798,7 +798,7 @@ ExtractAndSend = function(_,_,Item,Slot,Container,Path,InsertIntoSides,InsertInt
 		Transferring = false;
 		return nil;
 	end
-	--sb.logInfo("Master = " .. sb.print(CurrentController.Master));
+	--DPrint("Master = " .. sb.print(CurrentController.Master));
 	local ContainerPredictions = GetPredictionGroup(InsertContainer);
 	local ContainerSize = world.containerSize(InsertContainer);
 	local Inventory = world.containerItems(InsertContainer);
@@ -806,21 +806,21 @@ ExtractAndSend = function(_,_,Item,Slot,Container,Path,InsertIntoSides,InsertInt
 	CombinePredictions(Inventory,ContainerPredictions,ContainerSize);
 	local NewPrediction = {Item = Item,Container = InsertContainer,InsertSlots = InsertIntoSlots,MaxStack = root.itemConfig(Item).config.maxStack or 1000};
 	local NewSlot,Count = FindSlot(NewPrediction,Inventory,ContainerSize,nil,true);
-	--sb.logInfo("Found SLot = " .. sb.print(NewSlot));
+	--DPrint("Found SLot = " .. sb.print(NewSlot));
 	if NewSlot ~= nil then
 		NewPrediction.Slot = NewSlot;
 		NewPrediction.Item.count = Count;
-		--sb.logInfo("XS");
+		--DPrint("XS");
 		--world.spawnProjectile("electricbolt",vecAdd(world.entityPosition(Path[#Path]),{0.5,0.5}));
 		if Occluded == false then
 			NewPrediction.TraversalID = world.spawnProjectile("traversal" .. Colors[Color],vecAdd(world.entityPosition(Path[#Path]),{0.5,0.5}),SourceConduit or EntityID);
 		else
 			NewPrediction.TraversalID = sb.makeUuid();
 		end
-		--sb.logInfo("XT");
-		--sb.logInfo("XT");
+		--DPrint("XT");
+		--DPrint("XT");
 		if (Occluded == true or world.entityExists(NewPrediction.TraversalID) == true) and world.containerConsumeAt(Container,Slot - 1,Count) == true then
-			--sb.logInfo(EntityID .. " Adding Prediction of = " .. sb.printJson(NewPrediction));
+			--DPrint(EntityID .. " Adding Prediction of = " .. sb.printJson(NewPrediction));
 			AddPredictionAndSend(NewPrediction);
 			if Occluded == false then
 				world.callScriptedEntity(NewPrediction.TraversalID,"StartTraversing",Path,Speed,InsertContainer,nil,nil,CurrentController.Conduits,ConduitLimits,InsertIntoSides);
@@ -831,11 +831,11 @@ ExtractAndSend = function(_,_,Item,Slot,Container,Path,InsertIntoSides,InsertInt
 		end
 	end
 	--[[if FPS < Threshold then
-		sb.logInfo("CrammingE");
+		DPrint("CrammingE");
 		--CramTraversal();
 	end--]]
 	Transferring = false;
-	--sb.logInfo("XB");
+	--DPrint("XB");
 end
 
 function ContainerCount()
@@ -866,15 +866,15 @@ function AnySidesHaveContainers(Sides)
 	local Valid = false;
 	for _,v in ipairs(Sides) do
 		local number = SideTypeToNumber(v);
-		--sb.logInfo("V = " .. sb.print(number));
-		--sb.logInfo("Cable Value = " .. sb.print(Cables.CableTypes.Containers[number]));
+		--DPrint("V = " .. sb.print(number));
+		--DPrint("Cable Value = " .. sb.print(Cables.CableTypes.Containers[number]));
 		if Cables.CableTypes.Containers[number] ~= -10 then
 			Valid = true;
 			break;
 		end
 	end
-	--sb.logInfo("Searching Position = " .. sb.print(entity.position()));
-	--sb.logInfo("FOUND SIDE FOR " .. sb.print(Sides) .. " = " .. sb.print(Valid));
+	--DPrint("Searching Position = " .. sb.print(entity.position()));
+	--DPrint("FOUND SIDE FOR " .. sb.print(Sides) .. " = " .. sb.print(Valid));
 	return Valid;
 end
 
@@ -973,11 +973,11 @@ FindSlot = function(prediction,inventory,ContainerSize,converter,ReduceCount)
 end
 
 DropItems = function(_,_,TraversalID,ContainerID,Position)
-	--sb.logInfo("XA");
-	--sb.logInfo("DROPPING");
-	--sb.logInfo("TraversalID = " .. sb.print(TraversalID));
-	--sb.logInfo("ContainerID = " .. sb.print(ContainerID));
-	--sb.logInfo("Position = " .. sb.print(Position));
+	--DPrint("XA");
+	--DPrint("DROPPING");
+	--DPrint("TraversalID = " .. sb.print(TraversalID));
+	--DPrint("ContainerID = " .. sb.print(ContainerID));
+	--DPrint("Position = " .. sb.print(Position));
 	if Position == nil then Position = entity.position() end;
 	local Index = ContainerToControllerIndex(ContainerID);
 	if Index == nil then return nil end;
@@ -986,17 +986,17 @@ DropItems = function(_,_,TraversalID,ContainerID,Position)
 		world.sendEntityMessage(CurrentController.Master,"DropItems",TraversalID,ContainerID,Position);
 		return nil;
 	end
-	--sb.logInfo("XB");
-	--sb.logInfo();
+	--DPrint("XB");
+	--DPrint();
 	local ContainerPredictions = GetPredictionGroup(ContainerID);
 	local ContainerSize = world.containerSize(ContainerID);
 	local Inventory = world.containerItems(ContainerID);
 	CombinePredictions(Inventory,ContainerPredictions,ContainerSize);
 	for i=#ContainerPredictions,1,-1 do
-		--sb.logInfo("XC");
+		--DPrint("XC");
 		if ContainerPredictions[i].TraversalID == TraversalID then
-			--sb.logInfo("XD");
-			--sb.logInfo("DROPPINGA");
+			--DPrint("XD");
+			--DPrint("DROPPINGA");
 			world.spawnItem(ContainerPredictions[i].Item,Position,ContainerPredictions[i].Item.count,ContainerPredictions[i].Item.parameters);
 			if ContainerPredictions[i].Crammed ~= true then
 				PredictionCount = PredictionCount - 1;
@@ -1004,11 +1004,11 @@ DropItems = function(_,_,TraversalID,ContainerID,Position)
 			table.remove(ContainerPredictions,i);
 		end
 	end
-	--sb.logInfo("XE");
+	--DPrint("XE");
 	local dump = GetDump(ContainerID);
 	for i=#dump,1,-1 do
 		if dump[i].TraversalID == TraversalID then
-			--sb.logInfo("DROPPINGB");
+			--DPrint("DROPPINGB");
 			world.spawnItem(dump[i].Item,Position,dump[i].Item.count,dump[i].Item.parameters);
 			if ContainerPredictions[i].Crammed ~= true then
 				PredictionCount = PredictionCount - 1;
@@ -1064,18 +1064,18 @@ end
 
 RemapContainers = function()
 	local PreviousContainers = config.getParameter("PreviousContainers");
-	--sb.logInfo(EntityID .. " Previous Containers = " .. sb.print(PreviousContainers));
-	--sb.logInfo(EntityID .. "Current Containers = " .. sb.print(Cables.CableTypes.Containers));
+	--DPrint(EntityID .. " Previous Containers = " .. sb.print(PreviousContainers));
+	--DPrint(EntityID .. "Current Containers = " .. sb.print(Cables.CableTypes.Containers));
 	if PreviousContainers == nil then return nil end;
 	for i=1,4 do
 		if Cables.CableTypes.Containers[i] ~= -10 and PreviousContainers[i] ~= -10 and Cables.CableTypes.Containers[i] ~= PreviousContainers[i] then
-			--sb.logInfo(EntityID .. " Predictions = " .. sb.printJson(Predictions,1));
+			--DPrint(EntityID .. " Predictions = " .. sb.printJson(Predictions,1));
 			for m,n in pairs(Predictions) do
 				local Container = tonumber(m);
-				--sb.logInfo(EntityID .. " I = " .. sb.print(i));
-				--sb.logInfo(EntityID .. " M = " .. sb.print(m));
+				--DPrint(EntityID .. " I = " .. sb.print(i));
+				--DPrint(EntityID .. " M = " .. sb.print(m));
 				if Container == PreviousContainers[i] then
-					--sb.logInfo(EntityID .. " Remapping " .. PreviousContainers[i] .. "To " .. sb.print(Cables.CableTypes.Containers[i]));
+					--DPrint(EntityID .. " Remapping " .. PreviousContainers[i] .. "To " .. sb.print(Cables.CableTypes.Containers[i]));
 					Predictions[tostring(Cables.CableTypes.Containers[i])] = Predictions[m];
 					Predictions[m] = nil;
 					for o,p in ipairs(Predictions[tostring(Cables.CableTypes.Containers[i])]) do
@@ -1102,13 +1102,13 @@ AddAllPredictions = function()
 			if Exists == true then
 				local Item = world.containerPutItemsAt(Container,p.Item,p.Slot - 1);
 				if Item ~= nil and Item.count > 0 then
-					--sb.logInfo("DROPPINGE");
-					--sb.logInfo("DROPPINGC");
+					--DPrint("DROPPINGE");
+					--DPrint("DROPPINGC");
 					world.spawnItem(p.Item,Position,p.Item.count,p.Item.parameters);
 				end
 			else
-				--sb.logInfo("DROPPINGD");
-				--sb.logInfo("DROPPINGD");
+				--DPrint("DROPPINGD");
+				--DPrint("DROPPINGD");
 				world.spawnItem(p.Item,Position,p.Item.count,p.Item.parameters);
 			end
 		end
@@ -1117,8 +1117,8 @@ AddAllPredictions = function()
 	object.setConfigParameter("Predictions",Predictions);
 	for k,i in pairs(PredictionsForDumping) do
 		for o,p in ipairs(i) do
-			--sb.logInfo("DROPPINGC");
-			--sb.logInfo("DROPPINGE");
+			--DPrint("DROPPINGC");
+			--DPrint("DROPPINGE");
 			world.spawnItem(p.Item,Position,p.Item.count,p.Item.parameters);
 		end
 	end
@@ -1128,45 +1128,45 @@ AddAllPredictions = function()
 end
 
 AddToInventory = function(_,_,Traversal,Container)
-	--sb.logInfo("ADDING");
-	--sb.logInfo("Container = " .. sb.print(Container));
-	--sb.logInfo("Traversal = " .. sb.print(Traversal));
+	--DPrint("ADDING");
+	--DPrint("Container = " .. sb.print(Container));
+	--DPrint("Traversal = " .. sb.print(Traversal));
 	local Index = ContainerToControllerIndex(Container);
-	--sb.logInfo("CIndex = " .. sb.print(Index));
+	--DPrint("CIndex = " .. sb.print(Index));
 	if Index == nil then return nil end;
 	local CurrentController = GetController(Index);
 	if CurrentController.Master ~= EntityID then
 		world.sendEntityMessage(CurrentController.Master,"AddToInventory",Traversal,Container);
 		return nil;
 	end
-	--sb.logInfo("AZ");
+	--DPrint("AZ");
 	--local PredictionGroup = Predictions[tostring(Container)];
 	local ContainerPredictions = GetPredictionGroup(Container);
 	local ContainerSize = world.containerSize(Container);
 	local Inventory = world.containerItems(Container);
 	local Exists = world.entityExists(Container);
-	--sb.logInfo("Exists = " .. sb.print(Exists));
+	--DPrint("Exists = " .. sb.print(Exists));
 	local Position = entity.position();
 	CombinePredictions(Inventory,ContainerPredictions,ContainerSize);
 	if ContainerPredictions ~= nil then
-		--sb.logInfo("BZ");
-		--sb.logInfo("Container Predictions = " .. sb.print(ContainerPredictions));
+		--DPrint("BZ");
+		--DPrint("Container Predictions = " .. sb.print(ContainerPredictions));
 		for i=#ContainerPredictions,1,-1 do
-			--sb.logInfo("TraversalID = " .. sb.print(ContainerPredictions[i].TraversalID));
-			--sb.logInfo("Traversal = " .. sb.print(Traversal));
+			--DPrint("TraversalID = " .. sb.print(ContainerPredictions[i].TraversalID));
+			--DPrint("Traversal = " .. sb.print(Traversal));
 			if ContainerPredictions[i].TraversalID == Traversal then
-				--sb.logInfo("CZ");
+				--DPrint("CZ");
 				if Exists == true then
-					--sb.logInfo("DZ");
+					--DPrint("DZ");
 					local Item = world.containerPutItemsAt(Container,ContainerPredictions[i].Item,ContainerPredictions[i].Slot - 1);
 					if Item ~= nil and Item.count > 0 then
-						--sb.logInfo("DROPPINGB");
-						--sb.logInfo("DROPPINGF");
+						--DPrint("DROPPINGB");
+						--DPrint("DROPPINGF");
 						world.spawnItem(ContainerPredictions[i].Item,Position,ContainerPredictions[i].Item.count,ContainerPredictions[i].Item.parameters);
 					end
 				else
-					--sb.logInfo("DROPPINGA");
-					--sb.logInfo("DROPPINGG");
+					--DPrint("DROPPINGA");
+					--DPrint("DROPPINGG");
 					world.spawnItem(ContainerPredictions[i].Item,Position,ContainerPredictions[i].Item.count,ContainerPredictions[i].Item.parameters);
 				end
 				if ContainerPredictions[i].Crammed ~= true then
@@ -1181,33 +1181,33 @@ end
 
 function ReRouteFromID(FromID)
 	if Active == true then
-		--[[sb.logInfo("FromID = " .. sb.print(FromID));
-		sb.logInfo("Controller = " .. sb.print(Controllers));
-		sb.logInfo("C ENTITYID = " .. sb.print(EntityID));
+		--[[DPrint("FromID = " .. sb.print(FromID));
+		DPrint("Controller = " .. sb.print(Controllers));
+		DPrint("C ENTITYID = " .. sb.print(EntityID));
 		if Predictions ~= nil then
-			sb.logInfo("Predictions = " .. sb.printJson(Predictions,1));
+			DPrint("Predictions = " .. sb.printJson(Predictions,1));
 		else
-			sb.logInfo("Predictions = " .. sb.print(Predictions));
+			DPrint("Predictions = " .. sb.print(Predictions));
 		end--]]
 		for _,c in pairs(Controllers) do
 			local Container = tostring(c.Container);
-			--sb.logInfo(1);
+			--DPrint(1);
 			if Predictions[Container] ~= nil then
-				--sb.logInfo(2);
+				--DPrint(2);
 				for m=#Predictions[Container],1,-1 do
 					local n = Predictions[Container][m];
-					--sb.logInfo("SourceConduit = " .. sb.print(n.SourceConduit));
+					--DPrint("SourceConduit = " .. sb.print(n.SourceConduit));
 					if n.Crammed ~= true and world.entityExists(n.TraversalID) == true then
 						local SourceID = world.callScriptedEntity(n.TraversalID,"GetSourceID");
 						if SourceID == FromID then
-							--sb.logInfo(3);
+							--DPrint(3);
 							local Traversal = n.TraversalID;
 							if world.entityExists(Traversal) == true then
-								--sb.logInfo("Conduits = " .. sb.print(c.Conduits));
-								--sb.logInfo("C = " .. sb.print(c));
+								--DPrint("Conduits = " .. sb.print(c.Conduits));
+								--DPrint("C = " .. sb.print(c));
 								local ToID = world.callScriptedEntity(Traversal,"ReRoute",c.Conduits,FromID);
 								if ToID == nil then
-									--sb.logInfo("DTB");
+									--DPrint("DTB");
 									world.sendEntityMessage(Traversal,"AddItemToDrop",n.Item);
 									PredictionCount = PredictionCount - 1;
 									table.remove(Predictions[Container],m);
@@ -1230,7 +1230,7 @@ local Dying = false;
 local oldDie = die;
 function die()
 	Dying = true;
-	--sb.logInfo("Dying = " .. sb.print(Dying));
+	--DPrint("Dying = " .. sb.print(Dying));
 	if oldDie ~= nil then
 		oldDie();
 	end
@@ -1240,22 +1240,22 @@ end
 
 local oldUninit = uninit;
 function uninit()
-	--sb.logInfo("UNINIT OF INSERTION CONDUIT");
+	--DPrint("UNINIT OF INSERTION CONDUIT");
 	if Dying == false then
 		object.setConfigParameter("Predictions",Predictions);
 		object.setConfigParameter("Dump",PredictionsForDumping);
 		object.setConfigParameter("StoredRegion",StoredRegion);
 		object.setConfigParameter("PreviousContainers",Cables.CableTypes.Containers);
 	end
-	--sb.logInfo("ALL Predictions = " .. sb.printJson(Predictions,1));
+	--DPrint("ALL Predictions = " .. sb.printJson(Predictions,1));
 	if oldUninit ~= nil then
 		oldUninit();
 	end
 	if Active == true then
 		Active = false;
-		--sb.logInfo("Controllers = " .. sb.print(Controllers));
+		--DPrint("Controllers = " .. sb.print(Controllers));
 		for _,c in pairs(Controllers) do
-			--sb.logInfo("F");
+			--DPrint("F");
 			local PredictionsSet = false;
 			local PredictionID = nil;
 			for i=1,#c.Conduits do
@@ -1276,7 +1276,7 @@ function uninit()
 					end
 				end
 			end
-			--sb.logInfo("E");
+			--DPrint("E");
 			if Dying == true then
 				for k,i in ipairs(CrammedTraversals) do
 					--DropItems(i.Traversal,i.Container,EntityPosition);
@@ -1284,14 +1284,14 @@ function uninit()
 				end
 				if c.Master == EntityID then
 					if PredictionsSet == true then
-						--sb.logInfo("SENDING TO Predicted ID");
+						--DPrint("SENDING TO Predicted ID");
 						world.callScriptedEntity(PredictionID,"ReRouteFromID",EntityID);
 					else
 						local Container = tostring(c.Container);
 						if Predictions[Container] ~= nil then
 							for m,n in ipairs(Predictions[Container]) do
 								if n.Crammed ~= true and world.entityExists(n.TraversalID) == true then
-									--sb.logInfo("DTA");
+									--DPrint("DTA");
 									world.sendEntityMessage(n.TraversalID,"AddItemToDrop",n.Item);
 								end
 							end
@@ -1299,12 +1299,12 @@ function uninit()
 					end
 				else
 					if world.entityExists(c.Master) == true then
-						--sb.logInfo("SENDING TO MASTER");
+						--DPrint("SENDING TO MASTER");
 						world.callScriptedEntity(c.Master,"ReRouteFromID",EntityID);
 					end
 				end
 			else
-				--sb.logInfo("FORCE DESTROYING");
+				--DPrint("FORCE DESTROYING");
 				local Container = tostring(c.Container);
 				if Predictions[Container] ~= nil then
 					for o,p in ipairs(Predictions[Container]) do

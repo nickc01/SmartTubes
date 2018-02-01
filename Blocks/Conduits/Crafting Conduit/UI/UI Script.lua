@@ -1,4 +1,5 @@
 require ("/Core/ArgonGUI/Argon.lua");
+require ("/Core/Debug.lua");
 local RecipesList = "recipeArea.itemList";
 local AddedRecipesList = "addedRecipeArea.itemList";
 local UpdateRecipesForItem;
@@ -183,10 +184,10 @@ local function AddRecipeToList(Item,Recipe,Canvas,List)
 		local RequiredItem = Argon.CreateElement("Image",Canvas,RequiredItemImage,RequiredItemPos);
 		local ItemName = Recipe.input[i].name;
 		RequiredItem.SetClickFunction(function(Position,ButtonType,Clicking)
-			--sb.logInfo("Clicking over Image = " .. sb.print(Clicking));
-			--sb.logInfo("MouseType = " .. sb.print(ButtonType));
+			--DPrint("Clicking over Image = " .. sb.print(Clicking));
+			--DPrint("MouseType = " .. sb.print(ButtonType));
 			if ButtonType == 0 then
-				--sb.logInfo(sb.print(i) .. " mode = " .. sb.print(Clicking));
+				--DPrint(sb.print(i) .. " mode = " .. sb.print(Clicking));
 				if Clicking == true then
 					Element.SetDescriptionActive(Clicking);
 					Element.SetDescription(GetConfig(ItemName).shortdescription or ItemName);
@@ -209,10 +210,10 @@ local function AddRecipeToList(Item,Recipe,Canvas,List)
 			local RequiredCurrency = Argon.CreateElement("Image",Canvas,RequiredCurrencyImage,RequiredCurrencyPos);
 			local ItemName = k;
 			RequiredCurrency.SetClickFunction(function(Position,ButtonType,Clicking)
-				--sb.logInfo("Clicking over Image = " .. sb.print(Clicking));
-				--sb.logInfo("MouseType = " .. sb.print(ButtonType));
+				--DPrint("Clicking over Image = " .. sb.print(Clicking));
+				--DPrint("MouseType = " .. sb.print(ButtonType));
 				if ButtonType == 0 then
-					--sb.logInfo(sb.print(i) .. " mode = " .. sb.print(Clicking));
+					--DPrint(sb.print(i) .. " mode = " .. sb.print(Clicking));
 					if Clicking == true then
 						Element.SetDescriptionActive(Clicking);
 						Element.SetDescription(GetConfig(ItemName).shortdescription or ItemName);
@@ -244,10 +245,10 @@ local function AddRecipeToList(Item,Recipe,Canvas,List)
 				local RequiredCurrency = Argon.CreateElement("Image",Canvas,RequiredCurrencyImage,RequiredCurrencyPos);
 				local ItemName = k;
 				RequiredCurrency.SetClickFunction(function(Position,ButtonType,Clicking)
-					--sb.logInfo("Clicking over Image = " .. sb.print(Clicking));
-					--sb.logInfo("MouseType = " .. sb.print(ButtonType));
+					--DPrint("Clicking over Image = " .. sb.print(Clicking));
+					--DPrint("MouseType = " .. sb.print(ButtonType));
 					if ButtonType == 0 then
-						--sb.logInfo(sb.print(i) .. " mode = " .. sb.print(Clicking));
+						--DPrint(sb.print(i) .. " mode = " .. sb.print(Clicking));
 						if Clicking == true then
 							Element.SetDescriptionActive(Clicking);
 							Element.SetDescription(GetConfig(ItemName).shortdescription or ItemName);
@@ -276,7 +277,7 @@ local function AddRecipeToList(Item,Recipe,Canvas,List)
 		Element.AddChild(ItemSlot);
 
 		--Item Image
-		--sb.logInfo("Group = " .. sb.print(Group));
+		--DPrint("Group = " .. sb.print(Group));
 		local CrafterItemImage,CrafterItemPos = nil,nil;
 		if string.match(Group.SlotItem,"^/") == nil then
 			CrafterItemImage,CrafterItemPos	= GetItemImage(Group.SlotItem,{11,18});
@@ -348,7 +349,7 @@ function init()
 	UpdateCurrencySlot("currencyToAddSlot",CurrencyIndex);
 	UpdateCurrencySlot("currencyAddedSlot",CurrencyAddedIndex);
 	UpdateCurrencyCount();
-	--sb.logInfo("Currencies = " .. sb.print(Currencies));
+	--DPrint("Currencies = " .. sb.print(Currencies));
 	ContainerCore.Init(SourceID);
 	Argon.Init();
 	AddedRecipeCanvas = Argon.AddCanvas("addedRecipeCanvas","AddedRecipeCanvas");
@@ -430,11 +431,11 @@ function init()
 	widget.setButtonEnabled("orderUp",false);
 	widget.setButtonEnabled("orderDown",false);
 	local ReceivedRecipes = world.getObjectParameter(SourceID,"Recipes",{});
-	--sb.logInfo("RETRIVED Recipes = " .. sb.print(Recipes));
-	--sb.logInfo("Recipes = " .. sb.printJson(Recipes,1));
+	--DPrint("RETRIVED Recipes = " .. sb.print(Recipes));
+	--DPrint("Recipes = " .. sb.printJson(Recipes,1));
 	Recipes = {};
 	--[[for i=1,#Recipes do
-		sb.logInfo("Adding Recipe");
+		DPrint("Adding Recipe");
 		AddRecipeToList(Recipes[i].Item,Recipes[i].Recipe,"AddedRecipeCanvas",AddedRecipeList);
 	end--]]
 	for k,i in pairs(ReceivedRecipes) do
@@ -467,9 +468,9 @@ function UpdateRecipesForItem(item,IsCurrency)
 	RecipeList.ClearList();
 	if item ~= nil then
 		local Recipes = root.recipesForItem(item.name);
-		--sb.logInfo("Item = " .. sb.printJson(item,1))
-		sb.logInfo("Recipes = " .. sb.printJson(Recipes,1));
-		--sb.logInfo("Recipes = " .. sb.print(Recipes));
+		--DPrint("Item = " .. sb.printJson(item,1))
+		DPrint("Recipes = " .. sb.printJson(Recipes,1));
+		--DPrint("Recipes = " .. sb.print(Recipes));
 		for k,i in ipairs(Recipes) do
 			i.IsCurrency = (IsCurrency == true);
 			AddRecipeToList(item,i);
@@ -510,10 +511,10 @@ end
 
 function RemoveRecipe()
 	if SelectedAddedRecipeElement ~= nil then
-		--sb.logInfo("REMOVING");
+		--DPrint("REMOVING");
 		local Index = AddedRecipeList.GetElementIndex(SelectedAddedRecipeElement);
 		if Index ~= nil then
-			--sb.logInfo("Index = " .. sb.print(Index));
+			--DPrint("Index = " .. sb.print(Index));
 			AddedRecipeList.RemoveElement(SelectedAddedRecipeElement);
 			table.remove(Recipes,Index);
 			world.sendEntityMessage(SourceID,"SetRecipes",Recipes);
@@ -535,14 +536,14 @@ function orderUp()
 	if SelectedAddedRecipeElement ~= nil then
 		local Index = AddedRecipeList.GetElementIndex(SelectedAddedRecipeElement);
 		if Index ~= nil and Index > 1 then
-			--sb.logInfo("Recipes BEFORE = " .. sb.print(Recipes));
-			--sb.logInfo("INDEX = " .. sb.print(Index));
+			--DPrint("Recipes BEFORE = " .. sb.print(Recipes));
+			--DPrint("INDEX = " .. sb.print(Index));
 			local recipe = Recipes[Index];
 			table.remove(Recipes,Index);
 			table.insert(Recipes,Index - 1,recipe);
 			--AddedRecipeList.MoveElementUp(SelectedAddedRecipeElement);
 			UpdateAddedRecipeList();
-			--sb.logInfo("Recipes AFTER = " .. sb.print(Recipes));
+			--DPrint("Recipes AFTER = " .. sb.print(Recipes));
 			world.sendEntityMessage(SourceID,"SetRecipes",Recipes);
 		end
 	end
@@ -552,7 +553,7 @@ function orderDown()
 	if SelectedAddedRecipeElement ~= nil then
 		local Index = AddedRecipeList.GetElementIndex(SelectedAddedRecipeElement);
 		if Index ~= nil and Index < #Recipes then
-			--sb.logInfo("INDEX = " .. sb.print(Index));
+			--DPrint("INDEX = " .. sb.print(Index));
 			local recipe = Recipes[Index];
 			table.remove(Recipes,Index);
 			table.insert(Recipes,Index + 1,recipe);
@@ -667,14 +668,14 @@ function AddCurrency()
 		Text = "0";
 	end
 	local Diff = tonumber(Text);
-	--[[sb.logInfo("Num = " .. sb.print(9999999999999999999));
+	--[[DPrint("Num = " .. sb.print(9999999999999999999));
 	if Count + Diff > 9999999999999999999 then
 		Diff = 9999999999999999999 - Count;
 	end--]]
 	if Diff > player.currency(Currency) then
 		Diff = player.currency(Currency);
 	end
-	sb.logInfo("Diff = " .. sb.print(Diff));
+	DPrint("Diff = " .. sb.print(Diff));
 	if player.consumeCurrency(Currency,Diff) then
 		Count = Count + Diff;
 		world.sendEntityMessage(SourceID,"SetCurrencyCount",Currency,Count);

@@ -1,3 +1,4 @@
+require("/Core/Debug.lua");
 local Hue = 0;
 local Saturation = 0;
 
@@ -26,7 +27,7 @@ function init()
 	Cables.SetCableConnections({{-1,0},{0,-1},{-1,1},{-1,2},{0,3},{1,3},{2,3},{3,2},{3,1},{3,0},{2,-1},{1,-1}});
 	Cables.AddCondition("Conduits","conduitType",function(value) return value ~= nil end);
 	Cables.Initialize();
-	sb.logInfo("ANIM");
+	DPrint("ANIM");
 	--sb.logInfo("Animated Parts = " .. sb.print(objectAnimator.getParameter("animatedParts")));
 end
 
@@ -57,7 +58,7 @@ ScanForConduits = function()
 			if world.entityExists(Next[i].ID) then
 				local Conduits = world.callScriptedEntity(Next[i].ID,"GetConduits");
 				if Next[i].ID == EntityID then
-					sb.logInfo("SELF CONDUITS = " .. sb.print(Conduits));
+					DPrint("SELF CONDUITS = " .. sb.print(Conduits));
 				end
 				world.callScriptedEntity(Next[i].ID,"AddExtractionConduit",EntityID);
 				if Conduits ~= nil then
@@ -91,7 +92,7 @@ ScanForConduits = function()
 							end
 						end
 					end
-					sb.logInfo("Adding = " .. sb.print(Next[i]));
+					DPrint("Adding = " .. sb.print(Next[i]));
 					Findings[#Findings + 1] = Next[i];
 					local Type = world.getObjectParameter(Next[i].ID,"conduitType");
 					if Type ~= nil then
@@ -119,7 +120,7 @@ function update(dt)
 	if First == true then
 		if FirstTimer > 1 then
 			First = nil;
-			sb.logInfo("AllConduits = " .. sb.print(ScanForConduits()));
+			DPrint("AllConduits = " .. sb.print(ScanForConduits()));
 		else
 			FirstTimer = FirstTimer + dt;
 		end

@@ -176,6 +176,7 @@ function init()
 	Speed = config.getParameter("Speed",0);
 	Stack = config.getParameter("Stack",0);
 	Config = config.getParameter("Configs",{});
+	--object.setConfigParameter("ConduitName",config.getParameter("shortdescription",""));
 	object.setConfigParameter("RetainingParameters",{"Speed","Stack","SelectedColor","Configs"});
 	SelectedColor = config.getParameter("SelectedColor",1);
 	EntityPosition = entity.position();

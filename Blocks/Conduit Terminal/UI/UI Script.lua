@@ -1,4 +1,5 @@
 require("/Core/ImageCore.lua");
+require("/Core/Debug.lua");
 local TitleImage = "/Blocks/Conduit Terminal/UI/Window/Title Bar.png";
 local CloseImage = "/Blocks/Conduit Terminal/UI/Window/Close Button/Close Button.png";
 local CloseHighlightedImage = "/Blocks/Conduit Terminal/UI/Window/Close Button/Close Button Highlighted.png";
@@ -27,7 +28,7 @@ local function SetupAnimationInfoForType(ConduitType,TestObject)
 		--Is A Cable
 		Animations[ConduitType].IsCable = true;
 		Animations[ConduitType].Image = MakeImageAbsolute(ConduitType,"Main/Main.png",TestObject);
-		sb.logInfo("Image = " .. sb.print(Animations[ConduitType].Image));
+		DPrint("Image = " .. sb.print(Animations[ConduitType].Image));
 	else
 		--Not a Cable
 	end--]]
@@ -44,9 +45,9 @@ local function SetupAnimationInfoForType(ConduitType,TestObject)
 		local PartStates = {};
 		for k,i in pairs(PartImages) do
 			PartStates[k] = {Types = {}};
-			sb.logInfo("Animation File = " .. sb.printJson(AnimationFile,1));
+			DPrint("Animation File = " .. sb.printJson(AnimationFile,1));
 			for m,n in pairs(AnimationFile.animatedParts.parts[k].partStates) do
-				sb.logInfo("n = " .. sb.print(n));
+				DPrint("n = " .. sb.print(n));
 				local Image = n.main.properties.image;
 				Image = string.gsub(Image,"<partImage>",PartImages[k]);
 				Image = string.gsub(Image,"<color>","default");
@@ -104,11 +105,11 @@ function init()
 	UpdateColors();
 	MainCanvas = widget.bindCanvas("mainCanvas");
 	Conduits = world.getObjectParameter(SourceID,"AllConduits",{});
-	sb.logInfo("ALLCONDUITINITIAL = " .. sb.print(Conduits));
+	DPrint("ALLCONDUITINITIAL = " .. sb.print(Conduits));
 	for k,i in pairs(Conduits) do
-		sb.logInfo("Setting Up Type = " .. sb.print(k));
-		sb.logInfo("I[1] = " .. sb.print(i[1]));
-		sb.logInfo("I = " .. sb.printJson(i,1));
+		DPrint("Setting Up Type = " .. sb.print(k));
+		DPrint("I[1] = " .. sb.print(i[1]));
+		DPrint("I = " .. sb.printJson(i,1));
 		SetupAnimationInfoForType(k,i[1]);
 	end
 	--ImageCore.GetFrameOfImage("/Blocks/Conduits/Curved/5x/TR/Curve.png");
@@ -146,9 +147,9 @@ function update(dt)
 	end--]]
 	MainCanvas:drawTiledImage("/Blocks/Conduit Terminal/UI/Window/TileImage.png",{Offset[1] * 0.7,Offset[2] * 0.7},{0,0,2000,2000},0.1,LastColor);
 	for k,i in pairs(Conduits) do
-		--sb.logInfo("Animations = " .. sb.print(Animations));
+		--DPrint("Animations = " .. sb.print(Animations));
 		if Animations[k] ~= nil and Animations[k].Image ~= nil then
-			--sb.logInfo("Here");
+			--DPrint("Here");
 			for m,n in ipairs(i) do
 				local Pos = world.entityPosition(n);
 				local State = world.getObjectParameter(n,"CustomAnimationState");
@@ -184,8 +185,8 @@ function update(dt)
 			end
 		end
 	end
-	--sb.logInfo("Hue = " .. sb.print(Hue));
-	--sb.logInfo("Sat = " .. sb.print(Sat));
+	--DPrint("Hue = " .. sb.print(Hue));
+	--DPrint("Sat = " .. sb.print(Sat));
 	--PreviousMousePos = MousePos;
 end
 
@@ -208,7 +209,7 @@ UpdateColors = function()
 end
 
 function CanvasClick(Position,ButtonType,IsDown)
-	--sb.logInfo("ButtonType = " .. sb.print(ButtonType));
+	--DPrint("ButtonType = " .. sb.print(ButtonType));
 	if ButtonType == 0 then
 		if IsDown == true then
 			PreviousMousePos = MainCanvas:mousePosition();
@@ -237,7 +238,7 @@ MakeImageAbsolute = function(ConduitType,Image,ObjectSource)
 		OutputImages[ConduitType] = Image;
 		return Image;
 	else
-		sb.logInfo("Object Name = " .. sb.print(world.entityName(ObjectSource)));
+		DPrint("Object Name = " .. sb.print(world.entityName(ObjectSource)));
 		local Directory = root.itemConfig({name = world.entityName(ObjectSource),count = 1}).directory;
 		if string.find(Directory,"/$") == nil then
 			Directory = Directory .. "/";

@@ -1,3 +1,4 @@
+require("/Core/Debug.lua");
 CableCore = {};
 
 local CableCore = CableCore;
@@ -271,11 +272,11 @@ end
 --THIS IS A TEST
 
 function CableCore.Initialize()
-	sb.logInfo("CableInit");
+	DPrint("CableInit");
 	if CableCore.Initalized == true then
 		return nil;
 	end
-	sb.logInfo("New Init");
+	DPrint("New Init");
 	--sb.logInfo("Started INIT of " .. sb.print(entity.id()));
 	--sb.logInfo("Animation = " .. sb.print(config.getParameter("animation")));
 

@@ -1,3 +1,4 @@
+require("/Core/Debug.lua");
 local Configs;
 local SourceID;
 local ItemList = "configArea.itemList";
@@ -12,6 +13,13 @@ local Image = "/Blocks/Conduits/Extraction Conduit/UI/Window/White Color.png?set
 local ItemName;
 local SlotItem;
 local ChangeConfig = false;
+
+local ConduitName = "";
+local DefaultName = "Extraction Conduit";
+
+--TODO TODO TODO
+
+-- MOVE DEFAULTNAME TO CONDUIT's Config
 
 local PasteMessage;
 
@@ -132,6 +140,7 @@ function uninit()
 	world.sendEntityMessage(SourceID,"SetValue","UITakeFromSlot",widget.getText("takeFromSlotBox"));
 	world.sendEntityMessage(SourceID,"SetValue","UIInsertIntoSlot",widget.getText("insertIntoSlotBox"));
 	world.sendEntityMessage(SourceID,"SetValue","UIAmountToLeave",widget.getText("amountToLeaveBox"));
+	world.sendEntityMessage(SourceID,"SetValue","ConduitName",ConduitName);
 end
 
 function stringTable(table,name,spacer)
@@ -192,6 +201,14 @@ function init()
 	widget.setText("amountToLeaveBox",world.getObjectParameter(SourceID,"UIAmountToLeave",""));
 	widget.setText("speedUpgrades",Speed);
 	widget.setText("stackUpgrades",Stack);
+	DefaultName = world.getObjectParameter(SourceID,"OriginalDescription") or world.getObjectParameter(SourceID,"shortdescription");
+	--sb.logInfo("Default Name = " .. sb.print(DefaultName));
+	ConduitName = world.getObjectParameter(SourceID,"shortdescription","");
+	--sb.logInfo("Conduit Name = " .. sb.print(ConduitName));
+	if ConduitName == DefaultName then
+		ConduitName = "";
+	end
+	widget.setText("conduitNameBox",ConduitName);
 	Configs = world.getObjectParameter(SourceID,"Configs",{});
 	widget.setChecked("autoCheckBox",world.getObjectParameter(SourceID,"AutoValue",false));
 	widget.setChecked("specificCheckBox",world.getObjectParameter(SourceID,"SpecificValue",false));
@@ -258,7 +275,7 @@ function update(dt)
 	end
 	--sb.logInfo("Finished = " .. sb.print(CanPasteMessage:finished()));
 	if CanPasteMessage:finished() then
-		sb.logInfo("Can Paste = " .. sb.print(CanPasteMessage:result()));
+		DPrint("Can Paste = " .. sb.print(CanPasteMessage:result()));
 		if CanPasteMessage:result() ~= CanPaste then
 			CanPaste = CanPasteMessage:result();
 			UpdatePasteButton();
@@ -467,12 +484,12 @@ function ColorDecrement()
 end
 
 function Copy()
-	sb.logInfo("Copy Pressed");
+	DPrint("Copy Pressed");
 	local SelectedItem = widget.getListSelected(ItemList);
 	local Index = 0;
 	for k,i in ipairs(ListItems) do
 		if SelectedItem == i then
-			sb.logInfo("Sending " .. sb.print(Configs[k]) .. " to player");
+			DPrint("Sending " .. sb.print(Configs[k]) .. " to player");
 			world.sendEntityMessage(player.id(),"SetExtractionConfigCopy",Configs[k]);
 			break;
 		end
@@ -502,6 +519,42 @@ function Edit()
 	end
 	ChangeConfig = true;
 	UpdateConfigsArea();
+end
+
+function Save()
+	local Object = pane.sourceEntity();
+	if Object ~= nil then
+		local Params = world.getObjectParameter(Object,"RetainingParameters");
+		--sb.logInfo("Params = " .. sb.print(Params));
+		local Pos = world.entityPosition(Object);
+		--sb.logInfo(stringTable(world,"World"));
+		local Configs = {};
+		if Params ~= nil then
+			for k,i in ipairs(Params) do
+				Configs[i] = world.getObjectParameter(Object,i);
+			end
+			local Icon = world.getObjectParameter(Object,"inventoryIcon");
+			if string.find(Icon,"%?border=1;FF0000%?fade=007800;0%.1$") ~= nil then
+				Configs["inventoryIcon"] = Icon;
+			else
+				Configs["inventoryIcon"] = Icon .. "?border=1;FF0000?fade=007800;0.1";
+			end
+			Configs["RetainingParameters"] = Params;
+			Configs["OriginalDescription"] = world.getObjectParameter(Object,"OriginalDescription") or world.getObjectParameter(Object,"shortdescription");
+			if ConduitName ~= nil and ConduitName ~= "" then
+				Configs["shortdescription"] = ConduitName;
+			else
+				Configs["shortdescription"] = DefaultName;
+			end
+			DPrint("Configs = " .. sb.printJson(Configs,1));
+			world.sendEntityMessage(Object,"SmashCableBlockAndSpawnItem",nil,world.entityPosition(Object),10,Configs);
+		end
+		--world.sendEntityMessage(Object,"SetRetainingMode");
+	end
+end
+
+function ConduitNameChange()
+	ConduitName = widget.getText("conduitNameBox");
 end
 
 

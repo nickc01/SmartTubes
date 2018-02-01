@@ -1,4 +1,4 @@
-
+require("/Core/Debug.lua");
 local oldinit = init;
 
 function init()
@@ -47,7 +47,9 @@ function onInteraction(args)
 		FinalJson = sb.jsonMerge(ExtractionJson,InsertionPatch);
 		FinalJson.scripts = Scripts;
 		FinalJson.scriptWidgetCallbacks = Callbacks;
-		FinalJson.gui.windowtitle.title = "IO Conduit";
+		FinalJson.gui.windowtitle.title = "";
+		DPrint("OriginalDescription = " .. sb.print(config.getParameter("OriginalDescription")));
+		FinalJson.gui.conduitNameBox.hint = config.getParameter("OriginalDescription") or config.getParameter("shortdescription","IO Conduit");
 		FinalJson.gui.windowtitle.subtitle = "Extracts and inserts into inventories";
 	end
 	return {"ScriptPane",FinalJson};

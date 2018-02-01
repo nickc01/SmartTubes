@@ -12,6 +12,8 @@ local EntityID;
 local DroppingItems = nil;
 local LastPosition = nil;
 
+local ENTITYID;
+
 local ReRoutedPath = nil;
 local ReRoutedID = nil;
 local RedirectionIsCurved = false;
@@ -42,12 +44,16 @@ function init()
 	message.setHandler("AddItemToDrop",AddItemToDrop);
 	message.setHandler("SetSource",SetSource);
 	LastPosition = entity.position();
+	ENTITYID = entity.id();
+	sb.logInfo("Creating Traversal of " .. sb.print(entity.id()));
 end
 
 local function Finish()
 	--sb.logInfo("Finished Traversing");
+	sb.logInfo(sb.print(entity.id()) .. " adding to inventory to " .. sb.print(SourceID));
 	world.sendEntityMessage(SourceID,"AddToInventory",EntityID,ContainerID);
 	projectile.die();
+	sb.logInfo(sb.print(entity.id()) .. " finished");
 	return nil;
 end
 
@@ -56,6 +62,7 @@ end
 end--]]
 
 local function Drop()
+	sb.logInfo(sb.print(entity.id()) .. " dropping to " .. sb.print(SourceID));
 	world.sendEntityMessage(SourceID,"DropItems",EntityID,ContainerID,entity.position());
 	if DroppingItems ~= nil then
 		local Position = entity.position();
@@ -74,6 +81,7 @@ function ChangeContainer(NewContainer)
 end
 
 local function RecalculatePath(StartingPoint)
+	sb.logInfo(sb.print(entity.id()) .. " recalc");
 	--sb.logInfo(stringTable(PossibleConduits,"PossibleConduits"));
 	local StartingConduit = world.objectAt(StartingPoint);
 	--sb.logInfo("StartingConduit = " .. StartingConduit);
@@ -386,6 +394,7 @@ function ReRoute(possibleConduits,removePossiblity)
 end
 
 function StartTraversing(path,speed,containerID,pathIndex,altID,possibleConduits,conduitLimits,sideLimits)
+	sb.logInfo(sb.print(entity.id()) .. " starting traverse");
 	EntityID = entity.id();
 	Started = true;
 	SourceID = altID or projectile.sourceEntity();
@@ -512,6 +521,6 @@ function update(dt)
 	end
 end
 
---[[function uninit()
-	sb.logInfo("TRAVERAL UNINIT");
-end--]]
+function uninit()
+	sb.logInfo(sb.print(ENTITYID) .. " UNINIT");
+end

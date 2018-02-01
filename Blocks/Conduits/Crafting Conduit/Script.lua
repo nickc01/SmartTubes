@@ -1,3 +1,4 @@
+require("/Core/Debug.lua");
 local Cables;
 local EntityID;
 local Recipes;
@@ -53,7 +54,7 @@ function init()
 		return false;
 	end);
 	message.setHandler("SetRecipes",function(_,_,value)
-		--sb.logInfo("VALUE = " .. sb.print(value));
+		--DPrint("VALUE = " .. sb.print(value));
 		NewRecipes = value;
 		object.setConfigParameter("Recipes",value);
 		Reset = true;
@@ -68,7 +69,7 @@ function init()
 	end);
 	Speeds = config.getParameter("Speed",0);
 	Recipes = config.getParameter("Recipes",{});
-	--sb.logInfo("INIT RECIPE = " .. sb.print(Recipes));
+	--DPrint("INIT RECIPE = " .. sb.print(Recipes));
 	CraftIndex = 0;
 	IncrementCraftIndexer();
 	Cables.AddAfterFunction(OnCableUpdate);
@@ -205,9 +206,9 @@ local function ConsumeCurrencies(currencies)
 end
 
 local function IsACurrency(ItemName)
-	sb.logInfo("ItemName = " .. sb.print(ItemName));
+	DPrint("ItemName = " .. sb.print(ItemName));
 	for k,i in ipairs(Currencies) do
-		sb.logInfo("Comparison = " .. sb.print(i));
+		DPrint("Comparison = " .. sb.print(i));
 		if i.item == ItemName then
 			return i.currency;
 		end
@@ -234,22 +235,22 @@ Craft = function(dt)
 		CraftIndex = 0;
 		IncrementCraftIndexer();
 	end
-	--sb.logInfo("Recipes = " .. sb.print(Recipes));
-	--sb.logInfo("Recipe Size = " .. sb.print(#Recipes));
+	--DPrint("Recipes = " .. sb.print(Recipes));
+	--DPrint("Recipe Size = " .. sb.print(#Recipes));
 	if #Recipes > 0 then
 		if RecipeInfo[CraftIndex] == nil then
 			RecipeInfo[CraftIndex] = 0
 			SetInfo = true;
 		end
-		--sb.logInfo("Recipe Groups = " .. sb.print(Recipes[CraftIndex].Recipe.groups));
-		--sb.logInfo("Can Craft : " .. sb.print(Recipes[CraftIndex].Recipe.output) .. " = " .. sb.print(CraftersHaveFilters(Recipes[CraftIndex].Recipe.groups)));
-		--sb.logInfo("A");
+		--DPrint("Recipe Groups = " .. sb.print(Recipes[CraftIndex].Recipe.groups));
+		--DPrint("Can Craft : " .. sb.print(Recipes[CraftIndex].Recipe.output) .. " = " .. sb.print(CraftersHaveFilters(Recipes[CraftIndex].Recipe.groups)));
+		--DPrint("A");
 		if CraftersHaveFilters(Recipes[CraftIndex].Recipe.groups) and ContainerCore.ContainerItemsCanFit(Recipes[CraftIndex].Recipe.output) > 0 and ItemsAvailable(Recipes[CraftIndex].Recipe.input,Recipes[CraftIndex].Recipe.matchInputParameters) and CurrenciesAvailable(Recipes[CraftIndex].Recipe.currencyInputs) then
-			--sb.logInfo("B");
+			--DPrint("B");
 			--CONSUME THE ITEMS
 				RecipeInfo[CraftIndex] = RecipeInfo[CraftIndex] + ((1 / Recipes[CraftIndex].Recipe.duration) * (dt * ((Speeds + 1) / 2)));
 				if RecipeInfo[CraftIndex] > 1 then
-					--sb.logInfo("Crafted : " .. sb.print(Recipes[CraftIndex].Recipe.output));
+					--DPrint("Crafted : " .. sb.print(Recipes[CraftIndex].Recipe.output));
 					--world.spawnItem(Recipes[CraftIndex].Recipe.output,entity.position());
 					if ConsumeItems(Recipes[CraftIndex].Recipe.input,Recipes[CraftIndex].Recipe.matchInputParameters) then
 						ConsumeCurrencies(Recipes[CraftIndex].Recipe.currencyInputs);
