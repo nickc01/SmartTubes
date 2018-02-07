@@ -22,8 +22,6 @@ end
 SetupAim = function()
 	activeItem.setTwoHandedGrip(false);
 	animator.resetTransformationGroup("itemana");
-	--animator.rotateTransformationGroup("itemana",1.75 * math.pi,{-0.6,0.6});
-	--animator.translateTransformationGroup("itemana",{0.55,0.3});
 end
 
 UpdateAim = function()

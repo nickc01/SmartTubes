@@ -31,6 +31,7 @@ local RecipeInfo = {};
 local FilterCache = {};
 
 function init()
+	object.smash();
 	Position = entity.position();
 	local CurrencyConfig = root.assetJson("/currencies.config");
 	CurrencyCount = config.getParameter("CurrencyCount",{});

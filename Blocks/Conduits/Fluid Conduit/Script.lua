@@ -103,6 +103,7 @@ LoopBackIter = function(tbl,startIndex)
 end
 
 function init()
+	object.smash();
 	ContainerCore.Init(24);
 	EntityID = entity.id();
 	Cables = CableCore;

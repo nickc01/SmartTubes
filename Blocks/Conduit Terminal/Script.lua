@@ -9,6 +9,7 @@ local EntityID;
 local UpdateCache = false;
 
 function init()
+	object.smash();
 	EntityID = entity.id();
 	Cables = CableCore;
 	Hue = config.getParameter("Hue",0);
