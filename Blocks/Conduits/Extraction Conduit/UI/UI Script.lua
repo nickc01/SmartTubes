@@ -140,7 +140,6 @@ function uninit()
 	world.sendEntityMessage(SourceID,"SetValue","UITakeFromSlot",widget.getText("takeFromSlotBox"));
 	world.sendEntityMessage(SourceID,"SetValue","UIInsertIntoSlot",widget.getText("insertIntoSlotBox"));
 	world.sendEntityMessage(SourceID,"SetValue","UIAmountToLeave",widget.getText("amountToLeaveBox"));
-	world.sendEntityMessage(SourceID,"SetValue","ConduitName",ConduitName);
 end
 
 function stringTable(table,name,spacer)
@@ -201,9 +200,15 @@ function init()
 	widget.setText("amountToLeaveBox",world.getObjectParameter(SourceID,"UIAmountToLeave",""));
 	widget.setText("speedUpgrades",Speed);
 	widget.setText("stackUpgrades",Stack);
-	DefaultName = world.getObjectParameter(SourceID,"OriginalDescription") or world.getObjectParameter(SourceID,"shortdescription");
+	local ConduitType = world.getObjectParameter(SourceID,"conduitType","");
+	if ConduitType == "extraction" then
+		DefaultName = "Extraction Conduit";
+	elseif ConduitType == "io" then
+		DefaultName = "IO Conduit";
+	end
+	--DefaultName = world.getObjectParameter(SourceID,"OriginalDescription") or world.getObjectParameter(SourceID,"shortdescription");
 	--sb.logInfo("Default Name = " .. sb.print(DefaultName));
-	ConduitName = world.getObjectParameter(SourceID,"shortdescription","");
+	ConduitName = world.getObjectParameter(SourceID,"ConduitName") or world.getObjectParameter(SourceID,"OriginalDescription") or world.getObjectParameter(SourceID,"shortdescription");
 	--sb.logInfo("Conduit Name = " .. sb.print(ConduitName));
 	if ConduitName == DefaultName then
 		ConduitName = "";
@@ -540,13 +545,14 @@ function Save()
 				Configs["inventoryIcon"] = Icon .. "?border=1;FF0000?fade=007800;0.1";
 			end
 			Configs["RetainingParameters"] = Params;
+			Configs["ConduitName"] = ConduitName or "";
 			Configs["OriginalDescription"] = world.getObjectParameter(Object,"OriginalDescription") or world.getObjectParameter(Object,"shortdescription");
 			if ConduitName ~= nil and ConduitName ~= "" then
 				Configs["shortdescription"] = ConduitName;
 			else
 				Configs["shortdescription"] = DefaultName;
 			end
-			DPrint("Configs = " .. sb.printJson(Configs,1));
+			--DPrint("Configs = " .. sb.printJson(Configs,1));
 			world.sendEntityMessage(Object,"SmashCableBlockAndSpawnItem",nil,world.entityPosition(Object),10,Configs);
 		end
 		--world.sendEntityMessage(Object,"SetRetainingMode");
@@ -555,6 +561,8 @@ end
 
 function ConduitNameChange()
 	ConduitName = widget.getText("conduitNameBox");
+	DPrint("Conduit name Changed to = " .. sb.print(ConduitName));
+	world.sendEntityMessage(SourceID,"SetValue","ConduitName",ConduitName);
 end
 
 

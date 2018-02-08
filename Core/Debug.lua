@@ -1,7 +1,11 @@
 require("/Core/Debug.lua");
 
 function Print(value)
-	sb.logInfo(sb.print(value));
+	if type(value) == "string" then
+		sb.logInfo(value);
+	else
+		sb.logInfo(sb.print(value));
+	end
 end
 
 local CanPrint;
