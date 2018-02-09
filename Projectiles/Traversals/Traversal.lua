@@ -244,7 +244,20 @@ ResetTraversal = function()
 			return nil;
 		else
 			--sb.logInfo("DROPE");
-			return Drop();
+			--return Drop();
+			mcontroller.setXVelocity((EndX - StartX) * Speed);
+			mcontroller.setYVelocity((EndY - StartY) * Speed);
+			Traverser = function(dt)
+				Timer = Timer + (dt * Speed);
+				if Timer > 1 then
+					PathIndex = PathIndex - 1;
+					Traverser = nil;
+					mcontroller.setXPosition(EndX);
+					mcontroller.setYPosition(EndY);
+					ResetTraversal();
+					return nil;
+				end
+			end
 		end
 	end
 	if world.getObjectParameter(Path[PathIndex - 1],"conduitType") == "curved" then
