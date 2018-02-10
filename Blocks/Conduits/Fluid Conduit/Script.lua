@@ -103,7 +103,9 @@ LoopBackIter = function(tbl,startIndex)
 end
 
 function init()
-	object.smash();
+	if root.assetJson("/Core/Debug.json").EnableExperimentalConduits == false then
+		object.smash();
+	end
 	ContainerCore.Init(24);
 	EntityID = entity.id();
 	Cables = CableCore;

@@ -11,11 +11,17 @@ local Conduits;
 local Clicked = false;
 local MakeImageAbsolute;
 local EntityPos;
+local UIUpdateMessage;
 
 local vecAdd;
 local vecLerp;
+local UpdateNetwork;
 
 local Animations = {};
+
+local function SetSourceValue(Name,Value)
+	world.sendEntityMessage(SourceID,"SetValue",Name,Value);
+end
 
 local function SetupAnimationInfoForType(ConduitType,TestObject)
 	--Animations[ConduitType] = {};
@@ -104,6 +110,22 @@ function init()
 	SourceID = pane.sourceEntity();
 	UpdateColors();
 	MainCanvas = widget.bindCanvas("mainCanvas");
+	--ImageCore.GetFrameOfImage("/Blocks/Conduits/Curved/5x/TR/Curve.png");
+	EntityPos = world.entityPosition(SourceID);
+	UpdateNetwork();
+end
+
+local Offset = {156,84};
+local MousePos;
+
+local function RectVecSub(A,B)
+	return {A[1] - B[1],A[2] - B[2],A[3] - B[1],A[4] - B[2]};
+end
+
+local NetworkData;
+
+UpdateNetwork = function()
+	DPrint("Updating Network!");
 	Conduits = world.getObjectParameter(SourceID,"AllConduits",{});
 	DPrint("ALLCONDUITINITIAL = " .. sb.print(Conduits));
 	for k,i in pairs(Conduits) do
@@ -112,15 +134,17 @@ function init()
 		DPrint("I = " .. sb.printJson(i,1));
 		SetupAnimationInfoForType(k,i[1]);
 	end
-	--ImageCore.GetFrameOfImage("/Blocks/Conduits/Curved/5x/TR/Curve.png");
-	EntityPos = world.entityPosition(SourceID);
-end
-
-local Offset = {156,84};
-local MousePos;
-
-local function RectVecSub(A,B)
-	return {A[1] - B[1],A[2] - B[2],A[3] - B[1],A[4] - B[2]};
+	NetworkData = {};
+	for k,i in pairs(Conduits) do
+		for m,n in ipairs(i) do
+			NetworkData[n] = {};
+			NetworkData[n].CustomFlipX = world.getObjectParameter(n,"CustomFlipX",false);
+			NetworkData[n].CustomFlipY = world.getObjectParameter(n,"CustomFlipY",false);
+			NetworkData[n].CustomAnimationState = world.getObjectParameter(n,"CustomAnimationState",false);
+			NetworkData[n].Position = world.entityPosition(n);
+		end
+	end
+	SetSourceValue("UINeedsUpdate",false);
 end
 
 function update(dt)
@@ -132,6 +156,19 @@ function update(dt)
 		UpdateColors();
 	end
 	MainCanvas:clear();
+	if UIUpdateMessage == nil then
+		UIUpdateMessage = world.sendEntityMessage(SourceID,"UINeedsUpdate");
+	else
+		if UIUpdateMessage:finished() then
+			if UIUpdateMessage:result() == true then
+				UpdateNetwork();
+			end
+			UIUpdateMessage = world.sendEntityMessage(SourceID,"UINeedsUpdate");
+		end
+	end
+	--[[if world.getObjectParameter(SourceID,"UINeedsUpdate") == true then
+		UpdateNetwork();
+	end--]]
 	local Scale = 1.3;
 	local LerpFactor = 7 * dt;
 	if Clicked == true then
@@ -145,14 +182,17 @@ function update(dt)
 	--[[if Offset >= 200 then
 		Offset = Offset - 200;
 	end--]]
+	--DPrint("At Conduits = " .. sb.print(Conduits));
 	MainCanvas:drawTiledImage("/Blocks/Conduit Terminal/UI/Window/TileImage.png",{Offset[1] * 0.7,Offset[2] * 0.7},{0,0,2000,2000},0.1,LastColor);
 	for k,i in pairs(Conduits) do
 		--DPrint("Animations = " .. sb.print(Animations));
 		if Animations[k] ~= nil and Animations[k].Image ~= nil then
 			--DPrint("Here");
 			for m,n in ipairs(i) do
-				local Pos = world.entityPosition(n);
-				local State = world.getObjectParameter(n,"CustomAnimationState");
+				--local Pos = world.entityPosition(n);
+				local Pos = NetworkData[n].Position;
+				--local State = world.getObjectParameter(n,"CustomAnimationState");
+				local State = NetworkData[n].CustomAnimationState;
 				--local Rotation = Animations[k].States[State].Rect;
 				--local Rotation = world.getObjectParameter(n,"CustomAnimationRotation");
 				--MainCanvas:drawImage(Animations[k].Image,{((Pos[1] - EntityPos[1]) * 8) + Offset[1],((Pos[2] - EntityPos[2]) * 8) + Offset[2]});
@@ -161,7 +201,7 @@ function update(dt)
 				local RenderCoords = {0,0,0,0};
 				local TexCoords = Animations[k].States[State].Rect;
 				--local RenderPos = Animations[k].States[State].Rect;
-				if world.getObjectParameter(n,"CustomFlipX",false) then
+				if NetworkData[n].CustomFlipX then
 					RenderCoords[1] = X + Animations[k].States[State].Size[1];
 					RenderCoords[3] = X;
 					--RenderPos[1] = RenderPos[1] + Animations[k].States[State].Offset[1] * 2;
@@ -171,7 +211,7 @@ function update(dt)
 					RenderCoords[3] = X + Animations[k].States[State].Size[1];
 				end
 
-				if world.getObjectParameter(n,"CustomFlipY",false) then
+				if NetworkData[n].CustomFlipY then
 					RenderCoords[2] = Y + Animations[k].States[State].Size[2];
 					RenderCoords[4] = Y;
 					--RenderPos[2] = RenderPos[2] + Animations[k].States[State].Offset[2] * 2;
@@ -209,7 +249,7 @@ UpdateColors = function()
 end
 
 function CanvasClick(Position,ButtonType,IsDown)
-	--DPrint("ButtonType = " .. sb.print(ButtonType));
+	DPrint("ButtonType = " .. sb.print(ButtonType));
 	if ButtonType == 0 then
 		if IsDown == true then
 			PreviousMousePos = MainCanvas:mousePosition();

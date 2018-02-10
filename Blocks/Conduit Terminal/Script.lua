@@ -7,9 +7,12 @@ local ScanForConduits;
 local Cables;
 local EntityID;
 local UpdateCache = false;
+local UINeedsUpdate = true;
 
 function init()
-	object.smash();
+	if root.assetJson("/Core/Debug.json").EnableExperimentalConduits == false then
+		object.smash();
+	end
 	EntityID = entity.id();
 	Cables = CableCore;
 	Hue = config.getParameter("Hue",0);
@@ -24,23 +27,37 @@ function init()
 		object.setConfigParameter("Saturation",newSat);
 		UpdateLooks();
 	end);
+	message.setHandler("SetValue",function(_,_,Name,Value)
+		object.setConfigParameter(Name,Value);
+	end);
+	message.setHandler("UINeedsUpdate",function()
+		local Value = UINeedsUpdate;
+		if UINeedsUpdate == true then
+			UINeedsUpdate = false;
+		end
+		--sb.logInfo("_________________Returned Value = ".. sb.print(UINeedsUpdate));
+		return Value;
+	end);
 	UpdateLooks();
 	Cables.SetCableConnections({{-1,0},{0,-1},{-1,1},{-1,2},{0,3},{1,3},{2,3},{3,2},{3,1},{3,0},{2,-1},{1,-1}});
 	Cables.AddCondition("Conduits","conduitType",function(value) return value ~= nil end);
+	Cables.AddAfterFunction(ResetPathCache);
 	Cables.Initialize();
 	DPrint("ANIM");
+	UpdateCache = true;
+	ScanForConduits();
 	--sb.logInfo("Animated Parts = " .. sb.print(objectAnimator.getParameter("animatedParts")));
 end
 
 UpdateLooks = function()
-	--object.setProcessingDirectives("?hueshift=" .. Hue .. "?saturation=" .. Saturation);
 	animator.setGlobalTag("directives","?hueshift=" .. Hue .. "?saturation=" .. Saturation);
 end
 
 function ResetPathCache()
-	--sb.logInfo("Cache Updated");
+	DPrint("Cache Reset");
 	UpdateCache = true;
-	object.setConfigParameter("UpdateCache",UpdateCache);
+	ScanForConduits();
+	--object.setConfigParameter("UpdateCache",UpdateCache);
 end
 
 local AllConduitCache = nil;
@@ -111,14 +128,16 @@ ScanForConduits = function()
 	object.setConfigParameter("AllConduits",AllConduits);
 	UpdateCache = false;
 	object.setConfigParameter("UpdateCache",UpdateCache);
+	--object.setConfigParameter("UINeedsUpdate",true);
+	UINeedsUpdate = true;
 	return AllConduits;
 end
 
-local First = false;
-local FirstTimer = 0;
+--local First = false;
+--local FirstTimer = 0;
 
 function update(dt)
-	if First == true then
+	--[[if First == true then
 		if FirstTimer > 1 then
 			First = nil;
 			DPrint("AllConduits = " .. sb.print(ScanForConduits()));
@@ -127,7 +146,7 @@ function update(dt)
 		end
 	elseif First == false then
 		First = true;
-	end
+	end--]]
 	object.setProcessingDirectives("?hueshift=" .. Hue);
 end
 

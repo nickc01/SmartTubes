@@ -31,7 +31,9 @@ local RecipeInfo = {};
 local FilterCache = {};
 
 function init()
-	object.smash();
+	if root.assetJson("/Core/Debug.json").EnableExperimentalConduits == false then
+		object.smash();
+	end
 	Position = entity.position();
 	local CurrencyConfig = root.assetJson("/currencies.config");
 	CurrencyCount = config.getParameter("CurrencyCount",{});
