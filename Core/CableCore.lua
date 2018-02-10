@@ -9,6 +9,8 @@ function GetConduits()
 	return CableCore.CableTypes["Conduits"];
 end
 
+local LoopingConduits = false;
+
 local CableConnections;
 local Conditions = {};
 local CableAmount = 0;
@@ -178,12 +180,14 @@ function CableCore.SetAnimationState(stateName,NewState,FlipX,FlipY)
 end
 
 AfterFunctions[1] = function()
-	for i=1,#ExtractionConduits do
+	for i=#ExtractionConduits,1,-1 do
 		if world.entityExists(ExtractionConduits[i]) == true then
-			world.callScriptedEntity(ExtractionConduits[i],"ResetPathCache");
+			local Conduit = ExtractionConduits[i];
+			table.remove(ExtractionConduits,i);
+			world.callScriptedEntity(Conduit,"ResetPathCache");
 		end
 	end
-	ExtractionConduits = {};
+	--ExtractionConduits = {};
 	if Animated == true then
 		object.setProcessingDirectives("");
 		if CableCore.CablesFound[3] ~= nil and CableCore.CablesFound[4] ~= nil and CableCore.CablesFound[1] == nil and CableCore.CablesFound[2] == nil then
@@ -272,11 +276,12 @@ end
 --THIS IS A TEST
 
 function CableCore.Initialize()
-	DPrint("CableInit");
+	--DPrint("CableInit");
 	if CableCore.Initalized == true then
 		return nil;
 	end
-	DPrint("New Init");
+	--DPrint("New Init");
+	DPrint("New Block");
 	--sb.logInfo("Started INIT of " .. sb.print(entity.id()));
 	--sb.logInfo("Animation = " .. sb.print(config.getParameter("animation")));
 
@@ -378,7 +383,7 @@ end
 end--]]
 
 function CableCore.UpdateExtractionConduits()
-	for i=1,#ExtractionConduits do
+	for i=#ExtractionConduits,1,-1 do
 		if world.entityExists(ExtractionConduits[i]) == true then
 			world.callScriptedEntity(ExtractionConduits[i],"ResetPathCache");
 		end

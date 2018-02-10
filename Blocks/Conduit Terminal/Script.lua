@@ -32,11 +32,13 @@ function init()
 	end);
 	message.setHandler("UINeedsUpdate",function()
 		local Value = UINeedsUpdate;
+		local NewConduits = nil;
 		if UINeedsUpdate == true then
 			UINeedsUpdate = false;
+			DPrint("Updating GUI");
+			NewConduits = ScanForConduits();
 		end
-		--sb.logInfo("_________________Returned Value = ".. sb.print(UINeedsUpdate));
-		return Value;
+		return {Value,NewConduits};
 	end);
 	UpdateLooks();
 	Cables.SetCableConnections({{-1,0},{0,-1},{-1,1},{-1,2},{0,3},{1,3},{2,3},{3,2},{3,1},{3,0},{2,-1},{1,-1}});
@@ -56,7 +58,8 @@ end
 function ResetPathCache()
 	DPrint("Cache Reset");
 	UpdateCache = true;
-	ScanForConduits();
+	UINeedsUpdate = true;
+	--ScanForConduits();
 	--object.setConfigParameter("UpdateCache",UpdateCache);
 end
 
@@ -76,7 +79,7 @@ ScanForConduits = function()
 			if world.entityExists(Next[i].ID) then
 				local Conduits = world.callScriptedEntity(Next[i].ID,"GetConduits");
 				if Next[i].ID == EntityID then
-					DPrint("SELF CONDUITS = " .. sb.print(Conduits));
+					--DPrint("SELF CONDUITS = " .. sb.print(Conduits));
 				end
 				world.callScriptedEntity(Next[i].ID,"AddExtractionConduit",EntityID);
 				if Conduits ~= nil then
@@ -110,7 +113,7 @@ ScanForConduits = function()
 							end
 						end
 					end
-					DPrint("Adding = " .. sb.print(Next[i]));
+					--DPrint("Adding = " .. sb.print(Next[i]));
 					Findings[#Findings + 1] = Next[i];
 					local Type = world.getObjectParameter(Next[i].ID,"conduitType");
 					if Type ~= nil then
@@ -127,9 +130,9 @@ ScanForConduits = function()
 	AllConduitCache = AllConduits;
 	object.setConfigParameter("AllConduits",AllConduits);
 	UpdateCache = false;
-	object.setConfigParameter("UpdateCache",UpdateCache);
+	--object.setConfigParameter("UpdateCache",UpdateCache);
 	--object.setConfigParameter("UINeedsUpdate",true);
-	UINeedsUpdate = true;
+	--UINeedsUpdate = true;
 	return AllConduits;
 end
 

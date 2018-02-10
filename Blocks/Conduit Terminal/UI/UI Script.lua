@@ -124,14 +124,20 @@ end
 
 local NetworkData;
 
-UpdateNetwork = function()
-	DPrint("Updating Network!");
-	Conduits = world.getObjectParameter(SourceID,"AllConduits",{});
-	DPrint("ALLCONDUITINITIAL = " .. sb.print(Conduits));
+UpdateNetwork = function(NewConduits)
+	--DPrint("Updating Network!");
+	if NewConduits ~= nil then
+		DPrint("Setting to New Conduits");
+		Conduits = NewConduits;
+	else
+		Conduits = world.getObjectParameter(SourceID,"AllConduits",{});
+	end
+	--Conduits = NewConduits or world.getObjectParameter(SourceID,"AllConduits",{});
+	--DPrint("ALLCONDUITINITIAL = " .. sb.print(Conduits));
 	for k,i in pairs(Conduits) do
-		DPrint("Setting Up Type = " .. sb.print(k));
-		DPrint("I[1] = " .. sb.print(i[1]));
-		DPrint("I = " .. sb.printJson(i,1));
+		--DPrint("Setting Up Type = " .. sb.print(k));
+		--DPrint("I[1] = " .. sb.print(i[1]));
+		--DPrint("I = " .. sb.printJson(i,1));
 		SetupAnimationInfoForType(k,i[1]);
 	end
 	NetworkData = {};
@@ -160,8 +166,9 @@ function update(dt)
 		UIUpdateMessage = world.sendEntityMessage(SourceID,"UINeedsUpdate");
 	else
 		if UIUpdateMessage:finished() then
-			if UIUpdateMessage:result() == true then
-				UpdateNetwork();
+			local Result,NewConduits = table.unpack(UIUpdateMessage:result());
+			if Result == true then
+				UpdateNetwork(NewConduits);
 			end
 			UIUpdateMessage = world.sendEntityMessage(SourceID,"UINeedsUpdate");
 		end
@@ -249,7 +256,7 @@ UpdateColors = function()
 end
 
 function CanvasClick(Position,ButtonType,IsDown)
-	DPrint("ButtonType = " .. sb.print(ButtonType));
+	--DPrint("ButtonType = " .. sb.print(ButtonType));
 	if ButtonType == 0 then
 		if IsDown == true then
 			PreviousMousePos = MainCanvas:mousePosition();
@@ -278,7 +285,7 @@ MakeImageAbsolute = function(ConduitType,Image,ObjectSource)
 		OutputImages[ConduitType] = Image;
 		return Image;
 	else
-		DPrint("Object Name = " .. sb.print(world.entityName(ObjectSource)));
+		--DPrint("Object Name = " .. sb.print(world.entityName(ObjectSource)));
 		local Directory = root.itemConfig({name = world.entityName(ObjectSource),count = 1}).directory;
 		if string.find(Directory,"/$") == nil then
 			Directory = Directory .. "/";
