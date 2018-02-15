@@ -16,6 +16,10 @@ local Conditions = {};
 local CableAmount = 0;
 local SourceObject = {};
 local DefaultConnections = {{0,1},{0,-1},{-1,0},{1,0}};
+local FlipX = false;
+local FlipY = false;
+local AnimationState;
+local TerminalImage;
 
 --Test = {};
 
@@ -170,12 +174,22 @@ end
 local AfterFunctions = {};
 local ExtractionConduits = {};
 
-function CableCore.SetAnimationState(stateName,NewState,FlipX,FlipY)
-	FlipX = FlipX or false;
-	FlipY = FlipY or false;
+function CableCore.SetAnimationState(stateName,NewState,flipX,flipY)
+	FlipX = flipX or false;
+	FlipY = flipY or false;
 	object.setConfigParameter("CustomFlipX",FlipX);
 	object.setConfigParameter("CustomFlipY",FlipY);
-	animator.setAnimationState(stateName,NewState);
+	if Animated == true then
+		animator.setAnimationState(stateName,NewState);
+	end
+	if FlipX and FlipY then
+		object.setProcessingDirectives("?flipxy");
+	elseif FlipX then
+		object.setProcessingDirectives("?flipx");
+	elseif FlipY then
+		object.setProcessingDirectives("?flipy");
+	end
+	AnimationState = NewState;
 	object.setConfigParameter("CustomAnimationState",NewState);
 end
 
@@ -188,7 +202,7 @@ AfterFunctions[1] = function()
 		end
 	end
 	--ExtractionConduits = {};
-	if Animated == true then
+	--if Animated == true then
 		object.setProcessingDirectives("");
 		if CableCore.CablesFound[3] ~= nil and CableCore.CablesFound[4] ~= nil and CableCore.CablesFound[1] == nil and CableCore.CablesFound[2] == nil then
 			CableCore.SetAnimationState("cable","horizontal");
@@ -198,21 +212,21 @@ AfterFunctions[1] = function()
 			CableCore.SetAnimationState("cable","corner");
 		elseif CableCore.CablesFound[3] ~= nil and CableCore.CablesFound[4] == nil and CableCore.CablesFound[1] ~= nil and CableCore.CablesFound[2] == nil then
 			CableCore.SetAnimationState("cable","corner",false,true);
-			object.setProcessingDirectives("?flipy");
+			--object.setProcessingDirectives("?flipy");
 		elseif CableCore.CablesFound[3] == nil and CableCore.CablesFound[4] ~= nil and CableCore.CablesFound[1] ~= nil and CableCore.CablesFound[2] == nil then
 			CableCore.SetAnimationState("cable","corner",true,true);
-			object.setProcessingDirectives("?flipxy");
+			--object.setProcessingDirectives("?flipxy");
 		elseif CableCore.CablesFound[3] == nil and CableCore.CablesFound[4] ~= nil and CableCore.CablesFound[1] == nil and CableCore.CablesFound[2] ~= nil then
 			CableCore.SetAnimationState("cable","corner",true,false);
-			object.setProcessingDirectives("?flipx");
+			--object.setProcessingDirectives("?flipx");
 		elseif CableCore.CablesFound[3] ~= nil and CableCore.CablesFound[4] ~= nil and CableCore.CablesFound[1] == nil and CableCore.CablesFound[2] ~= nil then
 			CableCore.SetAnimationState("cable","triplehorizontal");
 		elseif CableCore.CablesFound[3] ~= nil and CableCore.CablesFound[4] == nil and CableCore.CablesFound[1] ~= nil and CableCore.CablesFound[2] ~= nil then
 			CableCore.SetAnimationState("cable","triplevertical",true,false);
-			object.setProcessingDirectives("?flipx");
+			--object.setProcessingDirectives("?flipx");
 		elseif CableCore.CablesFound[3] ~= nil and CableCore.CablesFound[4] ~= nil and CableCore.CablesFound[1] ~= nil and CableCore.CablesFound[2] == nil then
 			CableCore.SetAnimationState("cable","triplehorizontal",false,true);
-			object.setProcessingDirectives("?flipy");
+			--object.setProcessingDirectives("?flipy");
 		elseif CableCore.CablesFound[3] == nil and CableCore.CablesFound[4] ~= nil and CableCore.CablesFound[1] ~= nil and CableCore.CablesFound[2] ~= nil then
 			CableCore.SetAnimationState("cable","triplevertical");
 		elseif CableCore.CablesFound[3] ~= nil and CableCore.CablesFound[4] ~= nil and CableCore.CablesFound[1] ~= nil and CableCore.CablesFound[2] ~= nil then
@@ -223,14 +237,14 @@ AfterFunctions[1] = function()
 			CableCore.SetAnimationState("cable","right");
 		elseif CableCore.CablesFound[3] == nil and CableCore.CablesFound[4] ~= nil and CableCore.CablesFound[1] == nil and CableCore.CablesFound[2] == nil then
 			CableCore.SetAnimationState("cable","right",true,false);
-			object.setProcessingDirectives("?flipx");
+			--object.setProcessingDirectives("?flipx");
 		elseif CableCore.CablesFound[3] == nil and CableCore.CablesFound[4] == nil and CableCore.CablesFound[1] ~= nil and CableCore.CablesFound[2] == nil then
 			CableCore.SetAnimationState("cable","up",false,true);
-			object.setProcessingDirectives("?flipy");
+			--object.setProcessingDirectives("?flipy");
 		elseif CableCore.CablesFound[3] == nil and CableCore.CablesFound[4] == nil and CableCore.CablesFound[1] == nil and CableCore.CablesFound[2] ~= nil then
 			CableCore.SetAnimationState("cable","up");
 		end
-	end
+	--end
 end
 CableCore.CablesFound = {};
 CableCore.CableTypes = {};
@@ -254,12 +268,25 @@ function CableCore.UpdateOthers()
 	end
 end
 
+function CableCore.SetTerminalImage(image)
+	TerminalImage = image;
+	object.setConfigParameter("StoredTerminalImage",TerminalImage);
+end
+
 local function MakeImageAbsolute(Image,ObjectSource)
+	ObjectSource = ObjectSource or entity.id();
+	--DPrint("Image = " .. sb.print(Image) .. " , " .. sb.print(ObjectSource));
 	if string.find(Image,"^/") ~= nil then
 		return Image;
 	else
 		--sb.logInfo("Object Name = " .. sb.print(world.entityName(ObjectSource)));
-		local Directory = root.itemConfig({name = world.entityName(ObjectSource),count = 1}).directory;
+		local DirectoryObject;
+		if type(ObjectSource) == "string" then
+			DirectoryObject = ObjectSource;
+		else
+			DirectoryObject = world.entityName(ObjectSource);
+		end
+		local Directory = root.itemConfig({name = DirectoryObject,count = 1}).directory;
 		if string.find(Directory,"/$") == nil then
 			Directory = Directory .. "/";
 		end
@@ -281,10 +308,37 @@ function CableCore.Initialize()
 		return nil;
 	end
 	--DPrint("New Init");
-	DPrint("New Block");
+	--DPrint("New Block");
 	--sb.logInfo("Started INIT of " .. sb.print(entity.id()));
 	--sb.logInfo("Animation = " .. sb.print(config.getParameter("animation")));
-
+	message.setHandler("GetFlipX",function()
+		--DPrint("ID = " .. sb.print(entity.id()));
+	--	DPrint("Getting Flip X = " .. sb.print(FlipX));
+		return FlipX;
+	end);
+	message.setHandler("GetFlipY",function()
+		--DPrint("ID = " .. sb.print(entity.id()));
+		--DPrint("Getting Flip Y = " .. sb.print(FlipY));
+		return FlipY;
+	end);
+	message.setHandler("GetAnimationState",function()
+		--DPrint("ID = " .. sb.print(entity.id()));
+		--DPrint("Getting Animation State = " .. sb.print(AnimationState));
+		return AnimationState;
+	end);
+	message.setHandler("GetTerminalImage",function()
+		if TerminalImage == nil then
+			if Facaded == true and Relations ~= nil then
+			local RelatedObjectName = Relations.GetConduitOfFacade(object.name());
+				TerminalImage = MakeImageAbsolute(root.itemConfig(RelatedObjectName).config.animationParts.cables,RelatedObjectName);
+			else
+				TerminalImage = MakeImageAbsolute(config.getParameter("animationParts").cables);
+			end
+			object.setConfigParameter("StoredTerminalImage",TerminalImage);
+		end
+		--DPrint("Returning Terminal Image of " .. sb.print(TerminalImage));
+		return TerminalImage;
+	end);
 	message.setHandler("SmashCableBlockAndSpawnItem",function(_,_,ItemName,Pos,Count,Config)
 		--sb.logInfo("A");
 		ItemName = ItemName or object.name();
@@ -312,11 +366,16 @@ function CableCore.Initialize()
 		end
 	end);
 
-	if config.getParameter("animation") ~= "/Animations/Cable.animation" then
-		Animated = false;
-	else
+	--if config.getParameter("animation") ~= "/Animations/Cable.animation" then
+	--	Animated = false;
+	--end
+	--else
 		CableCore.StartAnimationSettings();
-		CableCore.SetAnimationImage(MakeImageAbsolute(config.getParameter("animationParts").cables,entity.id()));
+		if config.getParameter("animation") ~= "/Animations/Cable.animation" then
+			Animated = false;
+		else
+			CableCore.SetAnimationImage(MakeImageAbsolute(config.getParameter("animationParts").cables,entity.id()));
+		end
 		CableCore.SetDefaultState("none");
 
 		CableCore.AddAnimationState("none",GetCableImageInfoForNum(0,1));
@@ -337,7 +396,7 @@ function CableCore.Initialize()
 
 		CableCore.AddAnimationState("full",GetCableImageInfoForNum(8,1));
 		CableCore.FinishAnimationSettings();
-	end
+--	end
 	if CableConnections == nil then
 		CableConnections = config.getParameter("CableConnections",DefaultConnections);
 	end
@@ -481,6 +540,7 @@ function CableCore.SetDefaultState(StateName)
 		CableCore.StartAnimationSettings();
 	end
 	Animation.Default = StateName;
+	AnimationState = StateName;
 end
 
 function CableCore.FinishAnimationSettings()

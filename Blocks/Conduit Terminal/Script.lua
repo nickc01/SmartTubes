@@ -13,6 +13,7 @@ function init()
 	if root.assetJson("/Core/Debug.json").EnableExperimentalConduits == false then
 		object.smash();
 	end
+	DPrint("Self ID = " .. sb.print(entity.id()));
 	EntityID = entity.id();
 	Cables = CableCore;
 	Hue = config.getParameter("Hue",0);
@@ -30,29 +31,30 @@ function init()
 	message.setHandler("SetValue",function(_,_,Name,Value)
 		object.setConfigParameter(Name,Value);
 	end);
-	message.setHandler("UINeedsUpdate",function()
+	message.setHandler("UINeedsUpdate",function(_,_,Force)
+		--DPrint("Got Message!!!");
 		local Value = UINeedsUpdate;
 		local NewConduits = nil;
-		if UINeedsUpdate == true then
+		if UINeedsUpdate == true or Force == true then
 			UINeedsUpdate = false;
-			DPrint("Updating GUI");
+			--DPrint("Updating GUI");
 			NewConduits = ScanForConduits();
 		end
+		--DPrint("RETURNING Value = " .. sb.print({Value,NewConduits}));
 		return {Value,NewConduits};
 	end);
 	UpdateLooks();
 	Cables.SetCableConnections({{-1,0},{0,-1},{-1,1},{-1,2},{0,3},{1,3},{2,3},{3,2},{3,1},{3,0},{2,-1},{1,-1}});
 	Cables.AddCondition("Conduits","conduitType",function(value) return value ~= nil end);
 	Cables.AddAfterFunction(ResetPathCache);
-	Cables.Initialize();
-	DPrint("ANIM");
+	--Cables.Initialize();
+	--DPrint("ANIM");
 	UpdateCache = true;
-	ScanForConduits();
 	--sb.logInfo("Animated Parts = " .. sb.print(objectAnimator.getParameter("animatedParts")));
 end
 
 UpdateLooks = function()
-	animator.setGlobalTag("directives","?hueshift=" .. Hue .. "?saturation=" .. Saturation);
+	animator.setGlobalTag("directives","?hueshift=" .. Hue .. "?saturation=" .. -Saturation);
 end
 
 function ResetPathCache()
@@ -115,12 +117,17 @@ ScanForConduits = function()
 					end
 					--DPrint("Adding = " .. sb.print(Next[i]));
 					Findings[#Findings + 1] = Next[i];
-					local Type = world.getObjectParameter(Next[i].ID,"conduitType");
-					if Type ~= nil then
-						if AllConduits[Type] == nil then
-							AllConduits[Type] = {};
+					if Next[i].ID ~= EntityID then
+						local Type = world.getObjectParameter(Next[i].ID,"conduitType");
+						if Type ~= nil then
+							if AllConduits[Type] == nil then
+								AllConduits[Type] = {};
+							end
+							AllConduits[Type][#AllConduits[Type] + 1] = Next[i].ID;
+							--[[if Next[i].ID ~= EntityID then
+								
+							end--]]
 						end
-						AllConduits[Type][#AllConduits[Type] + 1] = Next[i].ID;
 					end
 				end
 			end
@@ -128,29 +135,23 @@ ScanForConduits = function()
 		Next = NewNext;
 	until #Next == 0;
 	AllConduitCache = AllConduits;
+	DPrint("AllConduits = " .. sb.print(AllConduits));
 	object.setConfigParameter("AllConduits",AllConduits);
 	UpdateCache = false;
-	--object.setConfigParameter("UpdateCache",UpdateCache);
-	--object.setConfigParameter("UINeedsUpdate",true);
-	--UINeedsUpdate = true;
 	return AllConduits;
 end
 
---local First = false;
+local First = false;
 --local FirstTimer = 0;
 
 function update(dt)
-	--[[if First == true then
-		if FirstTimer > 1 then
-			First = nil;
-			DPrint("AllConduits = " .. sb.print(ScanForConduits()));
-		else
-			FirstTimer = FirstTimer + dt;
-		end
-	elseif First == false then
+	--ScanForConduits();
+	if First == false then
 		First = true;
-	end--]]
-	object.setProcessingDirectives("?hueshift=" .. Hue);
+		Cables.Initialize();
+		ScanForConduits();
+	end
+	--object.setProcessingDirectives("?hueshift=" .. Hue);
 end
 
 function die()
