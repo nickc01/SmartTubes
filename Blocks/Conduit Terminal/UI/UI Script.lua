@@ -122,7 +122,9 @@ function init()
 	widget.setSliderValue("hueSlider",Hue);
 	widget.setSliderValue("satSlider",Sat);
 	MainCanvas = widget.bindCanvas("mainCanvas");
-	--ImageCore.GetFrameOfImage("/Blocks/Conduits/Curved/5x/TR/Curve.png");
+	--"/Blocks/Conduits/Curved/5x/TR/Curve.png"
+	sb.logInfo("Returned Frame = " .. sb.print(ImageCore.GetFrameOfImage("/Projectiles/Traversals/Yellow/Traversal.png")));
+	--sb.logInfo("Result of function = " .. sb.print({pcall(function() sb.logInfo("Generate Name Result = " .. sb.print(root.generateName("/Blocks/Conduits/Curved/5x/Curve.frame"))); end)}));
 	SourcePos = world.entityPosition(SourceID);
 	UpdateNetwork();
 	Initialized = true;

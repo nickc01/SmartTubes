@@ -9,8 +9,6 @@ function GetConduits()
 	return CableCore.CableTypes["Conduits"];
 end
 
-local LoopingConduits = false;
-
 local CableConnections;
 local Conditions = {};
 local CableAmount = 0;
@@ -20,12 +18,6 @@ local FlipX = false;
 local FlipY = false;
 local AnimationState;
 local TerminalImage;
-
---Test = {};
-
---[[function Test.testingfunction()
-	return "This is a test!";
-end--]]
 
 function IsConnectedTo(ID)
 	for i=1,CableAmount do
@@ -69,23 +61,18 @@ local function GetParameterOf(ID,value,defaultValue)
 end
 
 function GetCableConnections()
-	--sb.logInfo("RETURNING CABLE CONNECTIONS OF " .. sb.print(CableConnections));
-	--sb.logInfo("Cable Connection REturning");
 	return CableConnections;
 end
 
 local function GetCableConnectionsOf(ID)
 	if SourceObject.Config ~= nil and SourceObject.ID == ID then
-		--sb.logInfo("Returning CONFIG");
 		return SourceObject.Config["CableConnections"];
 	end
 
 	if world.entityExists(ID) == true then
-		--sb.logInfo("Requesting Cable Connections From Entity of " .. sb.print(entity.id()));
 		return world.callScriptedEntity(ID,"GetCableConnections");
 	end
 
-	--sb.logInfo("Returning VIA WORLD");
 	return world.getObjectParameter(ID,"CableConnections",DefaultConnections);
 end
 
@@ -121,11 +108,10 @@ local function TestCondition(Condition,ID)
 end
 
 local function SatisfiesConditions(objectID,Index)
-	--sb.logInfo("START");
 	local InCondition = false;
 	for i=1,#Conditions do
 		if objectID ~= nil then
-			if TestCondition(Conditions[i],objectID) == true      --[[Conditions[i][2](GetParameterOf(objectID,Conditions[i][3])) == true--]] then
+			if TestCondition(Conditions[i],objectID) == true then
 				local Valid = false;
 				local EntityPosition = entity.position();
 				for o,p in ipairs(object.spaces()) do
@@ -150,8 +136,6 @@ local function SatisfiesConditions(objectID,Index)
 					end
 					local List = CableCore.CableTypes[Conditions[i][1]];
 					List[Index] = objectID;
-					--sb.logInfo(sb.print(objectID) .. " is part of " .. sb.print(Conditions[i][1]));
-					--return objectID;
 					InCondition = true;
 				end
 			end
@@ -164,7 +148,6 @@ local function SatisfiesConditions(objectID,Index)
 			end
 		end
 	end
-	--sb.logInfo("END");
 	if InCondition == true then
 		return objectID;
 	end
@@ -193,6 +176,33 @@ function CableCore.SetAnimationState(stateName,NewState,flipX,flipY)
 	object.setConfigParameter("CustomAnimationState",NewState);
 end
 
+local DefaultTraversalFunction = function(SourceTraversalID,PreviousPosition,PreviousID,Speed)
+	local EndPosition = entity.position();
+	local Time = 0;
+	return function(dt)
+		Time = Time + dt * Speed;
+		if Time >= 1 then
+			return {EndPosition[1] + 0.5,EndPosition[2] + 0.5},nil,true;
+		else
+			return {0.5 + PreviousPosition[1] + (EndPosition[1] - PreviousPosition[1]) * Time,0.5 + PreviousPosition[2] + (EndPosition[2] - PreviousPosition[2]) * Time};
+		end
+	end
+end
+
+local TraversalPathFunction = DefaultTraversalFunction;
+
+function CableCore.GetDefaultTraversalFunction()
+	return DefaultTraversalFunction;
+end
+
+function CableCore.SetTraversalPathFunction(func)
+	TraversalPathFunction = func;
+end
+
+function CableCore.GetTraversalPath(SourceTraversalID,StartPosition,PreviousID,Speed)
+	return TraversalPathFunction(SourceTraversalID,StartPosition,PreviousID,Speed);
+end
+
 AfterFunctions[1] = function()
 	for i=#ExtractionConduits,1,-1 do
 		if world.entityExists(ExtractionConduits[i]) == true then
@@ -212,21 +222,16 @@ AfterFunctions[1] = function()
 			CableCore.SetAnimationState("cable","corner");
 		elseif CableCore.CablesFound[3] ~= nil and CableCore.CablesFound[4] == nil and CableCore.CablesFound[1] ~= nil and CableCore.CablesFound[2] == nil then
 			CableCore.SetAnimationState("cable","corner",false,true);
-			--object.setProcessingDirectives("?flipy");
 		elseif CableCore.CablesFound[3] == nil and CableCore.CablesFound[4] ~= nil and CableCore.CablesFound[1] ~= nil and CableCore.CablesFound[2] == nil then
 			CableCore.SetAnimationState("cable","corner",true,true);
-			--object.setProcessingDirectives("?flipxy");
 		elseif CableCore.CablesFound[3] == nil and CableCore.CablesFound[4] ~= nil and CableCore.CablesFound[1] == nil and CableCore.CablesFound[2] ~= nil then
 			CableCore.SetAnimationState("cable","corner",true,false);
-			--object.setProcessingDirectives("?flipx");
 		elseif CableCore.CablesFound[3] ~= nil and CableCore.CablesFound[4] ~= nil and CableCore.CablesFound[1] == nil and CableCore.CablesFound[2] ~= nil then
 			CableCore.SetAnimationState("cable","triplehorizontal");
 		elseif CableCore.CablesFound[3] ~= nil and CableCore.CablesFound[4] == nil and CableCore.CablesFound[1] ~= nil and CableCore.CablesFound[2] ~= nil then
 			CableCore.SetAnimationState("cable","triplevertical",true,false);
-			--object.setProcessingDirectives("?flipx");
 		elseif CableCore.CablesFound[3] ~= nil and CableCore.CablesFound[4] ~= nil and CableCore.CablesFound[1] ~= nil and CableCore.CablesFound[2] == nil then
 			CableCore.SetAnimationState("cable","triplehorizontal",false,true);
-			--object.setProcessingDirectives("?flipy");
 		elseif CableCore.CablesFound[3] == nil and CableCore.CablesFound[4] ~= nil and CableCore.CablesFound[1] ~= nil and CableCore.CablesFound[2] ~= nil then
 			CableCore.SetAnimationState("cable","triplevertical");
 		elseif CableCore.CablesFound[3] ~= nil and CableCore.CablesFound[4] ~= nil and CableCore.CablesFound[1] ~= nil and CableCore.CablesFound[2] ~= nil then
@@ -237,10 +242,8 @@ AfterFunctions[1] = function()
 			CableCore.SetAnimationState("cable","right");
 		elseif CableCore.CablesFound[3] == nil and CableCore.CablesFound[4] ~= nil and CableCore.CablesFound[1] == nil and CableCore.CablesFound[2] == nil then
 			CableCore.SetAnimationState("cable","right",true,false);
-			--object.setProcessingDirectives("?flipx");
 		elseif CableCore.CablesFound[3] == nil and CableCore.CablesFound[4] == nil and CableCore.CablesFound[1] ~= nil and CableCore.CablesFound[2] == nil then
 			CableCore.SetAnimationState("cable","up",false,true);
-			--object.setProcessingDirectives("?flipy");
 		elseif CableCore.CablesFound[3] == nil and CableCore.CablesFound[4] == nil and CableCore.CablesFound[1] == nil and CableCore.CablesFound[2] ~= nil then
 			CableCore.SetAnimationState("cable","up");
 		end
@@ -275,11 +278,9 @@ end
 
 local function MakeImageAbsolute(Image,ObjectSource)
 	ObjectSource = ObjectSource or entity.id();
-	--DPrint("Image = " .. sb.print(Image) .. " , " .. sb.print(ObjectSource));
 	if string.find(Image,"^/") ~= nil then
 		return Image;
 	else
-		--sb.logInfo("Object Name = " .. sb.print(world.entityName(ObjectSource)));
 		local DirectoryObject;
 		if type(ObjectSource) == "string" then
 			DirectoryObject = ObjectSource;
@@ -300,30 +301,17 @@ local function GetCableImageInfoForNum(Num,Shrinkage)
 	return {24 * Num + Shrinkage,Shrinkage,24 * (Num + 1) - Shrinkage,24 - Shrinkage},{8 - Shrinkage,8 - Shrinkage},0,{24 - (Shrinkage * 2),24 - (Shrinkage * 2)};
 end
 
---THIS IS A TEST
-
 function CableCore.Initialize()
-	--DPrint("CableInit");
 	if CableCore.Initalized == true then
 		return nil;
 	end
-	--DPrint("New Init");
-	--DPrint("New Block");
-	--sb.logInfo("Started INIT of " .. sb.print(entity.id()));
-	--sb.logInfo("Animation = " .. sb.print(config.getParameter("animation")));
 	message.setHandler("GetFlipX",function()
-		--DPrint("ID = " .. sb.print(entity.id()));
-	--	DPrint("Getting Flip X = " .. sb.print(FlipX));
 		return FlipX;
 	end);
 	message.setHandler("GetFlipY",function()
-		--DPrint("ID = " .. sb.print(entity.id()));
-		--DPrint("Getting Flip Y = " .. sb.print(FlipY));
 		return FlipY;
 	end);
 	message.setHandler("GetAnimationState",function()
-		--DPrint("ID = " .. sb.print(entity.id()));
-		--DPrint("Getting Animation State = " .. sb.print(AnimationState));
 		return AnimationState;
 	end);
 	message.setHandler("GetTerminalImage",function()
@@ -336,11 +324,9 @@ function CableCore.Initialize()
 			end
 			object.setConfigParameter("StoredTerminalImage",TerminalImage);
 		end
-		--DPrint("Returning Terminal Image of " .. sb.print(TerminalImage));
 		return TerminalImage;
 	end);
 	message.setHandler("SmashCableBlockAndSpawnItem",function(_,_,ItemName,Pos,Count,Config)
-		--sb.logInfo("A");
 		ItemName = ItemName or object.name();
 		CableCore.Smashing = true;
 		local ConduitType = config.getParameter("conduitType");
@@ -357,7 +343,6 @@ function CableCore.Initialize()
 			Config.description = Config.description .. "\nInsertID=" .. sb.print(config.getParameter("insertID") or "");
 		end
 		object.smash(true);
-		--sb.logInfo("Parameters = " .. sb.print(Config));
 		if Facaded == true then
 			Config.ContainsStoredInfoFor = GetFacadeDropItem();
 			world.spawnItem(GetFacadeDropItem(),Pos,nil,Config);

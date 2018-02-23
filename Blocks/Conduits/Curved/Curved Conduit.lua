@@ -9,18 +9,7 @@ local ConduitSize = nil;
 
 local EdgePoints = nil;
 
-local RadianConstant = 180 / math.pi;
-
-local FullRadian = math.pi * 2;
-
-local QuarterRadian = math.pi / 2;
-
-local DT = 1;
-
 local function AfterFunction()
-	--[[for k, i in ipairs(Cables.CablesFound) do
-		sb.logInfo("Found = " .. i);
-	end--]]
 	if Cables.CablesFound[1] ~= nil and Cables.CablesFound[2] ~= nil then
 		animator.setAnimationState("curveState","3");
 	elseif Cables.CablesFound[1] ~= nil and Cables.CablesFound[2] == nil then
@@ -48,35 +37,13 @@ local function vecAdd(A,B)
 	return {A[1] + B[1],A[2] + B[2]};
 end
 
-local function AngleDirection(A,B)
-	local Start = A;
-	A = A - Start;
-	B = B - Start;
-	if B > FullRadian then
-		B = B - FullRadian;
-	end
-	if B < 0 then
-		B = B + FullRadian;
-	end
-	if B > math.pi then
-	 B = B - FullRadian;
-	end
-	if A == B then return 0; end;
-	if A > B then
-		return -1;
-	else
-		return 1;
-	end
-	return 0;
-end
-
 local function vecNormalize(A)
 	local dist = Distance(A);
 	return {A[1] / dist,A[2] / dist};
 end
 
 local function Lerp(A,B,t)
-	return {((B[1] - A[1]) * t) + A[1],((B[2] - A[2]) * t) + A[2]};
+	return {A[1] + (B[1] - A[1]) * t,A[2] + (B[2] - A[2]) * t};
 end
 
 local function Bezier(A,t)
@@ -111,11 +78,6 @@ function GetCurveFunction(StartPoint,EndPoint,Speed,UseEdge)
 		EndPoint = vecAdd(EndPoint,{0.5,0.5});
 	end
 
-	--local Start = vecSub(StartPoint,EntityPos);
-	--local End = vecSub(EndPoint,EntityPos);
-
-	--local MidPoint = Lerp(Start,End,0.5);
-
 	local OtherCorners = {{StartPoint[1],EndPoint[2]},{EndPoint[1],StartPoint[2]}};
 	local Distances = {Distance(OtherCorners[1],vecAdd(CenterPoint,EntityPos)),Distance(OtherCorners[2],vecAdd(CenterPoint,EntityPos))};
 	local MainCenter = nil;
@@ -129,32 +91,39 @@ function GetCurveFunction(StartPoint,EndPoint,Speed,UseEdge)
 	end
 	BezierPoint = Lerp(MainCenter,BezierPoint,1 - 0.06);
 
-	--[[local Start = vecSub(StartPoint,MainCenter);
-	local End = vecSub(EndPoint,MainCenter);
-	local MidPoint = Lerp(Start,End,0.5);
-	local Direction = vecNormalize(vecSub(MidPoint,MainCenter));--]]
 	local BezierPoints = {StartPoint,BezierPoint,EndPoint};
 	local Timer = 0;
-	local FinalReturn = false;
 	local DerivativeSpeed = Distance(Bezier(BezierPoints,0.0),Bezier(BezierPoints,0.01)) / 0.01;
-	return function()
-		Timer = Timer + (Speed * DT / DerivativeSpeed);
+	return function(dt)
+		Timer = Timer + (Speed * dt / DerivativeSpeed);
 		if Timer > 1 then
 			Timer = 1;
 		end
 		local Result = Bezier(BezierPoints,Timer);
 		local DeltaPoint = vecSub(Result,MainCenter);
 		if Timer == 1 then
-			if FinalReturn == false then
-				FinalReturn = true;
-				return Result,math.atan(DeltaPoint[2],DeltaPoint[1]);
-			end
-			return nil;
+			return Result,math.atan(DeltaPoint[2],DeltaPoint[1]),true;
 		end
 		return Result,math.atan(DeltaPoint[2],DeltaPoint[1]);
 	end
-	--local FinalPoint = Lerp({0,0},Direction,ConduitSize);
 
+end
+
+local TraversalPathFunction = function(SourceTraversalID,StartPosition,NextID,Speed)
+	local NextConduit = world.callScriptedEntity(SourceTraversalID,"GetConduitInPath",2);
+
+	if world.entityExists(NextConduit) == true then
+		if world.getObjectParameter(NextConduit,"conduitType") == "curved" then
+			--SetTraversalFromCurve(true,1);
+			return GetCurveFunction(world.entityPosition(SourceTraversalID),nil,Speed,true);
+		else
+			--SetTraversalFromCurve(false,2);
+			world.callScriptedEntity(SourceTraversalID,"GoToNextConduit");
+			return GetCurveFunction(world.entityPosition(SourceTraversalID),nil,Speed,false);
+		end
+	else
+		return nil;
+	end
 end
 
 function init()
@@ -186,11 +155,17 @@ function init()
 	Cables.SetCableConnections(CableConnections);
 	Cables.AddCondition("Conduits","conduitType",function(value) return value ~= nil end);
 	Cables.SetAfterFunction(AfterFunction);
-	Cables.Initialize();
+	Cables.SetTraversalPathFunction(TraversalPathFunction);
 end
+
+local First = false;
 
 function update(dt)
 	DT = dt;
+	if First == false then
+		First = true;
+		Cables.Initialize();
+	end
 end
 
 function uninit()
@@ -198,5 +173,5 @@ function uninit()
 end
 
 function die()
-	Cables.Uninitalize();
+	Cables.Uninitialize();
 end

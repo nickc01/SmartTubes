@@ -28,6 +28,18 @@ local function GetWirelessConnectedConduits()
 	return nil;
 end
 
+local TraversalPathFunction = function(SourceTraversalID,StartPosition,NextID,Speed)
+	local EndPosition = world.entityPosition(NextID);
+	if IsConnectedWirelesslyTo(NextID) then
+		return function(dt)
+			world.callScriptedEntity(SourceTraversalID,"Respawn",{EndPosition[1] + 0.5,EndPosition[2] + 0.5},1);
+			return nil;
+		end
+	else
+		return CableCore.GetDefaultTraversalFunction()(SourceTraversalID,StartPosition,NextID,Speed);
+	end
+end
+
 function init()
 	Cables = CableCore;
 	local OldGetConduits = GetConduits;
@@ -50,6 +62,7 @@ function init()
 		return Final;
 	end
 	Cables.AddCondition("Conduits","conduitType",function(value) return value ~= nil end);
+	--Cables.SetTraversalPathFunction(TraversalPathFunction);
 	--Cables.Initialize();
 end
 

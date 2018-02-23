@@ -32,25 +32,19 @@ function init()
 		object.setConfigParameter(Name,Value);
 	end);
 	message.setHandler("UINeedsUpdate",function(_,_,Force)
-		--DPrint("Got Message!!!");
 		local Value = UINeedsUpdate;
 		local NewConduits = nil;
 		if UINeedsUpdate == true or Force == true then
 			UINeedsUpdate = false;
-			--DPrint("Updating GUI");
 			NewConduits = ScanForConduits();
 		end
-		--DPrint("RETURNING Value = " .. sb.print({Value,NewConduits}));
 		return {Value,NewConduits};
 	end);
 	UpdateLooks();
 	Cables.SetCableConnections({{-1,0},{0,-1},{-1,1},{-1,2},{0,3},{1,3},{2,3},{3,2},{3,1},{3,0},{2,-1},{1,-1}});
 	Cables.AddCondition("Conduits","conduitType",function(value) return value ~= nil end);
 	Cables.AddAfterFunction(ResetPathCache);
-	--Cables.Initialize();
-	--DPrint("ANIM");
 	UpdateCache = true;
-	--sb.logInfo("Animated Parts = " .. sb.print(objectAnimator.getParameter("animatedParts")));
 end
 
 UpdateLooks = function()
@@ -61,8 +55,6 @@ function ResetPathCache()
 	DPrint("Cache Reset");
 	UpdateCache = true;
 	UINeedsUpdate = true;
-	--ScanForConduits();
-	--object.setConfigParameter("UpdateCache",UpdateCache);
 end
 
 local AllConduitCache = nil;
@@ -80,9 +72,6 @@ ScanForConduits = function()
 		for i=1,#Next do
 			if world.entityExists(Next[i].ID) then
 				local Conduits = world.callScriptedEntity(Next[i].ID,"GetConduits");
-				if Next[i].ID == EntityID then
-					--DPrint("SELF CONDUITS = " .. sb.print(Conduits));
-				end
 				world.callScriptedEntity(Next[i].ID,"AddExtractionConduit",EntityID);
 				if Conduits ~= nil then
 					for x=1,#Conduits do
@@ -115,7 +104,6 @@ ScanForConduits = function()
 							end
 						end
 					end
-					--DPrint("Adding = " .. sb.print(Next[i]));
 					Findings[#Findings + 1] = Next[i];
 					if Next[i].ID ~= EntityID then
 						local Type = world.getObjectParameter(Next[i].ID,"conduitType");
@@ -124,9 +112,6 @@ ScanForConduits = function()
 								AllConduits[Type] = {};
 							end
 							AllConduits[Type][#AllConduits[Type] + 1] = Next[i].ID;
-							--[[if Next[i].ID ~= EntityID then
-								
-							end--]]
 						end
 					end
 				end
@@ -135,23 +120,20 @@ ScanForConduits = function()
 		Next = NewNext;
 	until #Next == 0;
 	AllConduitCache = AllConduits;
-	DPrint("AllConduits = " .. sb.print(AllConduits));
+	--DPrint("AllConduits = " .. sb.print(AllConduits));
 	object.setConfigParameter("AllConduits",AllConduits);
 	UpdateCache = false;
 	return AllConduits;
 end
 
 local First = false;
---local FirstTimer = 0;
 
 function update(dt)
-	--ScanForConduits();
 	if First == false then
 		First = true;
 		Cables.Initialize();
 		ScanForConduits();
 	end
-	--object.setProcessingDirectives("?hueshift=" .. Hue);
 end
 
 function die()

@@ -10,7 +10,7 @@ local PathIndex = 1;
 local ContainerID;
 local EntityID;
 local DroppingItems = nil;
-local ResetTraversal;
+--local LastPosition = nil;
 
 local ENTITYID;
 
@@ -36,16 +36,20 @@ end
 
 local function SetSource(_,_,NewSource)
 	SourceID = NewSource;
+	--sb.logInfo("NEWID_E ___________________________________________ = " .. sb.print(SourceID));
+	--PossibleConduits[#PossibleConduits + 1] = NewSource;
 end
 
 function init()
 	message.setHandler("AddItemToDrop",AddItemToDrop);
 	message.setHandler("SetSource",SetSource);
+	--LastPosition = entity.position();
 	ENTITYID = entity.id();
 	sb.logInfo("Creating Traversal of " .. sb.print(entity.id()));
 end
 
 local function Finish()
+	--sb.logInfo("Finished Traversing");
 	sb.logInfo(sb.print(entity.id()) .. " adding to inventory to " .. sb.print(SourceID));
 	world.sendEntityMessage(SourceID,"AddToInventory",EntityID,ContainerID);
 	projectile.die();
@@ -53,12 +57,17 @@ local function Finish()
 	return nil;
 end
 
+--[[local function RecalculatePath(StartingPoint)
+
+end--]]
+
 local function Drop()
 	sb.logInfo(sb.print(entity.id()) .. " dropping to " .. sb.print(SourceID));
 	world.sendEntityMessage(SourceID,"DropItems",EntityID,ContainerID,entity.position());
 	if DroppingItems ~= nil then
 		local Position = entity.position();
 		for i=1,#DroppingItems do
+			--sb.logInfo("DROPPINGH");
 			world.spawnItem(DroppingItems[i],Position,DroppingItems[i].count,DroppingItems[i].parameters);
 		end
 	end
@@ -73,7 +82,10 @@ end
 
 local function RecalculatePath(StartingPoint)
 	sb.logInfo(sb.print(entity.id()) .. " recalc");
+	--sb.logInfo(stringTable(PossibleConduits,"PossibleConduits"));
 	local StartingConduit = world.objectAt(StartingPoint);
+	--sb.logInfo("StartingConduit = " .. StartingConduit);
+	--sb.logInfo("Start is " .. sb.print(StartingPoint));
 	if StartingConduit == nil then return nil end;
 	local Findings = {{ID = StartingConduit}};
 	local Next = {};
@@ -85,6 +97,8 @@ local function RecalculatePath(StartingPoint)
 			Next[#Next + 1] = {ID = StartingConduits[i],Previous = 1};
 		end
 	end
+	--sb.logInfo("Conduits to Start = " .. #StartingConduits);
+	--sb.logInfo("PossibleConduits = " .. sb.print(PossibleConduits));
 	repeat
 		local NewNext = {};
 		for i=1,#Next do
@@ -139,7 +153,9 @@ local function RecalculatePath(StartingPoint)
 	--sb.logInfo("RB");
 	return Path,SelectedInsertionConduit.ID;
 end
---[[local function SetTraversalFromCurve(UseEdge,DecreaseAmount)
+
+local ResetTraversal;
+local function SetTraversalFromCurve(UseEdge,DecreaseAmount)
 	local Iterator = world.callScriptedEntity(Path[PathIndex - 1],"GetCurveFunction",entity.position(),nil,Speed,UseEdge);
 	Traverser = function()
 		local Point,Rotation = Iterator();
@@ -153,114 +169,10 @@ end
 			mcontroller.setPosition(Point);
 		end
 	end
-end--]]
-
-function Respawn(Position,ConduitAdvancement)
-	ConduitAdvancement = ConduitAdvancement or 0;
-	if ConduitAdvancement > -1 then
-		if not (PathIndex - ConduitAdvancement > 0) then
-			ConduitAdvancement = 0;
-		end
-	else
-		if not (PathIndex - ConduitAdvancement <= #Path) then
-			ConduitAdvancement = 0;
-		end
-	end
-	local NewTraversal = world.spawnProjectile(projectile.getParameter("projectileName"),Position,SourceID);
-	world.sendEntityMessage(SourceID,"ChangeTransferID",EntityID,NewTraversal,ContainerID);
-	world.callScriptedEntity(NewTraversal,"StartTraversing",Path,Speed,ContainerID,PathIndex - ConduitAdvancement,SourceID,PossibleConduits,ConduitLimits,SideLimits);
-	projectile.die();
-	return NewTraversal;
-end
-
-function GoToNextConduit(Amount)
-	Amount = Amount or 1;
-	if Amount > -1 then
-		if PathIndex - Amount > 0 then
-			PathIndex = PathIndex - Amount;
-		end
-	else
-		if PathIndex - Amount <= #Path then
-			PathIndex = PathIndex - Amount;
-		end
-	end
-end
-
-function GetConduitInPath(Amount)
-	Amount = Amount or 1;
-	if Amount > -1 then
-		if PathIndex - Amount > 0 then
-			return Path[PathIndex - Amount];
-		end
-	else
-		if PathIndex - Amount <= #Path then
-			return Path[PathIndex - Amount];
-		end
-	end
 end
 
 ResetTraversal = function()
-	if PathIndex == 1 then
-		if Path[PathIndex] == SourceID and DroppingItems == nil then
-			return Finish();
-		else
-			return Drop();
-		end
-	end
-	local PreviousPosition = world.entityPosition(Path[PathIndex]);
-	if PreviousPosition == nil or world.getObjectParameter(Path[PathIndex],"conduitType") == nil then
-		return Drop();
-	end
-	local CallingConduit = Path[PathIndex - 1];
-	if not world.entityExists(CallingConduit) then
-		local NewID;
-		local NewPath;
-		NewPath,NewID = RecalculatePath(PreviousPosition);
-		if NewPath == nil then
-			return Drop();
-		end
-		Path = NewPath;
-		SourceID = NewID;
-		PathIndex = #Path;
-		CallingConduit = Path[PathIndex - 1];
-		--EndPosition = world.entityPosition(Path[PathIndex - 1]);
-		if not world.entityExists(CallingConduit) or world.getObjectParameter(CallingConduit,"conduitType") == nil then
-			return Drop();
-		end
-		--return Drop();
-	end
-	local Func = world.callScriptedEntity(CallingConduit,"CableCore.GetTraversalPath",EntityID,PreviousPosition,Path[PathIndex],Speed);
-	if Func == nil then
-		return Drop();
-	end
-	Traverser = function(dt)
-		if not world.entityExists(CallingConduit) then
-			return Drop();
-		end
-		local Pos,Rotation,Stop = Func(dt);
-		if Pos == nil then return nil end;
-		if Stop == true then
-			mcontroller.setPosition(Pos);
-			if Rotation ~= nil then
-				mcontroller.setRotation(Rotation);
-			end
-			PathIndex = PathIndex - 1;
-			ResetTraversal();
-			return nil;
-		else
-			mcontroller.setPosition(Pos);
-			if Rotation ~= nil then
-				mcontroller.setRotation(Rotation);
-			end
-		end
-	end
-
-
-
-
-	--OLD CODE
-	--[[return nil;
-
+	--LastPosition = entity.position();
 	if PathIndex == 1 then
 		if Path[PathIndex] == SourceID and DroppingItems == nil then
 			return Finish();
@@ -297,7 +209,11 @@ ResetTraversal = function()
 	mcontroller.setYVelocity(0);
 	if world.getObjectParameter(Path[PathIndex],"conduitType") == "sender" then
 		if world.callScriptedEntity(Path[PathIndex],"IsConnectedWirelesslyTo",Path[PathIndex - 1]) == true then
-			Respawn({EndX,EndY});
+			local NewTraversal = world.spawnProjectile(projectile.getParameter("projectileName"),{EndX,EndY},SourceID);
+			world.sendEntityMessage(SourceID,"ChangeTransferID",EntityID,NewTraversal,ContainerID);
+			world.callScriptedEntity(NewTraversal,"StartTraversing",Path,Speed,ContainerID,PathIndex - 1,SourceID,PossibleConduits,ConduitLimits,SideLimits);
+			projectile.die();
+			return nil;
 		else
 			mcontroller.setXVelocity((EndX - StartX) * Speed);
 			mcontroller.setYVelocity((EndY - StartY) * Speed);
@@ -350,7 +266,7 @@ ResetTraversal = function()
 				return nil;
 			end
 		end
-	end--]]
+	end
 end
 function StartCramming()
 	local Position = entity.position();
@@ -420,7 +336,37 @@ ApplyLimits = function(pConduits,cLimits,sLimits,exclusion)
 	PossibleConduits = Possibilites;
 	SideLimits = sLimits;
 	ConduitLimits = cLimits;
+	--[[local Possibilites = {};
+	if conduitLimits ~= nil then
+		for i=1,#possibleConduits do
+			local Valid = false;
+			if conduitLimits == "any" then 
+				Valid ==
+			end
+			for j=1,#conduitLimits do
+				
+			end
+		end
+	else
+		for i=1,#possibleConduits do
+			if possibleConduits[i] ~= exclusion then
+				Possibilites[#Possibilites + 1] = possibleConduits[i];
+			end
+		end
+	end--]]
 end
+
+--[[function TransferData(path,PossibleConduits,speed,containerID,pathIndex)
+	EntityID = entity.id();
+	Started = true;
+	SourceID = projectile.sourceEntity();
+	Path = path;
+	PossibleConduits = possibleConduits;
+	Speed = speed;
+	PathIndex = pathIndex;
+	ContainerID = containerID;
+	ResetTraversal();
+end--]]
 
 function GetSourceID()
 	return SourceID;
@@ -436,13 +382,16 @@ function update(dt)
 	end
 	if Traverser ~= nil then
 		if ReRouting == true then
+			--sb.logInfo("R is TRUE");
 			ReRouting = false;
 			if ReRoutedPath ~= nil then
+				--sb.logInfo("REROUTED _____________________________");
 				if RedirectionIsCurved == false then
 					Path = ReRoutedPath;
 					ReRoutedPath = nil;
 					PathIndex = #Path;
 					SourceID = ReRoutedID;
+					--sb.logInfo("NEWID_C ___________________________________________ = " .. sb.print(SourceID));
 					ReRoutedID = nil;
 					ResetTraversal();
 				else
@@ -453,6 +402,7 @@ function update(dt)
 						SourceID = ReRoutedID;
 						RedirectionIsCurved = false;
 						RedirectPathNumber = 0;
+						--sb.logInfo("NEWID_C ___________________________________________ = " .. sb.print(SourceID));
 						ReRoutedID = nil;
 						ResetTraversal();
 					end
@@ -463,6 +413,6 @@ function update(dt)
 	end
 end
 
---[[function uninit()
+function uninit()
 	sb.logInfo(sb.print(ENTITYID) .. " UNINIT");
-end--]]
+end
