@@ -1,19 +1,26 @@
 require("/Core/Debug.lua");
+--VARIABLES
 local Hue = 0;
 local Saturation = 0;
-
-local UpdateLooks;
-local ScanForConduits;
 local Cables;
 local EntityID;
 local UpdateCache = false;
 local UINeedsUpdate = true;
+local First = false;
+local ExtractionNodes;
+local InsertionNodes;
+--FUNCTIONS
+local UpdateLooks;
+local ScanForConduits;
+local OnNetworkUpdate;
+local OnUIUpdate;
+
 
 function init()
 	if root.assetJson("/Core/Debug.json").EnableExperimentalConduits == false then
 		object.smash();
 	end
-	DPrint("Self ID = " .. sb.print(entity.id()));
+	--DPrint("Self ID = " .. sb.print(entity.id()));
 	EntityID = entity.id();
 	Cables = CableCore;
 	Hue = config.getParameter("Hue",0);
@@ -33,12 +40,20 @@ function init()
 	end);
 	message.setHandler("UINeedsUpdate",function(_,_,Force)
 		local Value = UINeedsUpdate;
-		local NewConduits = nil;
+		local NewConduits;
+		local Extra;
 		if UINeedsUpdate == true or Force == true then
+			--if Force == true then
+				--sb.logInfo("Force = " .. sb.print(Force));
+			--end
+			if Force == true then
+				Value = true;
+			end
 			UINeedsUpdate = false;
 			NewConduits = ScanForConduits();
+			Extra = {OnUIUpdate(NewConduits)};
 		end
-		return {Value,NewConduits};
+		return {Value,NewConduits,Extra};
 	end);
 	UpdateLooks();
 	Cables.SetCableConnections({{-1,0},{0,-1},{-1,1},{-1,2},{0,3},{1,3},{2,3},{3,2},{3,1},{3,0},{2,-1},{1,-1}});
@@ -47,12 +62,52 @@ function init()
 	UpdateCache = true;
 end
 
+function update(dt)
+	if First == false then
+		First = true;
+		Cables.Initialize();
+		ScanForConduits();
+	end
+end
+
+function die()
+	Cables.Uninitialize();
+end
+
+function uninit()
+	
+end
+
+OnUIUpdate = function(NewNetwork)
+	sb.logInfo("Updating UI");
+	ExtractionNodes = {};
+	if NewNetwork.extraction ~= nil then
+		for k,i in ipairs(NewNetwork.extraction) do
+			local Containers = world.callScriptedEntity(i,"CableCore.GetConnectedObjectType","Containers");
+			if Containers ~= nil then
+				for m,n in ipairs(Containers) do
+					if n ~= -10 then
+						ExtractionNodes[#ExtractionNodes + 1] = n;
+					end
+				end
+			end
+			--ExtractionNodes[#ExtractionNodes + 1] = i;
+		end
+	end
+	sb.logInfo("ExtractionNodes to send = " .. sb.print(ExtractionNodes));
+	return ExtractionNodes;
+end
+
+OnNetworkUpdate = function(NewNetwork)
+	
+end
+
 UpdateLooks = function()
 	animator.setGlobalTag("directives","?hueshift=" .. Hue .. "?saturation=" .. -Saturation);
 end
 
 function ResetPathCache()
-	DPrint("Cache Reset");
+	--DPrint("Cache Reset");
 	UpdateCache = true;
 	UINeedsUpdate = true;
 end
@@ -120,26 +175,8 @@ ScanForConduits = function()
 		Next = NewNext;
 	until #Next == 0;
 	AllConduitCache = AllConduits;
-	--DPrint("AllConduits = " .. sb.print(AllConduits));
 	object.setConfigParameter("AllConduits",AllConduits);
+	OnNetworkUpdate(AllConduits);
 	UpdateCache = false;
 	return AllConduits;
-end
-
-local First = false;
-
-function update(dt)
-	if First == false then
-		First = true;
-		Cables.Initialize();
-		ScanForConduits();
-	end
-end
-
-function die()
-	Cables.Uninitialize();
-end
-
-function uninit()
-	
 end

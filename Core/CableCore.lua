@@ -9,6 +9,10 @@ function GetConduits()
 	return CableCore.CableTypes["Conduits"];
 end
 
+function CableCore.GetConnectedObjectType(type)
+	return CableCore.CableTypes[type];
+end
+
 local CableConnections;
 local Conditions = {};
 local CableAmount = 0;
@@ -276,6 +280,18 @@ function CableCore.SetTerminalImage(image)
 	object.setConfigParameter("StoredTerminalImage",TerminalImage);
 end
 
+local AdditionalTerminalObjects;
+
+function CableCore.AddAdditionalTerminalObjects(...)
+	if AdditionalTerminalObjects == nil then
+		AdditionalTerminalObjects = {...};
+	else
+		for k,i in ipairs({...}) do
+			AdditionalTerminalObjects[#AdditionalTerminalObjects + 1] = i;
+		end
+	end
+end
+
 local function MakeImageAbsolute(Image,ObjectSource)
 	ObjectSource = ObjectSource or entity.id();
 	if string.find(Image,"^/") ~= nil then
@@ -326,6 +342,9 @@ function CableCore.Initialize()
 		end
 		return TerminalImage;
 	end);
+	message.setHandler("GetAdditionalTerminalObjects",function()
+		return AdditionalTerminalObjects;
+	end);
 	message.setHandler("SmashCableBlockAndSpawnItem",function(_,_,ItemName,Pos,Count,Config)
 		ItemName = ItemName or object.name();
 		CableCore.Smashing = true;
@@ -363,23 +382,41 @@ function CableCore.Initialize()
 		end
 		CableCore.SetDefaultState("none");
 
-		CableCore.AddAnimationState("none",GetCableImageInfoForNum(0,1));
+		CableCore.AddAnimationState("none",GetCableImageInfoForNum(0,2));
 
-		CableCore.AddAnimationState("up",GetCableImageInfoForNum(1,1));
+		CableCore.AddAnimationState("up",GetCableImageInfoForNum(1,2));
 
-		CableCore.AddAnimationState("right",{48,0,72,24},{8,8},0,{24,24});
+		CableCore.AddAnimationState("right",GetCableImageInfoForNum(2,2));
 
-		CableCore.AddAnimationState("corner",GetCableImageInfoForNum(3,1));
+		CableCore.AddAnimationState("corner",GetCableImageInfoForNum(3,2));
 
-		CableCore.AddAnimationState("triplehorizontal",GetCableImageInfoForNum(4,1));
+		CableCore.AddAnimationState("triplehorizontal",GetCableImageInfoForNum(4,2));
 
-		CableCore.AddAnimationState("triplevertical",GetCableImageInfoForNum(5,1));
+		CableCore.AddAnimationState("triplevertical",GetCableImageInfoForNum(5,2));
 
-		CableCore.AddAnimationState("vertical",GetCableImageInfoForNum(6,1));
+		CableCore.AddAnimationState("vertical",GetCableImageInfoForNum(6,2));
 
-		CableCore.AddAnimationState("horizontal",GetCableImageInfoForNum(7,1));
+		CableCore.AddAnimationState("horizontal",GetCableImageInfoForNum(7,2));
 
-		CableCore.AddAnimationState("full",GetCableImageInfoForNum(8,1));
+		CableCore.AddAnimationState("full",GetCableImageInfoForNum(8,2));
+
+		--[[CableCore.AddAnimationState("none",GetCableImageInfoForNum(0,0));
+
+		CableCore.AddAnimationState("up",GetCableImageInfoForNum(1,0));
+
+		CableCore.AddAnimationState("right",GetCableImageInfoForNum(2,0));
+
+		CableCore.AddAnimationState("corner",GetCableImageInfoForNum(3,0));
+
+		CableCore.AddAnimationState("triplehorizontal",GetCableImageInfoForNum(4,0));
+
+		CableCore.AddAnimationState("triplevertical",GetCableImageInfoForNum(5,0));
+
+		CableCore.AddAnimationState("vertical",GetCableImageInfoForNum(6,0));
+
+		CableCore.AddAnimationState("horizontal",GetCableImageInfoForNum(7,0));
+
+		CableCore.AddAnimationState("full",GetCableImageInfoForNum(8,0));--]]
 		CableCore.FinishAnimationSettings();
 --	end
 	if CableConnections == nil then
@@ -517,7 +554,7 @@ function CableCore.AddAnimationState(StateName,Rect,ImageOffset_Vec2,Rotation_Ra
 		CableCore.StartAnimationSettings();
 	end
 	--sb.logInfo("Animation = " .. sb.print(Animation));
-	Animation.States[StateName] = {Rect = Rect,Offset = ImageOffset_Vec2,Rotation = Rotation_Rad,Size = Size_Vec2};
+	Animation.States[StateName] = {Rect = Rect,Offset = {ImageOffset_Vec2[1] / 8,ImageOffset_Vec2[2] / 8},Rotation = Rotation_Rad,Size = Size_Vec2};
 end
 
 function CableCore.SetDefaultState(StateName)

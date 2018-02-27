@@ -1,14 +1,24 @@
 require("/Core/Debug.lua");
 
+if sb == nil then
+	sb = {};
+end
+
+local oldprint = sb.logInfo;
+
 function Print(value)
 	if type(value) == "string" then
-		sb.logInfo(value);
+		oldprint(value);
 	else
-		sb.logInfo(sb.print(value));
+		oldprint(sb.print(value));
 	end
 end
 
 local CanPrint;
+
+function sb.logInfo(value)
+	DPrint(value);
+end
 
 function DPrint(value)
 	if CanPrint == nil then

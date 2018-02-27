@@ -1,5 +1,7 @@
 require("/Core/ImageCore.lua");
 require("/Core/Debug.lua");
+
+--VARIABLES
 local TitleImage = "/Blocks/Conduit Terminal/UI/Window/Title Bar.png";
 local CloseImage = "/Blocks/Conduit Terminal/UI/Window/Close Button/Close Button.png";
 local CloseHighlightedImage = "/Blocks/Conduit Terminal/UI/Window/Close Button/Close Button Highlighted.png";
@@ -11,19 +13,24 @@ local LastColor;
 local SourceID;
 local Conduits;
 local Clicked = false;
-local MakeImageAbsolute;
 local SourcePos;
-local UIUpdateMessage;
+local Initialized = false;
+local UIColor = nil;
+local Animations = {};
+local ExtractionNodes;
+local ExtractionNodeData;
+local InsertionNodes;
+local CanvasScale = 1;
 
+--FUNCTIONS
+local MakeImageAbsolute;
+local UIUpdateMessage;
+local Render;
+local OnNetworkUpdate;
 local vecAdd;
 local vecLerp;
 local UpdateNetwork;
-local Initialized = false;
-local UIColor = nil;
 
---local Red,Green,Blue;
-
-local Animations = {};
 
 local function SetSourceValue(Name,Value)
 	world.sendEntityMessage(SourceID,"SetValue",Name,Value);
@@ -53,8 +60,8 @@ local function CallMessageAsync(Object,FuncName,AltFunction,...)
 end
 
 local function SetupAnimationInfoForType(ConduitType,TestObject)
-	--DPrint("Result for " .. sb.print(ConduitType) .. " = " .. sb.print(world.getObjectParameter(TestObject,"CustomAnimations")));
 	Animations[ConduitType] = world.getObjectParameter(TestObject,"CustomAnimations");
+	sb.logInfo("Animations = " .. sb.printJson(Animations or {},1));
 end
 
 local MainCanvas;
@@ -123,12 +130,21 @@ function init()
 	widget.setSliderValue("satSlider",Sat);
 	MainCanvas = widget.bindCanvas("mainCanvas");
 	--"/Blocks/Conduits/Curved/5x/TR/Curve.png"
-	sb.logInfo("Returned Frame = " .. sb.print(ImageCore.GetFrameOfImage("/Projectiles/Traversals/Yellow/Traversal.png")));
+	--sb.logInfo("Returned Frame = " .. sb.print(ImageCore.GetFrameOfImage("/Projectiles/Traversals/Yellow/Traversal.png")));
+	ImageCore.MakeImageCanvasRenderable(ImageCore.MakePathAbsolute("Terminal.png:default",SourceID));
+	local AnimationTest = ImageCore.ParseObjectAnimation(SourceID);
+	if type(AnimationTest) == "table" then
+		sb.logInfo("AnimationTest = " .. sb.printJson(AnimationTest,1));
+	else
+		sb.logInfo("AnimationTest = " .. sb.print(AnimationTest));
+	end
 	--sb.logInfo("Result of function = " .. sb.print({pcall(function() sb.logInfo("Generate Name Result = " .. sb.print(root.generateName("/Blocks/Conduits/Curved/5x/Curve.frame"))); end)}));
 	SourcePos = world.entityPosition(SourceID);
 	UpdateNetwork();
+	OnNetworkUpdate();
 	Initialized = true;
-	--UIUpdateMessage = world.sendEntityMessage(SourceID,"UINeedsUpdate",true);
+	--sb.logInfo("Start 1");
+	UIUpdateMessage = world.sendEntityMessage(SourceID,"UINeedsUpdate",true);
 end
 
 local Offset = {156,84};
@@ -142,18 +158,11 @@ local NetworkData;
 
 UpdateNetwork = function(NewConduits)
 	if NewConduits ~= nil then
-		--DPrint("Setting to New Conduits");
 		Conduits = NewConduits;
 	else
 		Conduits = world.getObjectParameter(SourceID,"AllConduits",{});
 	end
-	--DPrint("Updating Network with = " .. sb.printJson(Conduits,1));
-	--Conduits = NewConduits or world.getObjectParameter(SourceID,"AllConduits",{});
-	--DPrint("ALLCONDUITINITIAL = " .. sb.print(Conduits));
 	for k,i in pairs(Conduits) do
-		--DPrint("Setting Up Type = " .. sb.print(k));
-		--DPrint("I[1] = " .. sb.print(i[1]));
-		--DPrint("I = " .. sb.printJson(i,1));
 		SetupAnimationInfoForType(k,i[1]);
 	end
 	NetworkData = {};
@@ -168,35 +177,131 @@ UpdateNetwork = function(NewConduits)
 			NetworkData[n].AnimationState = CallMessageAsync(n,"GetAnimationState",function() return world.getObjectParameter(n,"CustomAnimationState",false) end);
 			NetworkData[n].Image = CallMessageAsync(n,"GetTerminalImage",function() return world.getObjectParameter(n,"StoredTerminalImage"); end);
 			NetworkData[n].Position = world.entityPosition(n);
+			--NetworkData[n].AdditionalTerminalObjects = CallMessageAsync(n,"GetAdditionalTerminalObjects",);
 			--DPrint("Position = " .. sb.print(NetworkData[n].Position));
 		end
 	end
 	SetSourceValue("UINeedsUpdate",false);
 end
 
-function update(dt)
-	--[[local NewHue = world.getObjectParameter(SourceID,"Hue",0);
-	local NewSat = world.getObjectParameter(SourceID,"Saturation",0);
-	if Hue ~= NewHue or Sat ~= NewSat then
-		Hue = NewHue;
-		Sat = NewSat;
-		UpdateColors();
-	end--]]
+OnNetworkUpdate = function(extractionNodes)
+	--sb.logInfo("Conduits = " .. sb.print(Conduits));
+	ExtractionNodes = extractionNodes;
+	ExtractionNodeData = {};
+	--sb.logInfo("EXTRACTION NODES = " .. sb.print(ExtractionNodes));
+	if ExtractionNodes ~= nil then
+		for k,i in ipairs(ExtractionNodes) do
+			--sb.logInfo("Image for " .. sb.print(i) .. " is = " .. sb.print(ImageCore.ObjectToImage(i)));
+			ExtractionNodeData[i] = ImageCore.ObjectToImage(i);
+			if ExtractionNodeData[i] ~= nil then
+				ExtractionNodeData[i].Position = world.entityPosition(i);
+				--ExtractionNodeData[i].Offset = ExtractionNodeData[i].Offset;
+			end
+		end
+	end
+end
+
+Render = function()
+	--Clear Background
 	MainCanvas:clear();
+	--Draw Background
+	MainCanvas:drawTiledImage("/Blocks/Conduit Terminal/UI/Window/TileImage.png",{Offset[1] * 0.7,Offset[2] * 0.7},{0,0,2000,2000},0.1,LastColor);
+	--Draw Conduits
+	for k,i in pairs(Conduits) do
+		if Animations[k] ~= nil then
+			for m,n in ipairs(i) do
+				if NetworkData[n].Position == nil then
+					NetworkData[n].Position = world.entityPosition(n);
+				end
+				local Pos = NetworkData[n].Position;
+				if Pos ~= nil then
+					--local Offset = {180,80};
+					local State = NetworkData[n].AnimationState();
+					local X = (((Pos[1] - SourcePos[1] - Animations[k].States[State].Offset[1]) * 8) * CanvasScale + Offset[1])-- - Animations[k].States[State].Offset[1];
+					local Y = (((Pos[2] - SourcePos[2] - Animations[k].States[State].Offset[2]) * 8) * CanvasScale + Offset[2])-- - Animations[k].States[State].Offset[2];
+					local RenderCoords = {0,0,0,0};
+					local TexCoords = Animations[k].States[State].Rect;
+					if NetworkData[n].FlipX() == true then
+						RenderCoords[1] = X + (Animations[k].States[State].Size[1] * CanvasScale);
+						RenderCoords[3] = X;
+					else
+						RenderCoords[1] = X;
+						RenderCoords[3] = X + (Animations[k].States[State].Size[1] * CanvasScale);
+					end
+
+					if NetworkData[n].FlipY() == true then
+						RenderCoords[2] = Y + (Animations[k].States[State].Size[2] * CanvasScale);
+						RenderCoords[4] = Y;
+					else
+						RenderCoords[2] = Y;
+						RenderCoords[4] = Y + (Animations[k].States[State].Size[2] * CanvasScale);
+					end
+					
+				--	sb.logInfo("Conduit RenderCoords = " .. sb.print(RenderCoords));
+					--RenderCoords = RectVecSub(RenderCoords,Animations[k].States[State].Offset);
+					--TexCoords[1],TexCoords[2],TexCoords[3],TexCoords[4] = TexCoords[1] * CanvasScale,TexCoords[2] * CanvasScale,TexCoords[3] * CanvasScale,TexCoords[4] * CanvasScale;
+					local Image = NetworkData[n].Image();
+					if Image ~= nil then
+						MainCanvas:drawImageRect(Image,TexCoords,RenderCoords);
+					end
+					--MainCanvas:drawLine({RenderCoords[1],RenderCoords[2]},{RenderCoords[1] - 1,RenderCoords[2]},{0,0,255},5);
+				end
+			end
+		end
+	end
+	--Draw Terminal
+	MainCanvas:drawImageRect(ConduitTerminalImage,{0,0,24,24},{Offset[1],Offset[2],Offset[1] + (24 * CanvasScale),Offset[2] + (24 * CanvasScale)});
+	MainCanvas:drawImageRect(LitConduitTerminalImage,{0,0,24,24},{Offset[1],Offset[2],Offset[1] + (24 * CanvasScale),Offset[2] + (24 * CanvasScale)},LastColor);
+
+	--Draw Extraction Objects
+	if ExtractionNodes ~= nil then
+		for k,i in ipairs(ExtractionNodes) do
+			if ExtractionNodeData[i] ~= nil then
+				--local Offset = {180,80};
+				local Data = ExtractionNodeData[i];
+				local Position = {Data.Position[1] + Data.Offset[1],Data.Position[2] + Data.Offset[2]};
+				local X = ((Position[1] - SourcePos[1]) * 8) * CanvasScale + Offset[1];
+				local Y = ((Position[2] - SourcePos[2]) * 8) * CanvasScale + Offset[2];
+				local RenderCoords = {0,0,0,0};
+				--local TexCoords = Animations[k].States[State].Rect;
+				for m,n in ipairs(Data.Images) do
+					if Data.Flip == true then
+						RenderCoords[1] = X + (n.Width * CanvasScale);
+						RenderCoords[3] = X;
+					else
+						RenderCoords[1] = X;
+						RenderCoords[3] = X + (n.Width * CanvasScale);
+					end
+					RenderCoords[2] = Y;
+					RenderCoords[4] = Y + (n.Height * CanvasScale);
+					
+					--sb.logInfo("Object RenderCoords = " .. sb.print(RenderCoords));
+					local TexCoords = n.TextureRect;
+					--TexCoords[1],TexCoords[2],TexCoords[3],TexCoords[4] = TexCoords[1] * CanvasScale,TexCoords[2] * CanvasScale,TexCoords[3] * CanvasScale,TexCoords[4] * CanvasScale;
+					MainCanvas:drawImageRect(n.Image,TexCoords,RenderCoords);
+					--MainCanvas:drawLine({RenderCoords[1],RenderCoords[2]},{RenderCoords[1] - 1,RenderCoords[2]},{255,0,0},5);
+				end
+			end
+		end
+	end
+end
+
+function update(dt)
 	if UIUpdateMessage == nil then
+		--sb.logInfo("Start 2");
 		UIUpdateMessage = world.sendEntityMessage(SourceID,"UINeedsUpdate");
 	else
 		if UIUpdateMessage:finished() then
-			local Result,NewConduits = table.unpack(UIUpdateMessage:result() or {});
+		--	sb.logInfo("Finished");
+			local Result,NewConduits,Extra = table.unpack(UIUpdateMessage:result() or {});
 			if Result == true then
 				UpdateNetwork(NewConduits);
+				OnNetworkUpdate(table.unpack(Extra));
 			end
+			--sb.logInfo("Restart");
 			UIUpdateMessage = world.sendEntityMessage(SourceID,"UINeedsUpdate");
 		end
 	end
-	--[[if world.getObjectParameter(SourceID,"UINeedsUpdate") == true then
-		UpdateNetwork();
-	end--]]
 	local Scale = 1.3;
 	local LerpFactor = 7 * dt;
 	if Clicked == true then
@@ -207,44 +312,9 @@ function update(dt)
 		Offset[2] = Offset[2] + ((MousePos[2] - PreviousMousePos[2]) * LerpFactor * Scale);
 		PreviousMousePos = vecLerp(PreviousMousePos,MousePos,LerpFactor);
 	end
-	MainCanvas:drawTiledImage("/Blocks/Conduit Terminal/UI/Window/TileImage.png",{Offset[1] * 0.7,Offset[2] * 0.7},{0,0,2000,2000},0.1,LastColor);
-	for k,i in pairs(Conduits) do
-		if Animations[k] ~= nil then
-			for m,n in ipairs(i) do
-				if NetworkData[n].Position == nil then
-					NetworkData[n].Position = world.entityPosition(n);
-				end
-				local Pos = NetworkData[n].Position;
-				local State = NetworkData[n].AnimationState();
-				local X = ((Pos[1] - SourcePos[1]) * 8) + Offset[1];
-				local Y = ((Pos[2] - SourcePos[2]) * 8) + Offset[2];
-				local RenderCoords = {0,0,0,0};
-				local TexCoords = Animations[k].States[State].Rect;
-				if NetworkData[n].FlipX() == true then
-					RenderCoords[1] = X + Animations[k].States[State].Size[1];
-					RenderCoords[3] = X;
-				else
-					RenderCoords[1] = X;
-					RenderCoords[3] = X + Animations[k].States[State].Size[1];
-				end
-
-				if NetworkData[n].FlipY() == true then
-					RenderCoords[2] = Y + Animations[k].States[State].Size[2];
-					RenderCoords[4] = Y;
-				else
-					RenderCoords[2] = Y;
-					RenderCoords[4] = Y + Animations[k].States[State].Size[2];
-				end
-				RenderCoords = RectVecSub(RenderCoords,Animations[k].States[State].Offset);
-				local Image = NetworkData[n].Image()
-				if Image ~= nil then
-					MainCanvas:drawImageRect(Image,TexCoords,RenderCoords);
-				end
-			end
-		end
-	end
-	MainCanvas:drawImage(ConduitTerminalImage,{Offset[1],Offset[2]});
-	MainCanvas:drawImage(LitConduitTerminalImage,{Offset[1],Offset[2]},nil,LastColor);
+	Render();
+	--CanvasScale = CanvasScale - (dt * 0.1);
+	if CanvasScale < 0 then CanvasScale = 0 end;
 end
 
 UpdateColors = function()
@@ -280,19 +350,13 @@ vecLerp = function(A,B,T)
 end
 
 local function SetColor()
-	--[[DPrint("Old Hue = " .. sb.print(Hue));
-	DPrint("Old Sat = " .. sb.print(Sat));
-	DPrint("Last Color Old = " .. sb.print(LastColor));
-	DPrint("New Hue = " .. sb.print(Hue));
-	DPrint("New Sat = " .. sb.print(Sat));
-	DPrint("Last Color New = " .. sb.print(LastColor));--]]
 	world.sendEntityMessage(SourceID,"SetHue",Hue);
 	world.sendEntityMessage(SourceID,"SetSaturation",Sat);
 	UpdateColors();
 end
 
 function HueSlider()
-	DPrint("Hue Change!");
+	--DPrint("Hue Change!");
 	if Initialized then
 		Hue = widget.getSliderValue("hueSlider");
 		SetColor();
@@ -300,7 +364,7 @@ function HueSlider()
 end
 
 function SatSlider()
-	DPrint("Sat Change!");
+	--DPrint("Sat Change!");
 	if Initialized then
 		Sat = widget.getSliderValue("satSlider");
 		SetColor();

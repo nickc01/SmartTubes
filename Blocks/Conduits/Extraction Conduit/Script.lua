@@ -221,38 +221,12 @@ local Time = nil;
 local UpdateRate = 0;
 local ConfigIndexResetted = false;
 function update(dt)
-	--sb.logInfo("FPS = " .. sb.print(GetFPS()));
-	--[[if Time == nil then
-		Time = os.clock();
-	else
-		local NewTime = os.clock();
-		sb.logInfo("Diff = " .. sb.print(1 /    ((NewTime - Time) / DELTA)   ));
-		Time = NewTime;
-	end--]]
-	--[[if Time == nil then
-		Time = os.time();
-	else
-		if Time ~= os.time() then
-			sb.logInfo("Update Rate = " .. sb.print(UpdateRate + 1));
-			UpdateRate = 0;
-			Time = nil;
-		else
-			UpdateRate = UpdateRate + 1;
-		end
-	end--]]
-	--sb.logInfo("os TIme = " .. sb.print(os.time()));
-	--sb.logInfo("ScriptDT = " .. sb.print(script.updateDt()));
-	--sb.logInfo("DT = " .. sb.print(dt));
-	
-	--sb.logInfo("Update DT = " .. sb.print(1 / (script.updateDt() / DELTA)));
-	--sb.logInfo("FPS is Roughly = " .. sb.print((dt * script.updateDt())));
 	if First == false then
 		Cables.Initialize();
 	end
 	if oldupdate ~= nil then
 		oldupdate();
 	else
-		--sb.logInfo("Update");
 		Cables.Update();
 	end
 	if First == true then
@@ -266,7 +240,6 @@ function update(dt)
 		end
 	else
 		First = true;
-		--SetDelta();
 	end
 end
 
@@ -395,11 +368,6 @@ Extract = function()
 			Store("TakeFromSides",ExportSides);
 		end
 		local SelectedContainer;
-		--if ExtractCache.ExportSides ~= nil then
-			--sb.logInfo("Cache");
-		--	SelectedContainer = ExtractCache.ExportSides[math.random(1,#ExtractCache.ExportSides)];
-		--else
-		--sb.logInfo("Containers = " .. sb.print(Cables.CableTypes.Containers));
 			if Cables.CableTypes.Containers ~= nil then
 				--ExtractCache.ExportSides = {};
 				--sb.logInfo("NotCache");
@@ -503,8 +471,6 @@ Extract = function()
 				return true;
 				--world.callScriptedEntity(InsertionConduit,"ExtractAndSend",nil,nil,FoundItem,SelectedSlot,SelectedContainer,Path,InsertIntoSides,InsertIntoSlots,nil,Colors[SelectedColor],Speed + 1,nil,Retrieve("InsertID")--[[,Retrieve("InsertID")--]]);
 			end
-			--sb.logInfo("End");
-			--sb.logInfo("Exists After 1 = " .. sb.print(world.entityExists(InsertionConduit)));
 
 		end
 	end
