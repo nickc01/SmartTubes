@@ -42,10 +42,10 @@ end
 
 function init()
 	Cables = CableCore;
-	local OldGetConduits = GetConduits;
-	GetConduits = function()
+	--local OldGetConduits = GetConduits;
+	CableCore.SetConduitsFunction(function()
 		local Final = {};
-		local NearbyConduits = OldGetConduits();
+		local NearbyConduits = CableCore.GetConduitsDefault();
 		if WirelessUpdated == false then
 			WirelessUpdated = true;
 			WirelessBuffer = GetWirelessConnectedConduits();
@@ -60,7 +60,7 @@ function init()
 			end
 		end
 		return Final;
-	end
+	end);
 	Cables.AddCondition("Conduits","conduitType",function(value) return value ~= nil end);
 	--Cables.SetTraversalPathFunction(TraversalPathFunction);
 	--Cables.Initialize();

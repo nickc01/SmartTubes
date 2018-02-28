@@ -1,12 +1,27 @@
 require("/Core/Debug.lua");
+--Declaration
 CableCore = {};
-
 local CableCore = CableCore;
+--Variables
 CableCore.Initalized = false;
 local Animated = true;
+local GetConduitsFunction;
 
-function GetConduits()
+--Functions
+function CableCore.GetConduits()
+	if GetConduitsFunction ~= nil then
+		return GetConduitsFunction();
+	else
+		return CableCore.GetConduitsDefault();
+	end
+end
+
+function CableCore.GetConduitsDefault()
 	return CableCore.CableTypes["Conduits"];
+end
+
+function CableCore.SetConduitsFunction(func)
+	GetConduitsFunction = func;
 end
 
 function CableCore.GetConnectedObjectType(type)
@@ -369,11 +384,6 @@ function CableCore.Initialize()
 			world.spawnItem(ItemName,Pos,nil,Config);
 		end
 	end);
-
-	--if config.getParameter("animation") ~= "/Animations/Cable.animation" then
-	--	Animated = false;
-	--end
-	--else
 		CableCore.StartAnimationSettings();
 		if config.getParameter("animation") ~= "/Animations/Cable.animation" then
 			Animated = false;
@@ -400,23 +410,6 @@ function CableCore.Initialize()
 
 		CableCore.AddAnimationState("full",GetCableImageInfoForNum(8,2));
 
-		--[[CableCore.AddAnimationState("none",GetCableImageInfoForNum(0,0));
-
-		CableCore.AddAnimationState("up",GetCableImageInfoForNum(1,0));
-
-		CableCore.AddAnimationState("right",GetCableImageInfoForNum(2,0));
-
-		CableCore.AddAnimationState("corner",GetCableImageInfoForNum(3,0));
-
-		CableCore.AddAnimationState("triplehorizontal",GetCableImageInfoForNum(4,0));
-
-		CableCore.AddAnimationState("triplevertical",GetCableImageInfoForNum(5,0));
-
-		CableCore.AddAnimationState("vertical",GetCableImageInfoForNum(6,0));
-
-		CableCore.AddAnimationState("horizontal",GetCableImageInfoForNum(7,0));
-
-		CableCore.AddAnimationState("full",GetCableImageInfoForNum(8,0));--]]
 		CableCore.FinishAnimationSettings();
 --	end
 	if CableConnections == nil then

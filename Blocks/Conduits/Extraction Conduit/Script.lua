@@ -792,7 +792,7 @@ FindInsertionConduit = function()
 			local NewNext = {};
 			for i=1,#Next do
 				if world.entityExists(Next[i].ID) == true then
-					local Conduits = world.callScriptedEntity(Next[i].ID,"GetConduits");
+					local Conduits = world.callScriptedEntity(Next[i].ID,"CableCore.GetConduits");
 					world.callScriptedEntity(Next[i].ID,"AddExtractionConduit",SelfID);
 					if Conduits ~= nil then
 						for x=1,#Conduits do

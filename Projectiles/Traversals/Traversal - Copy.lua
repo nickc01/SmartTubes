@@ -95,7 +95,7 @@ local function RecalculatePath(StartingPoint)
 	local Findings = {{ID = StartingConduit}};
 	local Next = {};
 	local InsertConduits = {};
-	local StartingConduits = world.callScriptedEntity(StartingConduit,"GetConduits");
+	local StartingConduits = world.callScriptedEntity(StartingConduit,"CableCore.GetConduits");
 	for i=1,#StartingConduits do
 		if StartingConduits[i] ~= -10 then
 			Next[#Next + 1] = {ID = StartingConduits[i],Previous = 1};
@@ -107,7 +107,7 @@ local function RecalculatePath(StartingPoint)
 		local NewNext = {};
 		for i=1,#Next do
 			if world.entityExists(Next[i].ID) == true then
-				local Conduits = world.callScriptedEntity(Next[i].ID,"GetConduits");
+				local Conduits = world.callScriptedEntity(Next[i].ID,"CableCore.GetConduits");
 				for x=1,#Conduits do
 					if Conduits[x] ~= -10 then
 						local Valid = true;

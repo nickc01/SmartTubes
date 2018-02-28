@@ -1,3 +1,4 @@
+if ImageCore ~= nil then return nil end;
 ImageCore = {};
 
 local ImageCore = ImageCore;

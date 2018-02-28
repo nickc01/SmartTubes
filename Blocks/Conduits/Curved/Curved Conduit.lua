@@ -128,10 +128,13 @@ end
 
 function init()
 	Cables = CableCore;
-	OldFunc = GetConduits;
+	--[[OldFunc = GetConduits;
 	GetConduits = function()
 		return OldFunc();
-	end
+	end--]]
+	--[[Cables.SetConduitsFunction(function()
+		return 
+	end);--]]
 	local ObjectName = object.name();
 	ConduitSize = tonumber(string.match(ObjectName,"%d+"));
 	CableConnections = {};
