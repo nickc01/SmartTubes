@@ -333,7 +333,6 @@ local function GetCableImageInfoForNum(Num,Shrinkage)
 end
 
 function CableCore.Initialize()
-	sb.logInfo("Using CableCore");
 	if CableCore.Initalized == true then
 		return nil;
 	end

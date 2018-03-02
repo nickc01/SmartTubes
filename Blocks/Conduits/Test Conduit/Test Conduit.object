@@ -27,7 +27,7 @@
     "cables": "Cable/Cable.png"
   },
   "conduitType": "test",
-  "scriptDelta": 2,
-  "scripts": [ "Script.lua", "/Core/CableCore.lua" ]
+  "scriptDelta": 1,
+  "scripts": [ "Script.lua", "/Core/ConduitCore.lua" ]
 
 }
