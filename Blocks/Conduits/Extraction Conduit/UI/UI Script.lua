@@ -1,4 +1,4 @@
-require("/Core/Debug.lua");
+--require("/Core/Debug.lua");
 local Configs;
 local SourceID;
 local ItemList = "configArea.itemList";
@@ -122,7 +122,7 @@ local function UpdateConfigsArea()
 		end
 	end
 	if ChangeConfig == true then
-		world.sendEntityMessage(SourceID,"SetValue","Configs",deepCopy(Configs));
+		world.sendEntityMessage(SourceID,"SetConfig",deepCopy(Configs));
 		ChangeConfig = false;
 	end
 end
@@ -280,7 +280,7 @@ function update(dt)
 	end
 	--sb.logInfo("Finished = " .. sb.print(CanPasteMessage:finished()));
 	if CanPasteMessage:finished() then
-		DPrint("Can Paste = " .. sb.print(CanPasteMessage:result()));
+		sb.logInfo("Can Paste = " .. sb.print(CanPasteMessage:result()));
 		if CanPasteMessage:result() ~= CanPaste then
 			CanPaste = CanPasteMessage:result();
 			UpdatePasteButton();
@@ -489,12 +489,12 @@ function ColorDecrement()
 end
 
 function Copy()
-	DPrint("Copy Pressed");
+	sb.logInfo("Copy Pressed");
 	local SelectedItem = widget.getListSelected(ItemList);
 	local Index = 0;
 	for k,i in ipairs(ListItems) do
 		if SelectedItem == i then
-			DPrint("Sending " .. sb.print(Configs[k]) .. " to player");
+			sb.logInfo("Sending " .. sb.print(Configs[k]) .. " to player");
 			world.sendEntityMessage(player.id(),"SetExtractionConfigCopy",Configs[k]);
 			break;
 		end
@@ -552,7 +552,7 @@ function Save()
 			else
 				Configs["shortdescription"] = DefaultName;
 			end
-			--DPrint("Configs = " .. sb.printJson(Configs,1));
+			--sb.logInfo("Configs = " .. sb.printJson(Configs,1));
 			world.sendEntityMessage(Object,"SmashCableBlockAndSpawnItem",nil,world.entityPosition(Object),10,Configs);
 		end
 		--world.sendEntityMessage(Object,"SetRetainingMode");
@@ -561,7 +561,7 @@ end
 
 function ConduitNameChange()
 	ConduitName = widget.getText("conduitNameBox");
-	DPrint("Conduit name Changed to = " .. sb.print(ConduitName));
+	sb.logInfo("Conduit name Changed to = " .. sb.print(ConduitName));
 	world.sendEntityMessage(SourceID,"SetValue","ConduitName",ConduitName);
 end
 

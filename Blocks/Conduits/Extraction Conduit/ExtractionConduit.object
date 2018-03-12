@@ -34,6 +34,7 @@
   "conduitType": "extraction",
   "scriptDelta": 10,
   "retainObjectParametersInItem": false,
-  "scripts": [ "Script.lua", "/Core/CableCore.lua" ]
+  "extractionVersion": 1,
+  "scripts": [ "Script.lua" ]
 
 }

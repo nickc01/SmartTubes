@@ -28,6 +28,6 @@
   },
   "conduitType": "item",
   "scriptDelta": 2,
-  "scripts": [ "Script.lua", "/Core/CableCore.lua" ]
+  "scripts": [ "Script.lua" ]
 
 }

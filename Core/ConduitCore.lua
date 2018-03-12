@@ -12,6 +12,7 @@ local __ConduitCore__ = __ConduitCore__;
 --Variables
 local Initialized = false;
 local FirstUpdateComplete = false;
+local ForceUpdate = false;
 local Uninitialized = false;
 local ConnectionPoints = {{0,1},{0,-1},{-1,0},{1,0}};
 local Connections;
@@ -35,7 +36,7 @@ local NetworkUpdateFunctions = {};
 --Functions
 local PostInit;
 local SetMessages;
-local ConnectionChange;
+local ConnectionUpdate;
 local NetworkChange;
 local UpdateOtherConnections;
 local IsInTable;
@@ -104,7 +105,9 @@ end
 --Initialization After the First Update Loop
 PostInit = function()
 	--sb.logInfo("Post Init");
+	ForceUpdate = true;
 	ConduitCore.Update();
+	ForceUpdate = false;
 	FirstUpdateComplete = true;
 end
 
@@ -115,6 +118,8 @@ end
 
 --Updates itself and it's connections and returns whether the connections have changed or not
 function ConduitCore.Update()
+	--if FirstUpdateComplete == false then return nil end;
+	if not (ForceUpdate or FirstUpdateComplete) then return nil end;
 	if ConduitCore.UpdateSelf() then
 		UpdateOtherConnections();
 		return true;
@@ -123,6 +128,7 @@ function ConduitCore.Update()
 end
 --Updates itself without updating it's connections and returns whether the connections have changed or not
 function ConduitCore.UpdateSelf()
+	if not (ForceUpdate or FirstUpdateComplete) then return nil end;
 	local PostFuncs = {};
 	local ConnectionTypesAreChanged = {};
 	local ConnectionsAreChanged = false;
@@ -205,6 +211,7 @@ NetworkChange = function(ConnectionType)
 	for i=1,#NetworkUpdateFunctions do
 		NetworkUpdateFunctions[i]();
 	end
+	sb.logInfo("Network Has Changed = " .. sb.print(entity.id()));
 end
 
 --Add a function that is called when the Network is changed for a certain connection type
@@ -218,7 +225,7 @@ function __ConduitCore__.AddOnNetworkChangeFunc(func,ConnectionType)
 				return nil;
 			end
 		end
-		NetworkUpdateFunctions[ConnectionChange][#NetworkUpdateFunctions[ConnectionChange] + 1] = func;
+		NetworkUpdateFunctions[ConnectionType][#NetworkUpdateFunctions[ConnectionType] + 1] = func;
 	end
 end
 
@@ -243,6 +250,41 @@ end
 --Returns the Entire Connection Tree for the "Conduit" Connection Type
 function ConduitCore.GetConduitNetwork()
 	return ConduitCore.GetNetwork("Conduits");
+end
+
+--Returns a Path From this conduit to the Entity "To" using the "Conduit" Connection Type
+function ConduitCore.GetConduitPath(To)
+	return ConduitCore.GetPath("Conduits",To);
+end
+
+--Returns a Path From this conduit to the Entity "To" using the Connection Type
+function ConduitCore.GetPath(ConnectionType,To)
+	if NetworkCache[ConnectionType] == nil then
+		GetNetwork(ConnectionType);
+	end
+	local PathNetwork = NetworkCache[ConnectionType].WithPath;
+	local Path = {To};
+	local Node;
+	for i=1,#PathNetwork do
+		if PathNetwork[i].ID == To then
+			Node = PathNetwork[i];
+		end
+	end
+	if Node ~= nil then
+		while(true) do
+			if Node.Previous ~= nil then
+				Path[#Path + 1] = Node.Previous;
+				Node = Node.Previous;
+			else
+				break;
+			end
+		end
+		local NewPath = {};
+		for i=#Path,1,-1 do
+			NewPath[#NewPath + 1] = Path[i];
+		end
+		return NewPath;
+	end
 end
 
 --Returns the Entire Connection Tree for the Passed In Connection Type
@@ -370,7 +412,7 @@ UpdateSprite = function()
 end
 
 --Called when the Connections have changed
-function ConnectionUpdate()
+ConnectionUpdate = function()
 	UpdateSprite();
 	for i=1,#ConnectionUpdateFunctions do
 		ConnectionUpdateFunctions[i]();
@@ -384,7 +426,7 @@ function ConduitCore.SetConnectionPoints(connections)
 end
 
 --Sets if the conduit should update continously or not
-function ConduitCore.UpdateContinously(bool)
+function ConduitCore.UpdateContinuously(bool)
 	UpdateContinously = bool == true;
 end
 
@@ -395,6 +437,58 @@ UpdateOtherConnections = function()
 			world.callScriptedEntity(Connections[i],"ConduitCore.UpdateSelf");
 		end
 	end
+end
+
+--Returns true if this conduit is connected to the "id" using the "Conduit" Connection Type
+function ConduitCore.IsConnectedToConduit(id)
+	return ConduitCore.IsConnected(id,"Conduits");
+end
+
+--Returns true if this conduit is connected to the "id"
+function ConduitCore.IsConnectedGlobal(id)
+	if Connections ~= nil then
+		for k,i in ipairs(Connections) do
+			if i == id then return true end;
+		end
+	end
+	return false;
+end
+
+--Returns true if this conduit is connected to the "id" using the Connection Type
+function ConduitCore.IsConnected(id,connectionType)
+	if ConnectionTypes[connectionType] ~= nil then
+		for k,i in ipairs(ConnectionTypes[connectionType].Connections) do
+			if i == id then return true end;
+		end
+	end
+	return false;
+end
+
+--Adds a Connection Type
+function ConduitCore.AddConnectionType(ConnectionType,ConditionFunction)
+	if ConnectionTypes[ConnectionType] == nil then
+		ConnectionTypes[ConnectionType] = {
+			Condition = ConditionFunction,
+			Connections = {}
+		};
+		ConduitCore.Update();
+	end
+end
+
+--Removes a Connection Type
+function ConduitCore.RemoveConnectionType(ConnectionType)
+	if ConnectionTypes[ConnectionType] ~= nil then
+		ConnectionTypes[ConnectionType] = nil;
+		ConduitCore.Update();
+	end
+end
+
+--Returns true if the Connection Type is added and false otherwise
+function ConduitCore.HasConnectionType(ConnectionType)
+	if ConnectionTypes[ConnectionType] == nil then
+		return false;
+	end
+	return true;
 end
 
 --Uninitializes the Conduit

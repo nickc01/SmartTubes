@@ -68,6 +68,14 @@ function ContainerCore.ContainerItems()
 		end
 	end
 	return NewContainer;
+	--[[return setmetatable({},{
+		__index = function(tbl,k)
+			return rawget(tbl,k) or Container[k];
+		end,
+		__newindex = function(tbl,k,v)
+			rawset(tbl,k,v);
+		end
+	});--]]
 end
 
 function ContainerCore.ContainerItemsRef()
@@ -91,7 +99,7 @@ function ContainerCore.ContainerTakeAll()
 	return ReturningValue;
 end
 
-function ContainerCore.ContainerTakeAt()
+function ContainerCore.ContainerTakeAt(slot)
 	local Item = Container[tostring(slot + 1)];
 	Container[tostring(slot + 1)] = nil;
 	return Item;
