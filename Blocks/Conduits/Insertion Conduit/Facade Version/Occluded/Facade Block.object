@@ -30,6 +30,6 @@
   "slotCount": 1,
   "conduitType": "insertion",
   "scriptDelta": 10,
-  "scripts": [ "/Blocks/Conduits/Insertion Conduit/Script.lua", "/Core/CableCore.lua", "/Core/Facade/Facade.lua" ]
+  "scripts": [ "/Blocks/Conduits/Insertion Conduit/Script.lua","/Core/Facade/Facade.lua" ]
 
 }

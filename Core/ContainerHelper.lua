@@ -31,7 +31,39 @@ function Container.Items(ID)
 	if world.callScriptedEntity(ID,"IsContainerCore") == true then
 		return world.callScriptedEntity(ID,"ContainerCore.ContainerItems");
 	else
-		return world.containerItems(ID);
+		local Items = world.containerItems(ID);
+		local meta = getmetatable(Items);
+		local OldNewIndex = meta.__newindex;
+		local Num = false;
+		for k,i in ipairs(Items) do
+			Num = true;
+			break;
+		end
+		if Num == true then
+			meta.__newindex = function(tbl,k,value)
+				return OldNewIndex(tbl,k,value);
+			end
+			meta.__index = function(tbl,k)
+				return rawget(tbl,k);
+			end
+		else
+			meta.__newindex = function(tbl,k,value)
+				if type(k) == "number" then
+					return OldNewIndex(tbl,k,value);
+				else
+					return OldNewIndex(tbl,tostring(k),value);
+				end
+			end
+			meta.__index = function(tbl,k)
+				if type(k) == "number" then
+					return rawget(tbl,k);
+				else
+					return rawget(tbl,tostring(k));
+				end
+			end
+		end
+		--sb.logInfo("Metatable = " .. sb.print(getmetatable(Items)));
+		return Items;
 	end
 end
 
@@ -112,6 +144,7 @@ function Container.PutItemsAt(ID,Item,Slot)
 	if world.callScriptedEntity(ID,"IsContainerCore") == true then
 		return world.callScriptedEntity(ID,"ContainerCore.ContainerPutItemsAt",Item,Slot);
 	else
+		sb.logInfo("Calling NORMAL");
 		return world.containerPutItemsAt(ID,Item,Slot);
 	end
 end

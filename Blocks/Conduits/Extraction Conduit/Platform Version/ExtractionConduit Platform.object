@@ -34,6 +34,6 @@
   },
   "conduitType": "extraction",
   "scriptDelta": 10,
-  "scripts": ["/Blocks/Conduits/Extraction Conduit/Script.lua", "/Core/CableCore.lua"]
+  "scripts": ["/Blocks/Conduits/Extraction Conduit/Script.lua"]
 
 }

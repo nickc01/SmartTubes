@@ -32,7 +32,7 @@
     "cables": "Cable/Cable.png"
   },
   "conduitType": "extraction",
-  "scriptDelta": 10,
+  "scriptDelta": 60,
   "retainObjectParametersInItem": false,
   "extractionVersion": 1,
   "scripts": [ "Script.lua" ]

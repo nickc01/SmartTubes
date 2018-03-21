@@ -36,20 +36,15 @@ end
 Extract = function()
 	local Container = Extraction.GetContainer();
 	if Container ~= nil then
-		--sb.logInfo("Item = " .. sb.print());
 		local Item,Slot = Extraction.GetItemFromContainer(Container);
-		for _,Conduit in Extraction.InsertionConduitFinder() do
-			--sb.logInfo("Conduit = " .. sb.print(i));
+		if Item ~= nil then
+			for _,Conduit in Extraction.InsertionConduitFinder() do
+				if world.callScriptedEntity(Conduit,"PostExtract",Extraction,Item,Slot,Container) == 0 then
+					return nil;
+				end
+			end
 		end
-		--sb.logInfo("End");
-		--sb.logInfo("Item = " .. sb.print(Item) .. " Slot = " .. sb.print(Slot));
-		--if Item ~= nil then
-		--	ContainerHelper.ConsumeAt(Container,Slot - 1,Item.count);
-		--	world.containerConsumeAt(Container,Slot - 1,Item.count);
-		--end
-
 	end
-	--sb.logInfo("Container Selected = " .. sb.print(Container));
 end
 
 --The function that is called when the extraction conduit is uninitialized from the world

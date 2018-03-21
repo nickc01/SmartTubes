@@ -31,7 +31,7 @@ local NetworkCache = {};
 local NetworkUpdateFunctions = {};
 local FunctionTableTemplate;
 local ConnectionUpdateFunctions = {};
-local NetworkUpdateFunctions = {};
+local LocalNetworkUpdateFunctions = {};
 
 --Functions
 local PostInit;
@@ -41,6 +41,19 @@ local NetworkChange;
 local UpdateOtherConnections;
 local IsInTable;
 local UpdateSprite;
+local DefaultTraversalFunction = function(Traversal,StartPosition,PreviousID,Speed)
+	local EndPosition = entity.position();
+	local Time = 0;
+	return function(dt)
+		Time = Time + dt * Speed;
+		if Time >= 1 then
+			return {EndPosition[1] + 0.5,EndPosition[2] + 0.5},nil,true;
+		else
+			return {0.5 + StartPosition[1] + (EndPosition[1] - StartPosition[1]) * Time,0.5 + StartPosition[2] + (EndPosition[2] - StartPosition[2]) * Time};
+		end
+	end
+end
+local TraversalFunction = DefaultTraversalFunction;
 
 --Initializes the Conduit
 function ConduitCore.Initialize()
@@ -104,7 +117,6 @@ end
 
 --Initialization After the First Update Loop
 PostInit = function()
-	--sb.logInfo("Post Init");
 	ForceUpdate = true;
 	ConduitCore.Update();
 	ForceUpdate = false;
@@ -146,6 +158,7 @@ function ConduitCore.UpdateSelf()
 				if ConnectionData.Connections[i] ~= 0 then
 					if ConnectionTypesAreChanged[ConnectionType] == nil then
 						ConnectionTypesAreChanged[ConnectionType] = true;
+						PostFuncs[#PostFuncs + 1] = function() NetworkChange(ConnectionType) end;
 						PostFuncs[#PostFuncs + 1] = function() __ConduitCore__.CallNetworkChangeFunctions(ConnectionType) end;
 					end
 					ConnectionData.Connections[i] = 0;
@@ -166,6 +179,7 @@ function ConduitCore.UpdateSelf()
 					if ConnectionData.Connections[i] ~= Object then
 						if ConnectionTypesAreChanged[ConnectionType] == nil then
 							ConnectionTypesAreChanged[ConnectionType] = true;
+							PostFuncs[#PostFuncs + 1] = function() NetworkChange(ConnectionType) end;
 							PostFuncs[#PostFuncs + 1] = function() __ConduitCore__.CallNetworkChangeFunctions(ConnectionType) end;
 						end
 						ConnectionData.Connections[i] = Object;
@@ -175,6 +189,7 @@ function ConduitCore.UpdateSelf()
 					if ConnectionData.Connections[i] ~= 0 then
 						if ConnectionTypesAreChanged[ConnectionType] == nil then
 							ConnectionTypesAreChanged[ConnectionType] = true;
+							PostFuncs[#PostFuncs + 1] = function() NetworkChange(ConnectionType) end;
 							PostFuncs[#PostFuncs + 1] = function() __ConduitCore__.CallNetworkChangeFunctions(ConnectionType) end;
 						end
 						ConnectionData.Connections[i] = 0;
@@ -190,16 +205,13 @@ function ConduitCore.UpdateSelf()
 		end
 	end
 	if #PostFuncs > 0 then
-		NetworkChange();
 		for k,i in ipairs(PostFuncs) do
-		--	sb.logInfo("Post Func");
 			i();
 		end
 	end
 	if ConnectionsAreChanged == true then
 		ConnectionUpdate();
 	end
-	--sb.logInfo("All Connection Types = " .. sb.print(ConnectionTypes,1));
 	return ConnectionsAreChanged;
 end
 
@@ -208,16 +220,15 @@ NetworkChange = function(ConnectionType)
 	if NetworkCache[ConnectionType] ~= nil then
 		NetworkCache[ConnectionType].NeedsUpdating = true;
 	end
-	for i=1,#NetworkUpdateFunctions do
-		NetworkUpdateFunctions[i]();
+	for i=1,#LocalNetworkUpdateFunctions do
+		LocalNetworkUpdateFunctions[i](ConnectionType);
 	end
-	sb.logInfo("Network Has Changed = " .. sb.print(entity.id()));
 end
 
 --Add a function that is called when the Network is changed for a certain connection type
 function __ConduitCore__.AddOnNetworkChangeFunc(func,ConnectionType)
 	if NetworkUpdateFunctions[ConnectionType] == nil then
-		NetworkUpdateFunctions = {func};
+		NetworkUpdateFunctions[ConnectionType] = {func};
 	else
 		local ConnectionFunctions = NetworkUpdateFunctions[ConnectionType];
 		for i=1,#NetworkUpdateFunctions[ConnectionType] do
@@ -231,10 +242,14 @@ end
 
 --Calls all the network change functions of the Connection Type and removes them
 function __ConduitCore__.CallNetworkChangeFunctions(ConnectionType)
+	--sb.logInfo("__CONNECTIONTYPE = " .. sb.print(ConnectionType));
+	--NetworkChange(ConnectionType);
+	--sb.logInfo("Post");
 	if NetworkUpdateFunctions[ConnectionType] ~= nil then
 		for i=#NetworkUpdateFunctions[ConnectionType],1,-1 do
-			NetworkUpdateFunctions[ConnectionType](ConnectionType);
+			local func = NetworkUpdateFunctions[ConnectionType][i];
 			table.remove(NetworkUpdateFunctions[ConnectionType],i);
+			func(ConnectionType);
 		end
 	end
 end
@@ -257,13 +272,39 @@ function ConduitCore.GetConduitPath(To)
 	return ConduitCore.GetPath("Conduits",To);
 end
 
+--Returns true if this is connecting to anything with the Connection type
+function ConduitCore.IsConnectingTo(connectionType)
+	return ConnectionTypes[connectionType] ~= nil;
+end
+
+--Sets the Traversal function that is called to set the traversals position
+--the function must return another function that takes the parameter : dt
+--and must return a position,rotation (or nil for no rotation),and whether the traversal should stop calling the function or not
+function ConduitCore.SetTraversalFunction(func)
+	TraversalFunction = func;
+end
+
+--Returns the Currently Set Traversal Function
+function ConduitCore.GetTraversalFunction()
+	return TraversalFunction;
+end
+
+--Returns the Default Traversal Function
+function ConduitCore.GetDefaultTraversalFunction()
+	return DefaultTraversalFunction;
+end
+
+function __ConduitCore__.GetTraversalPath(Traversal,StartPosition,PreviousID,Speed)
+	return TraversalFunction(Traversal,StartPosition,PreviousID,Speed);
+end
+
 --Returns a Path From this conduit to the Entity "To" using the Connection Type
 function ConduitCore.GetPath(ConnectionType,To)
 	if NetworkCache[ConnectionType] == nil then
-		GetNetwork(ConnectionType);
+		ConduitCore.GetNetwork(ConnectionType);
 	end
 	local PathNetwork = NetworkCache[ConnectionType].WithPath;
-	local Path = {To};
+	local Path = {{ID = To}};
 	local Node;
 	for i=1,#PathNetwork do
 		if PathNetwork[i].ID == To then
@@ -281,7 +322,8 @@ function ConduitCore.GetPath(ConnectionType,To)
 		end
 		local NewPath = {};
 		for i=#Path,1,-1 do
-			NewPath[#NewPath + 1] = Path[i];
+			--sb.logInfo("Path Index in Pathfinder = " .. sb.print(Path[i]));
+			NewPath[#NewPath + 1] = Path[i].ID;
 		end
 		return NewPath;
 	end
@@ -295,6 +337,7 @@ function ConduitCore.GetNetwork(ConnectionType)
 	if NetworkCache[ConnectionType] ~= nil and NetworkCache[ConnectionType].NeedsUpdating == false then
 		return NetworkCache[ConnectionType].Normal;
 	end
+	--sb.logInfo("GENERATING NEW NETWORK");
 	local Findings = {};
 	local FindingsWithPath = {};
 	local Next = {{ID = SourceID}};
@@ -335,7 +378,7 @@ function ConduitCore.GetNetwork(ConnectionType)
 	end
 	for i=1,#Findings do
 		if Findings[i] ~= SourceID then
-			world.callScriptedEntity(Findings[i],"__ConduitCore__.AddOnNetworkChangeFunc",NetworkChange);
+			world.callScriptedEntity(Findings[i],"__ConduitCore__.AddOnNetworkChangeFunc",NetworkChange,ConnectionType);
 		end
 	end
 	return Findings;
@@ -364,7 +407,7 @@ end
 
 --Adds a function to a list of functions that are called when the Conduit Network is Updated
 function ConduitCore.AddNetworkUpdateFunction(func)
-	NetworkUpdateFunctions[#NetworkUpdateFunctions + 1] = func;
+	LocalNetworkUpdateFunctions[#LocalNetworkUpdateFunctions + 1] = func;
 end
 
 UpdateSprite = function()

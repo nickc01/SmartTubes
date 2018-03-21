@@ -48,7 +48,7 @@ function onInteraction(args)
 		FinalJson.scripts = Scripts;
 		FinalJson.scriptWidgetCallbacks = Callbacks;
 		FinalJson.gui.windowtitle.title = "";
-		DPrint("OriginalDescription = " .. sb.print(config.getParameter("OriginalDescription")));
+		--DPrint("OriginalDescription = " .. sb.print(config.getParameter("OriginalDescription")));
 		FinalJson.gui.conduitNameBox.hint = config.getParameter("OriginalDescription") or config.getParameter("shortdescription","IO Conduit");
 		FinalJson.gui.windowtitle.subtitle = "Extracts and inserts into inventories";
 	end

@@ -12,6 +12,7 @@ local Speed = 0;
 local Stack = 0;
 local Operators = {};
 local Config;
+local ConfigUUID;
 local NewConfig;
 local ConfigHasChanged = false;
 local ConfigIndex = 1;
@@ -19,8 +20,8 @@ local ConfigCache = {};
 local AnyNumberTable = setmetatable({},{__index = function(_,k) return k end});
 local ZeroIfNilMetatable = {__index = function(tbl,k)
 	sb.logInfo("Calling Metatable for = " .. sb.print(k));
-	return rawget(tbl,k) or 0;
-end};
+	return rawget(tbl,k) or 0; end};
+local LocalOnConfigUpdate = {};
 --Functions
 local SetMessages;
 local ConfigUpdate;
@@ -31,6 +32,9 @@ local ResetCache;
 local RandomIterator;
 local StringToNumbers;
 local CheckItemWithOperators;
+local SetConfigs;
+local AddConfig;
+local RemoveConfig;
 
 --Initializes the Extraction Conduit
 function Extraction.Initialize()
@@ -39,6 +43,11 @@ function Extraction.Initialize()
 	Speed = config.getParameter("Speed",0);
 	Stack = config.getParameter("Stack",0);
 	Config = config.getParameter("Configs",{});
+	ConfigUUID = config.getParameter("ConfigsUUID");
+	if ConfigUUID == nil then
+		 ConfigUUID = sb.makeUuid();
+		 object.setConfigParameter("ConfigUUID",ConfigUUID);
+	end
 	ConduitCore.AddConnectionUpdateFunction(function()
 		SetCachedConfigValue("TakeFromSidesWithIDs",nil);
 		SetCachedConfigValue("InsertionConduits",nil);
@@ -54,9 +63,8 @@ end
 
 --Sets the Messages required for this conduit
 SetMessages = function()
-	message.setHandler("SetConfig",function(_,_,config)
-		--sb.logInfo("Calling Set Config");
-		Extraction.SetConfig(config);
+	message.setHandler("SetConfigs",function(_,_,configs)
+		SetConfigs(configs);
 	end);
 	message.setHandler("SetSpeed",function(_,_,speed)
 		Speed = speed;
@@ -67,21 +75,31 @@ SetMessages = function()
 	message.setHandler("SetColor",function(_,_,speed)
 		--TODO TODO TODO
 	end);
+	message.setHandler("__UIGetConfig__",function(_,_,OldUUID)
+		if OldUUID ~= ConfigUUID then
+			return {true,Config,ConfigUUID};
+		else
+			return false;
+		end
+	end);
+	message.setHandler("__StoreValue__",function(_,_,Key,Value)
+		object.setConfigParameter(Key,Value);
+	end);
 end
 
-function Extraction.Extract()
+--[[function Extraction.Extract()
 	
+end--]]
+
+--Returns the Extraction Conduit's ID
+function Extraction.GetID()
+	return SourceID;
 end
 
---[[local function shuffle(t)
-	local n = #t
-  	while n > 1 do
-    	local k = math.random(n)
-    	t[n], t[k] = t[k], t[n]
-    	n = n - 1
- 	end
- 	return t
-end--]]
+--Returns the Extraction Conduit's position
+function Extraction.Position()
+	return SourcePosition;
+end
 
 local function RandomIterator(t)
 	local indexTable = {};
@@ -101,8 +119,8 @@ local function RandomIterator(t)
 	end
 end
 
---Gets a neighboring container based off of the config data
-function Extraction.GetContainer()
+--Returns an iterator that iterates over all the neighboring containers based off of the config data
+function Extraction.GetContainerIterator()
 	local Config = Extraction.GetConfig();
 	local ExportIDs;
 	--Retrieve the cached id table
@@ -139,7 +157,17 @@ function Extraction.GetContainer()
 	else
 		ExportIDs = GetCachedConfigValue("TakeFromSidesWithIDs");
 	end
-	for k,i in RandomIterator(ExportIDs) do
+	return RandomIterator(ExportIDs);
+	--[[for k,i in RandomIterator(ExportIDs) do
+		if i ~= 0 then
+			return i;
+		end
+	end--]]
+end
+
+--Returns a neighboring container based off of the config data
+function Extraction.GetContainer()
+	for _,i in Extraction.GetContainerIterator() do
 		if i ~= 0 then
 			return i;
 		end
@@ -156,11 +184,12 @@ function Extraction.GetItemFromContainer(container)
 		for number in StringToNumbers(Config.takeFromSlot) do
 			Slots[#Slots + 1] = number;
 		end
+		if Slots[1] == "any" then
+			Slots = AnyNumberTable;
+		end
+		SetCachedConfigValue("TakeFromSlots",Slots);
 	else
 		Slots = GetCachedConfigValue("TakeFromSlots");
-	end
-	if Slots[1] == "any" then
-		Slots = AnyNumberTable;
 	end
 	local ContainerSize = ContainerHelper.Size(container);
 	local AmountToLeave;
@@ -187,51 +216,58 @@ function Extraction.GetItemFromContainer(container)
 		end
 	end
 	local FinalCount = 0;
-	for slot=1,ContainerSize do
-		local Item = ContainerHelper.ItemAt(container,slot - 1);
-		if Item ~= nil then
-			--sb.logInfo("Beginning Check on " .. sb.print(Item));
-			if ForEntireInventory then
-				--sb.logInfo("A");
-				local TotalInInventory = ContainerHelper.Available(container,{name = Item.name,count = 1});
-				--sb.logInfo("Total In Inventory = " .. sb.print(TotalInInventory));
-				local AmountCanTake = TotalInInventory - AmountToLeave[1];
-				if Item.count <= AmountCanTake then
-					--sb.logInfo("B");
-					--CheckItemWithOperators(Item); TODO
-					if CheckItemWithOperators(Item) then
-						--sb.logInfo("D");
-						return Item,slot;
-					end
-				else
-					--sb.logInfo("C");
-					--local Count = AmountCanTake;
-					Item = {name = Item.name,count = AmountCanTake};
-					--CheckItemWithOperators(Item); 
-					if CheckItemWithOperators(Item) then
-						--sb.logInfo("E");
-						return Item,slot;
-					end
+	for i=1,ContainerSize do
+		local slot = Slots[i];
+		if slot == nil then break end;
+		--if slot ~= nil then
+			local Item = ContainerHelper.ItemAt(container,slot - 1);
+			if Item ~= nil then
+				if Item.count > (Stack + 1) ^ 2 then
+					Item.count = (Stack + 1) ^ 2;
 				end
-			else
-				--sb.logInfo("F");
-				if AmountToLeave[slot] ~= 0 then
-					--sb.logInfo("Amount To Leave = " .. sb.print(AmountToLeave[slot]));
-					--sb.logInfo("G");
-					Item = {name = Item.name,count = Item.count - AmountToLeave[slot]};
-					--CheckItemWithOperators(Item); TODO
-					if CheckItemWithOperators(Item) then
-						--sb.logInfo("H");
-						return Item,slot;
+				--sb.logInfo("Beginning Check on " .. sb.print(Item));
+				if ForEntireInventory then
+					--sb.logInfo("A");
+					local TotalInInventory = ContainerHelper.Available(container,{name = Item.name,count = 1});
+					--sb.logInfo("Total In Inventory = " .. sb.print(TotalInInventory));
+					local AmountCanTake = TotalInInventory - AmountToLeave[1];
+					if Item.count <= AmountCanTake then
+						--sb.logInfo("B");
+						--CheckItemWithOperators(Item); TODO
+						if CheckItemWithOperators(Item) then
+							--sb.logInfo("D");
+							return Item,slot;
+						end
+					else
+						--sb.logInfo("C");
+						--local Count = AmountCanTake;
+						Item = {name = Item.name,count = AmountCanTake};
+						--CheckItemWithOperators(Item); 
+						if CheckItemWithOperators(Item) then
+							--sb.logInfo("E");
+							return Item,slot;
+						end
 					end
 				else
-					if CheckItemWithOperators(Item) then
-						--sb.logInfo("I");
-						return Item,slot;
+					--sb.logInfo("F");
+					if AmountToLeave[slot] ~= 0 then
+						--sb.logInfo("Amount To Leave = " .. sb.print(AmountToLeave[slot]));
+						--sb.logInfo("G");
+						Item = {name = Item.name,count = Item.count - AmountToLeave[slot]};
+						--CheckItemWithOperators(Item); TODO
+						if CheckItemWithOperators(Item) then
+							--sb.logInfo("H");
+							return Item,slot;
+						end
+					else
+						if CheckItemWithOperators(Item) then
+							--sb.logInfo("I");
+							return Item,slot;
+						end
 					end
 				end
 			end
-		end
+		--end
 	end
 end
 
@@ -292,6 +328,7 @@ function Extraction.InsertionConduitFinder()
 	--TODO
 	local InsertionConduits;
 	if not IsCached("InsertionConduits") then
+		sb.logInfo("Insertion Conduits Being Cached " .. sb.print(entity.id()));
 		local NetworkInsertConduits;
 		if not IsCached("NetworkInsertConduits") then
 			local Network = ConduitCore.GetConduitNetwork();
@@ -349,6 +386,7 @@ function Extraction.InsertionConduitFinder()
 	else
 		InsertionConduits = GetCachedConfigValue("InsertionConduits");
 	end
+	sb.logInfo("InsertionConduits = " .. sb.print(InsertionConduits));
 	return RandomIterator(InsertionConduits);
 end
 
@@ -363,11 +401,25 @@ function Extraction.CycleConfigIndex()
 end
 
 --Sets the Config for the Extraction Conduit
-function Extraction.SetConfig(config)
-	object.setConfigParameter("Configs",config);
-	NewConfig = config;
+SetConfigs = function(configs)
+	NewConfig = configs;
 	ConfigHasChanged = true;
-	--sb.logInfo("Done");
+end
+
+AddConfig = function(config)
+	--ConfigUUID = sb.makeUuid();
+	LocalOnConfigUpdate[#LocalOnConfigUpdate + 1] = function()
+		Config[#Config + 1] = config;
+	end
+	ConfigHasChanged = true;
+end
+
+RemoveConfig = function(index)
+	--ConfigUUID = sb.makeUuid();
+	LocalOnConfigUpdate[#LocalOnConfigUpdate + 1] = function()
+		table.remove(Config,index);
+	end
+	ConfigHasChanged = true;
 end
 
 --Gets the latest config
@@ -383,9 +435,12 @@ function Extraction.RefreshConfig()
 	if ConfigHasChanged then
 		--sb.logInfo("Refreshed");
 		Config = NewConfig;
+		ConfigUpdate();
+		object.setConfigParameter("Configs",configs);
+		ConfigUUID = sb.makeUuid();
+		object.setConfigParameter("ConfigsUUID",ConfigUUID);
 		NewConfig = nil;
 		ConfigHasChanged = false;
-		ConfigUpdate();
 	end
 end
 
@@ -421,6 +476,10 @@ end
 ConfigUpdate = function()
 	--sb.logInfo("Config is updated");
 	ResetCache();
+	for _,func in ipairs(LocalOnConfigUpdate) do
+		func();
+	end
+	LocalOnConfigUpdate = {};
 end
 
 --Resets the Config Index
@@ -467,6 +526,41 @@ GetCachedConfigValue = function(ConfigValue)
 		return nil;
 	end
 	return ConfigCache[ConfigIndex][ConfigValue];
+end
+
+--Gets the Insert Slots from the config
+function Extraction.GetInsertSlots()
+	if not IsCached("InsertSlots") then
+		local Config = Extraction.GetConfig();
+		local InsertSlots = {};
+		for number in StringToNumbers(Config.insertIntoSlot) do
+			InsertSlots[#InsertSlots + 1] = number;
+		end
+		if InsertSlots[1] == "any" then
+			InsertSlots = "any";
+		end
+		SetCachedConfigValue("InsertSlots",InsertSlots);
+		return InsertSlots;
+	else
+		return GetCachedConfigValue("InsertSlots");
+	end
+end
+
+function Extraction.GetInsertSides()
+	if not IsCached("InsertSides") then
+		local Config = Extraction.GetConfig();
+		local InsertSides = {};
+		for str in string.gmatch(Config.insertIntoSide,"[^,]+") do
+			InsertSides[#InsertSides + 1] = string.lower(str);
+		end
+		if InsertSides[1] == "any" then
+			InsertSides = {"right","down","left","up"};
+		end
+		SetCachedConfigValue("InsertSides");
+		return InsertSides;
+	else
+		return GetCachedConfigValue("InsertSides");
+	end
 end
 
 

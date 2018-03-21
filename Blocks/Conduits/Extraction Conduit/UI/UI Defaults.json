@@ -1,0 +1,11 @@
+{
+  "Defaults": {
+    "itemNameBox": "any",
+    "insertIDBox": "any",
+    "takeFromSideBox": "any",
+    "insertIntoSideBox": "any",
+    "takeFromSlotBox": "any",
+    "insertIntoSlotBox": "any",
+    "amountToLeaveBox": "0"
+  }
+}
