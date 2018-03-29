@@ -108,11 +108,16 @@ end
 
 --Returns true if this object is connected to the other object
 function Groups.IsConnectedTo(Object)
-	return GroupDictionary[Object] ~= nil;
+	return GroupDictionary[Object] ~= nil and world.entityExists(Object);
 end
 
 --Returns the master of the neighbor
 function Groups.GetMasterID(neighborID)
+	sb.logInfo("NeighborID = " .. sb.print(neighborID));
+	sb.logInfo("GroupDictionary = " .. sb.print(GroupDictionary[neighborID]));
+	if GroupDictionary[neighborID] ~= nil then
+		sb.logInfo("GroupConnections = " .. sb.print(GroupConnections[GroupDictionary[neighborID]]));
+	end
 	if GroupDictionary[neighborID] ~= nil then
 		return GroupConnections[GroupDictionary[neighborID]].Master;
 	end

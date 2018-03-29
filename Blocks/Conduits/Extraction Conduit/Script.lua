@@ -3,8 +3,7 @@ require("/Core/Conduit Scripts/Extraction.lua");
 --Variables
 local OldInit = init;
 local OldUpdate = update;
-local OldDie = die;
-local OldUninit = uninit;
+--local OldUninit = uninit;
 
 --Functions
 local Extract;
@@ -21,15 +20,12 @@ end
 --The Update Loop for the Extraction Conduit
 function update(dt)
 	if OldUpdate ~= nil then OldUpdate(dt) end;
+	--sb.logInfo("C");
 	Extraction.RefreshConfig();
 	if Extraction.IsConfigAvailable() then
+		--sb.logInfo("D");		
 		Extract();
 	end
-end
-
---The function that is called when the extraction conduit dies
-function die()
-	if OldDie ~= nil then OldDie() end;
 end
 
 --The Main Extraction Function for the Extraction Conduit
@@ -48,6 +44,6 @@ Extract = function()
 end
 
 --The function that is called when the extraction conduit is uninitialized from the world
-function uninit()
+--[[function uninit()
 	if OldUninit ~= nil then OldUninit() end;
-end
+end--]]

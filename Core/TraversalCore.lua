@@ -20,6 +20,8 @@ local MovementFunction;
 local Path;
 local PathIndex;
 local ConnectionType;
+local Speed;
+local Initialized = false;
 
 --Functions
 local UpdateMovement;
@@ -27,22 +29,32 @@ local InitializeMovement;
 local UpdatePath;
 
 --Initializes the Traversal
-function Traversal.Initialize(insertion,destination,connectionType,auto)
+function __Traversal__.Initialize(insertion,destination,connectionType,speed,auto)
 	SourceID = entity.id();
 	Insertion = insertion;
 	Destination = destination;
-	OldUpdate = update;
 	ConnectionType = connectionType or "Conduits";
-	auto = auto or true;
+	Speed = speed or 1;
+	sb.logInfo("Auto = " .. sb.print(auto));
+	if auto == nil then auto = true end;
+	Initialized = true;
 	if auto == true then
+		OldUpdate = update;
 		update = function(dt)
 			if OldUpdate ~= nil then
 				OldUpdate(dt);
 			end
-			MovementFunction(dt);
+			if MovementFunction ~= nil then
+				MovementFunction(dt);
+			end
 		end
 		InitializeMovement();
 	end
+end
+
+--Returns if the Traversal is initialized and running
+function Traversal.IsInitialized()
+	return Initialized;
 end
 
 --Updates the Movement so the traversal knows where to move to next
@@ -50,8 +62,6 @@ UpdateMovement = function()
 	if PathIndex == #Path then
 		return Traversal.Finish();
 	end
-	--sb.logInfo("PathIndex = " .. sb.print(PathIndex));
-	--sb.logInfo("Path = " .. sb.print(Path));
 	local StartPosition = world.entityPosition(Path[PathIndex]);
 	--Check if traversal is over a conduit
 	if StartPosition == nil--[[ or world.callScriptedEntity(Path[PathIndex],"IsConnectingTo",ConnectionType) ~= true--]] then
@@ -68,15 +78,30 @@ UpdateMovement = function()
 			return Traversal.Drop();
 		end
 	end
-	local TraversalFunc = world.callScriptedEntity(NextConduit,"__ConduitCore__.GetTraversalPath",SourceID,StartPosition,Path[PathIndex],1);
+	local TraversalFunc = world.callScriptedEntity(NextConduit,"__ConduitCore__.GetTraversalPath",SourceID,StartPosition,Path[PathIndex],Speed);
 	if TraversalFunc == nil then
-		return Traversal.Drop();
+		--If there is no Traversal Function for the object then try to reroute, otherwise, just drop
+		UpdatePath(Path[PathIndex]);
+		if Path == nil then
+			return Traversal.Drop();
+		end
+		NextConduit = Path[PathIndex + 1];
+		if NextConduit == nil or not world.entityExists(NextConduit) then
+			return Traversal.Drop();
+		else
+			TraversalFunc = world.callScriptedEntity(NextConduit,"__ConduitCore__.GetTraversalPath",SourceID,StartPosition,Path[PathIndex],Speed);
+			if TraversalFunc == nil then
+				return Traversal.Drop();
+			end
+		end
 	end
+	--sb.logInfo("Setting Movement Function");
 	MovementFunction = function(dt)
 		if not world.entityExists(NextConduit) then
 			return Traversal.Drop();
 		end
 		local Pos,Rot,Stop = TraversalFunc(dt);
+		if Pos == nil then return nil end;
 		if Stop == true then
 			mcontroller.setPosition(Pos);
 			if Rot ~= nil then
@@ -91,6 +116,16 @@ UpdateMovement = function()
 			end
 		end
 	end
+end
+
+--Returns the speed of the Traversal
+function Traversal.GetSpeed()
+	return Speed;
+end
+
+--Sets the speed of the Traversal
+function Traversal.SetSpeed(speed)
+	Speed = speed;
 end
 
 --Initializes the Movement Function for the first run
@@ -172,6 +207,7 @@ function Traversal.Finish()
 		Traversal.Drop();
 	end
 	projectile.die();
+	return nil;
 end
 
 --Destroys the Traversal and Drops all of its contents
@@ -186,5 +222,42 @@ function Traversal.Drop()
 		Predictions = {};
 	end
 	projectile.die();
+	return nil;
+end
+
+--Respawns the Traversal and goes to "AmountToMoveForward" down to the next conduit
+function Traversal.Respawn(NewPosition,AmountToMoveForward)
+	NewPosition = NewPosition or world.entityPosition(Path[PathIndex]);
+	AmountToMoveForward = AmountToMoveForward or 1;
+	local NewTraversal = world.spawnProjectile(projectile.getParameter("projectileName"),NewPosition);
+	sb.logInfo("Respawning");
+	world.callScriptedEntity(NewTraversal,"__Traversal__.InitializeAfterRespawn",Traversal,Insertion,ConnectionType,Predictions,PredictionsForTossing,Path,PathIndex + AmountToMoveForward);
+	projectile.die();
+	return NewTraversal;
+end
+
+--Initializes the Conduit from a respawn
+function __Traversal__.InitializeAfterRespawn(OldTraversal,insertion,connectionType,predictions,predictionsForTossing,path,NewIndex)
+	__Traversal__.Initialize(insertion,OldTraversal.GetDestination(),connectionType,OldTraversal.GetSpeed(),false);
+	Predictions = predictions or {};
+	for _,prediction in ipairs(Predictions) do
+		prediction.Traversal = SourceID;
+	end
+	PredictionsForTossing = predictionsForTossing or {};
+	for _,prediction in ipairs(PredictionsForTossing) do
+		prediction.Traversal = SourceID;
+	end
+	OldUpdate = update;
+	Path = path;
+	PathIndex = NewIndex;
+	update = function(dt)
+		if OldUpdate ~= nil then
+			OldUpdate(dt);
+		end
+		if MovementFunction ~= nil then
+			MovementFunction(dt);
+		end
+	end
+	UpdateMovement();
 end
 

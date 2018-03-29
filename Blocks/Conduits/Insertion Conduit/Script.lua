@@ -17,6 +17,9 @@ local SideToConnection = setmetatable({},{
 	end});
 
 --Functions
+local OldInit = init;
+local OldUninit = uninit;
+
 local function RandomIterator(t)
 	local indexTable = {};
 	for i=1,#t do
@@ -38,22 +41,22 @@ end
 --Initializes the conduit
 function init()
 	Insertion.Initialize();
-end
-
---The Update Loop
-function update(dt)
+	if OldInit ~= nil then
+		OldInit();
+	end
 end
 
 --Called when the extraction is requesting an item to be sent
 function PostExtract(Extraction,ExtractItem,ExtractSlot,ExtractContainer)
-	sb.logInfo("Post Extract");
+	--sb.logInfo("Post Extract");
+	if not Insertion.Ready() then return 4 end;
 	for _,side in RandomIterator(Extraction.GetInsertSides()) do
 		local Object = SideToConnection[side];
 		if Object ~= nil and Object ~= 0 then
 			local Item,Slot = Insertion.ItemCanFit(Object,ExtractItem,Extraction.GetInsertSlots());
 			if Item ~= nil then
 				if ContainerHelper.ConsumeAt(ExtractContainer,ExtractSlot - 1,Item.count) ~= nil then
-					if Insertion.SendItem(Item,Object,Slot,Extraction.GetID(),Extraction.GetInsertSlots()) == true then
+					if Insertion.SendItem(Item,Object,Slot,Extraction.GetID(),Extraction.GetInsertSlots(),Extraction.GetSelectedColor(),Extraction.GetSpeed() + 1) == true then
 						return 0;
 					end
 					return 2;
@@ -65,12 +68,10 @@ function PostExtract(Extraction,ExtractItem,ExtractSlot,ExtractContainer)
 	return 1;
 end
 
---Called when the object dies
-function die()
-	
-end
-
 --Called when the object is uninitialized
 function uninit()
 	Insertion.Uninitialize();
+	if OldUninit ~= nil then
+		OldUninit();
+	end
 end

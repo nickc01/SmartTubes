@@ -33,6 +33,6 @@
   "conduitType": "receiver",
   "scriptDelta": 1,
   "inputNodes": [ [ 0.0, 0.0 ] ],
-  "scripts": [ "/Blocks/Conduits/Wireless Receiving Conduit/Script.lua", "/Core/CableCore.lua", "/Core/Facade/Facade.lua" ]
+  "scripts": [ "/Blocks/Conduits/Wireless Receiving Conduit/Script.lua", "/Core/Facade/Facade.lua" ]
 
 }

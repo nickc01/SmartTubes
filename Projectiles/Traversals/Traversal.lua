@@ -11,7 +11,9 @@ end
 
 --The Update Loop for the Traversal
 function update(dt)
-	
+	if not Traversal.IsInitialized() then
+		projectile.die();
+	end
 end
 
 --Called when the traversal dies

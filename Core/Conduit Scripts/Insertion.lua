@@ -13,7 +13,7 @@ local __Insertion__ = __Insertion__;
 --Variables
 local SourceID;
 local SourcePosition;
-local Predictions = setmetatable({},{
+local StringTableMetatable = {
 	__index = function(tbl,k)
 		if type(k) == "number" then
 			return rawget(tbl,tostring(k));
@@ -27,27 +27,18 @@ local Predictions = setmetatable({},{
 		else
 			return rawset(tbl,k,value);
 		end
-	end});
-local PredictionsForTossing = setmetatable({},{
-	__index = function(tbl,k)
-		if type(k) == "number" then
-			return rawget(tbl,tostring(k));
-		else
-			return rawget(tbl,k);
-		end
-	end,
-	__newindex = function(tbl,k,value)
-		if type(k) == "number" then
-			return rawset(tbl,tostring(k),value);
-		else
-			return rawset(tbl,k,value);
-		end
-	end});
+	end}
+local Predictions = setmetatable({},StringTableMetatable);
+local PredictionsForTossing = setmetatable({},StringTableMetatable);
 local AnyNumTable = setmetatable({},{
 	__index = function(_,k)
 		return k;
 	end});
 local ConfigCache = setmetatable({}, { __mode = 'v' });
+local InsertID;
+local InsertUUID;
+local Uninitializing = false;
+local Dying = false;
 
 --Prediction Layout
 --Item
@@ -71,8 +62,10 @@ local AddPredictionForTossing;
 local RemovePredictionForTossing;
 local PredictionIter;
 local PossibleSlotIter;
-
---TODO TODO TODO ---- Get Prediction System Working
+local InsertIDChange;
+local SavePredictions;
+local LoadPredictions;
+local PostInit;
 
 --Initializes the Insertion Conduit
 function Insertion.Initialize()
@@ -84,10 +77,24 @@ function Insertion.Initialize()
 	Groups.AddGroupRemovalFunction(GroupRemove);
 	Groups.AddGroupMasterChangeFunction(GroupMasterChange);
 	ConduitCore.UpdateContinuously(true);
+	InsertID = config.getParameter("insertID","");
+	InsertUUID = config.getParameter("InsertUUID");
+	if InsertUUID == nil then
+		InsertUUID = sb.makeUuid();
+		object.setConfigParameter("InsertUUID",InsertUUID);
+	end
 	ConduitCore.AddConnectionType("Containers",function(ID) return ContainerHelper.IsContainer(ID) end);
-	Groups.OnUpdateFunction(GroupUpdate);
+	--Groups.OnUpdateFunction(GroupUpdate);
+	ConduitCore.AddPostInitFunction(PostInit);
 	ConduitCore.Initialize();
 	SetMessages();
+	local OldDie = die;
+	die = function()
+		if OldDie ~= nil then
+			OldDie();
+		end
+		Dying = true;
+	end
 end
 
 --Gets the ID of the Insertion Conduit
@@ -95,12 +102,88 @@ function Insertion.GetID()
 	return SourceID;
 end
 
+--Returns if the conduit is ready to start transporting items
+function Insertion.Ready()
+	return ConduitCore.FirstUpdateCompleted();
+end
+
+--Gets the Insert ID of this conduit
+function Insertion.GetInsertID()
+	return InsertID;
+end
+
+--Called when the ConduitCore is fully initialized
+PostInit = function()
+	--TODO -- TODO -- TODO -- TODO -- TODO
+	local LoadedPredictions = LoadPredictions("StoredPredictions");
+	local LoadedPredictionsForTossing = LoadPredictions("StoredPredictionsForTossing");
+	if LoadedPredictions ~= nil then
+		sb.logInfo("Loaded Predictions = " .. sb.printJson(LoadedPredictions,1));
+	end
+	for container,predictions in pairs(LoadedPredictions) do
+		container = tonumber(container);
+		if world.entityExists(container) and container > 0 then
+			for _,prediction in ipairs(predictions) do
+				local Leftover = ContainerHelper.PutItemsAt(container,prediction.Item,prediction.Slot - 1);
+				if Leftover ~= nil then
+					world.spawnItem(Leftover,SourcePosition);
+				end
+			end
+		else
+			for _,prediction in ipairs(predictions) do
+				world.spawnItem(prediction.Item,SourcePosition);
+			end
+		end
+	end
+	for _,predictions in pairs(LoadedPredictionsForTossing) do
+		for _,prediction in ipairs(predictions) do
+			world.spawnItem(prediction.Item,SourcePosition);
+		end
+	end
+end
+
+--Adds any messages for the object to call
+SetMessages = function()
+	message.setHandler("__UISetInsertID__",function(_,_,newInsertID,newInsertUUID)
+		InsertUUID = newInsertUUID or sb.makeUuid();
+		object.setConfigParameter("InsertUUID",InsertUUID);
+		if InsertID ~= newInsertID then
+			InsertID = newInsertID;
+			object.setConfigParameter("insertID",InsertID);
+			InsertIDChange();
+		end
+	end);
+	message.setHandler("__UIGetInsertID__",function(_,_,insertUUID)
+		if InsertUUID == insertUUID then
+			return {true,InsertID};
+		else
+			return false;
+		end
+	end);
+end
+
+InsertIDChange = function()
+	
+end
+
+--Sets the Insert id
+function Insertion.SetInsertID(id)
+	if InsertID ~= id then
+		InsertID = id;
+		InsertIDChange();
+		InsertUUID = sb.makeUuid();
+		object.setConfigParameter("InsertUUID",InsertUUID);
+		object.setConfigParameter("insertID",InsertID);
+
+	end
+end
+
 --Called when the groups update
-GroupUpdate = function()
+--GroupUpdate = function()
 	--[[for Object,Connections,Master,k in Groups.GroupIterator() do
 		
 	end--]]
-end
+--end
 
 --Called when a group is added
 GroupAdd = function(Object,Connections,Master)
@@ -114,26 +197,26 @@ end
 
 --Called when a group is removed
 GroupRemove = function(Object,Connections,OldMaster,NewMaster)
-	sb.logInfo("Removing Group");
-	sb.logInfo("Object = " .. sb.print(Object));
-	sb.logInfo("Connections = " .. sb.print(Connections));
-	sb.logInfo("OldMaster = " .. sb.print(OldMaster));
-	sb.logInfo("New Master = " .. sb.print(NewMaster));
-	sb.logInfo("SourceID = " .. sb.print(SourceID));
+	--sb.logInfo("Removing Group");
+	--sb.logInfo("Object = " .. sb.print(Object));
+	--sb.logInfo("Connections = " .. sb.print(Connections));
+	--sb.logInfo("OldMaster = " .. sb.print(OldMaster));
+	--sb.logInfo("New Master = " .. sb.print(NewMaster));
+	--sb.logInfo("SourceID = " .. sb.print(SourceID));
 	--If this entity is the master
 	if OldMaster == SourceID then
-		sb.logInfo(sb.print(SourceID) .. " was the original Master");
+		--sb.logInfo(sb.print(SourceID) .. " was the original Master");
 		--If no new master exists
-		sb.logInfo("New Master = " .. sb.print(NewMaster));
+		--sb.logInfo("New Master = " .. sb.print(NewMaster));
 		if NewMaster == nil then
 			--Delete all the predictions for the object
-			sb.logInfo("Deleting all predictions");
+			--sb.logInfo("Deleting all predictions");
 			Predictions[Object] = {};
 			PredictionsForTossing[Object] = {};
 		else
 			--Send the predictions to the new master
-			sb.logInfo("Sending the predictions to the new master");
-			sb.logInfo("Predictions to send = " .. sb.print(Predictions[Object]));
+			--sb.logInfo("Sending the predictions to the new master");
+			--sb.logInfo("Predictions to send = " .. sb.print(Predictions[Object]));
 			world.callScriptedEntity(Groups.GetMasterID(Object),"__Insertion__.SetPredictions",Object,Predictions[Object],PredictionsForTossing[Object]);
 			Predictions[Object] = {};
 			PredictionsForTossing[Object] = {};
@@ -145,17 +228,26 @@ end
 GroupMasterChange = function(Object,OldMaster,NewMaster)
 	--if this entity was the original master
 	if OldMaster == SourceID then
-		sb.logInfo("Sending Predictions to new Master");
-		--Move The Predictions to the new master
-		world.callScriptedEntity(NewMaster,"__Insertion__.SetPredictions",Object,Predictions[Object],PredictionsForTossing[Object]);
-		Predictions[Object] = {};
-		PredictionsForTossing[Object] = {};
+		--If there is a new master
+		if NewMaster ~= nil then
+			--Move The Predictions to the new master
+			world.callScriptedEntity(NewMaster,"__Insertion__.SetPredictions",Object,Predictions[Object],PredictionsForTossing[Object]);
+			Predictions[Object] = {};
+			PredictionsForTossing[Object] = {};
+		else
+			--If the conduit is not uninitializing then delete the predictions, otherwise save them for later so it can be saved
+			if not Uninitializing then
+				--Delete the Predictions
+				Predictions[Object] = {};
+				PredictionsForTossing[Object] = {};
+			end
+		end
 	end
 end
 
 --
 function __Insertion__.SetPredictions(Object,predictions,predictionsForTossing)
-	sb.logInfo("Setting the predictions at " .. sb.print(SourceID) .. " to " .. sb.print(Predictions));
+	--sb.logInfo("Setting the predictions at " .. sb.print(SourceID) .. " to " .. sb.print(Predictions));
 	Predictions[Object] = predictions;
 	for k,i in ipairs(predictions) do
 		if world.entityExists(i.Traversal) then
@@ -171,7 +263,12 @@ function __Insertion__.SetPredictions(Object,predictions,predictionsForTossing)
 end
 
 --Sends a traversal and sends it to the destination
-function Insertion.SendItem(Item,DestinationContainer,Slot,ExtractionID,PossibleSlots,TraversalColor)
+function Insertion.SendItem(Item,DestinationContainer,Slot,ExtractionID,PossibleSlots,TraversalColor,TraversalSpeed)
+	if TraversalSpeed == nil then
+		TraversalSpeed = 1;
+	elseif TraversalSpeed == 0 then
+		TraversalSpeed = 1;
+	end
 	if not Insertion.IsConnectedTo(DestinationContainer) then
 		error("This insertion Conduit is not connected to the Object : " .. sb.print(DestinationContainer));
 	end
@@ -179,7 +276,7 @@ function Insertion.SendItem(Item,DestinationContainer,Slot,ExtractionID,Possible
 	PossibleSlots = PossibleSlots or "any";
 	local StartPosition = world.entityPosition(ExtractionID);
 	local Traversal = world.spawnProjectile("traversal" .. TraversalColor,{StartPosition[1] + 0.5,StartPosition[2] + 0.5});
-	world.callScriptedEntity(Traversal,"Traversal.Initialize",Insertion,DestinationContainer,"Conduits");
+
 	if PossibleSlots == "any" then
 		--Set Possible Slots to be all the slots in the container
 		local ContainerSize = ContainerHelper.Size(DestinationContainer);
@@ -194,6 +291,7 @@ function Insertion.SendItem(Item,DestinationContainer,Slot,ExtractionID,Possible
 	--Create the prediction for the item
 	local Prediction = {Item = Item,Slot = Slot,MaxStack = Insertion.GetItemConfig(Item).config.maxstack or 1000,Traversal = Traversal,PossibleSlots = PossibleSlots};
 	AddPrediction(DestinationContainer,Prediction);
+	world.callScriptedEntity(Traversal,"__Traversal__.Initialize",Insertion,DestinationContainer,"Conduits",TraversalSpeed);
 	return true;
 end
 
@@ -216,20 +314,22 @@ function __Insertion__.InsertTraversalItems(Traversal)
 			--Add Item into the Container
 			ContainerHelper.PutItemsAt(Object,i.Item,i.Slot - 1);
 		end
+		for k,i in ipairs(Predictions) do
+			RemovePrediction(Object,i);
+		end
 	else
 		for k,i in ipairs(Predictions) do
 			--Drop Items on the group
 			world.spawnItem(i.Item,Position);
 		end
 	end
-	for k,i in ipairs(Predictions) do
-		RemovePrediction(Object,i);
-	end
 	for k,i in ipairs(PredictionsForTossing) do
 		world.spawnItem(i.Item,Position);
 	end
-	for k,i in ipairs(PredictionsForTossing) do
-		RemovePredictionForTossing(Object,i);
+	if world.entityExists(Object) then
+		for k,i in ipairs(PredictionsForTossing) do
+			RemovePredictionForTossing(Object,i);
+		end
 	end
 end
 
@@ -246,29 +346,34 @@ function __Insertion__.DropTraversalItems(Traversal)
 	for k,i in ipairs(PredictionsForTossing) do
 		world.spawnItem(i.Item,Position);
 	end
-	for k,i in ipairs(Predictions) do
-		RemovePrediction(Object,i);
-	end
-	for k,i in ipairs(PredictionsForTossing) do
-		RemovePredictionForTossing(Object,i);
+	if world.entityExists(Object) then
+		for k,i in ipairs(Predictions) do
+			RemovePrediction(Object,i);
+		end
+		for k,i in ipairs(PredictionsForTossing) do
+			RemovePredictionForTossing(Object,i);
+		end
 	end
 end
 
 --Checks if the item can fit in the Object
 function Insertion.ItemCanFit(Object,Item,Slots,Exact)
+	if not world.entityExists(Object) then return nil end;
 	local Inventory = GetInventoryWithPredictions(Object);
 	local MaxStack = Insertion.GetItemConfig(Item).config.maxStack or 1000;
 	Exact = Exact or false;
 	Slots = Slots or "any";
 	for slot in SlotIter(Slots,ContainerHelper.Size(Object)) do
 		if Inventory[slot] == nil then
+			--If the slot doesn't have anything in it then the item can go there
 			return Item,slot;
 		elseif root.itemDescriptorsMatch(Inventory[slot],Item,true) then
+			--If the item in the slot and the item were trying to fit match
 			local RemainingCount = MaxStack - Inventory[slot].count;
 			if Item.count <= RemainingCount then
 				return Item,slot;
 			else
-				if RemainingCount > 0 and Exact == true then
+				if RemainingCount > 0 and Exact ~= true then
 					return {name = Item.name,count = RemainingCount,parameters = Item.parameters},slot;
 				else
 					goto Continue;
@@ -285,41 +390,44 @@ function __Insertion__.GetMasterPredictions(Object,Tossing)
 	Tossing = Tossing or false;
 	local Master = Groups.GetMasterID(Object);
 	if Master == SourceID then
-		sb.logInfo(sb.print(SourceID) .. " is the master");
+		--sb.logInfo(sb.print(SourceID) .. " is the master");
 		if Tossing then
 			return PredictionsForTossing;
 		else
 			return Predictions;
 		end
 	else
-		return world.callScriptedEntity(Master,"__Insertion__.GetMasterPredictions",Object,Tossing);
+		if world.entityExists(Master) then
+			return world.callScriptedEntity(Master,"__Insertion__.GetMasterPredictions",Object,Tossing);
+		else
+			return nil;
+		end
 	end
-end
-
---Adds any messages for the object to call
-SetMessages = function()
-	
 end
 
 --Adds the prediction to the list and to the traversal's
 AddPrediction = function(Object,prediction)
 	local Predictions = __Insertion__.GetMasterPredictions(Object)[Object];
-	Predictions[#Predictions + 1] = prediction;
-	if world.entityExists(prediction.Traversal) then
-		world.callScriptedEntity(prediction.Traversal,"__Traversal__.AddPrediction",prediction);
+	if Predictions ~= nil then
+		Predictions[#Predictions + 1] = prediction;
+		if world.entityExists(prediction.Traversal) then
+			world.callScriptedEntity(prediction.Traversal,"__Traversal__.AddPrediction",prediction);
+		end
 	end
 end
 
 --Removes the prediction from the list and from the traversal's
 RemovePrediction = function(Object,prediction)
 	local Predictions = __Insertion__.GetMasterPredictions(Object);
-	for k,i in ipairs(Predictions[Object]) do
-		if i == prediction then
-			table.remove(Predictions[Object],k);
-			if world.entityExists(prediction.Traversal) then
-				world.callScriptedEntity(prediction.Traversal,"__Traversal__.RemovePrediction",prediction);
+	if Predictions ~= nil then
+		for k,i in ipairs(Predictions[Object]) do
+			if i == prediction then
+				table.remove(Predictions[Object],k);
+				if world.entityExists(prediction.Traversal) then
+					world.callScriptedEntity(prediction.Traversal,"__Traversal__.RemovePrediction",prediction);
+				end
+				return nil;
 			end
-			return nil;
 		end
 	end
 end
@@ -327,22 +435,26 @@ end
 --Adds the prediction to the list for tossing and to the traversal's
 AddPredictionForTossing = function(Object,prediction)
 	local Predictions = __Insertion__.GetMasterPredictions(Object,true)[Object];
-	Predictions[#Predictions + 1] = prediction;
-	if world.entityExists(prediction.Traversal) then
-		world.callScriptedEntity(prediction.Traversal,"__Traversal__.AddPredictionForTossing",prediction);
+		if Predictions ~= nil then
+		Predictions[#Predictions + 1] = prediction;
+		if world.entityExists(prediction.Traversal) then
+			world.callScriptedEntity(prediction.Traversal,"__Traversal__.AddPredictionForTossing",prediction);
+		end
 	end
 end
 
 --Removes the prediction from the list for tossing and from the traversal's
 RemovePredictionForTossing = function(Object,prediction)
 	local Predictions = __Insertion__.GetMasterPredictions(Object,true);
-	for k,i in ipairs(Predictions[Object]) do
-		if i == prediction then
-			table.remove(Predictions[Object],k);
-			if world.entityExists(prediction.Traversal) then
-				world.callScriptedEntity(prediction.Traversal,"__Traversal__.RemovePredictionForTossing",prediction);
+	if Predictions ~= nil then
+		for k,i in ipairs(Predictions[Object]) do
+			if i == prediction then
+				table.remove(Predictions[Object],k);
+				if world.entityExists(prediction.Traversal) then
+					world.callScriptedEntity(prediction.Traversal,"__Traversal__.RemovePredictionForTossing",prediction);
+				end
+				return nil;
 			end
-			return nil;
 		end
 	end
 end
@@ -350,7 +462,7 @@ end
 --Returns an iterator that iterates over the master predictions
 PredictionIter = function(Object)
 	local Predictions = __Insertion__.GetMasterPredictions(Object);
-	if Predictions[Object] == nil then
+	if Predictions == nil or Predictions[Object] == nil then
 		return function()
 			return nil,nil;
 		end
@@ -435,7 +547,9 @@ end
 
 --Gets the Inventory of the object with it's predictions added to it
 GetInventoryWithPredictions = function(Object)
+	if not world.entityExists(Object) then return nil end;
 	local Inventory = ContainerHelper.Items(Object);
+	--Iterate over all the predictions
 	for k,prediction in PredictionIter(Object) do
 		if Inventory[prediction.Slot] == nil then
 			--If Slot doesn't have anything
@@ -477,7 +591,10 @@ end
 
 --Called to uninitialize the Insertion Conduit
 function Insertion.Uninitialize()
+	Uninitializing = true;
 	if Predictions ~= nil then
+		sb.logInfo("Predictions = " .. sb.printJson(Predictions,1));
+		sb.logInfo("PredictionsForTossing = " .. sb.printJson(PredictionsForTossing,1));
 		for k,i in pairs(Predictions) do
 			for m,prediction in ipairs(i) do
 				if world.entityExists(prediction.Traversal) then
@@ -487,4 +604,57 @@ function Insertion.Uninitialize()
 		end
 	end
 	Groups.Uninitialize();
+	if Dying == false then
+		SavePredictions(Predictions,"StoredPredictions");
+		SavePredictions(PredictionsForTossing,"StoredPredictionsForTossing");
+	end
+end
+
+--Saves the Predictions to the Conduit
+SavePredictions = function(pred,saveName)
+	sb.logInfo("SAVING ENTITYID = " .. sb.print(SourceID));
+	pred = pred or Predictions;
+	saveName = saveName or "StoredPredictions";
+	if pred ~= nil then
+		sb.logInfo("Predictions to be saved = " .. sb.printJson(pred,1));
+		local SavingPredictions = setmetatable({},StringTableMetatable);
+		local Connections = ConduitCore.GetConnections("Containers");
+		for group,predictions in pairs(pred) do
+			local Index;
+			group = tonumber(group);
+			for k,connection in ipairs(Connections) do
+				if connection == group then
+					Index = k;
+					break;
+				end
+			end
+			if Index ~= nil then
+				SavingPredictions[Index] = predictions;
+			end
+		end
+		sb.logInfo("Final Saving Predictions = " .. sb.printJson(SavingPredictions,1));
+		object.setConfigParameter(saveName,SavingPredictions);
+	else
+		object.setConfigParameter(saveName,nil);
+	end
+end
+
+--Loads the Predictions from the conduit
+LoadPredictions = function(saveName)
+	local StoredPredictions = setmetatable(config.getParameter(saveName,{}),StringTableMetatable);
+	local FinalPredictions = setmetatable({},StringTableMetatable);
+	local Connections = ConduitCore.GetConnections("Containers");
+	sb.logInfo("ALL CONNECTIONS = " .. sb.print(Connections));
+	sb.logInfo("Loaded Predictions = " .. sb.printJson(StoredPredictions,1));
+	for ConnectionIndex,predictions in pairs(StoredPredictions) do
+		ConnectionIndex = tonumber(ConnectionIndex);
+		sb.logInfo("ConnectionIndex = " .. sb.print(ConnectionIndex));
+		if Connections[ConnectionIndex] ~= nil and Connections[ConnectionIndex] ~= 10 then
+			FinalPredictions[Connections[ConnectionIndex]] = predictions;
+		else
+			FinalPredictions[-ConnectionIndex] = predictions;
+		end
+	end
+	sb.logInfo("FINAL PREDICTIONS = " .. sb.printJson(FinalPredictions,1));
+	return FinalPredictions;
 end

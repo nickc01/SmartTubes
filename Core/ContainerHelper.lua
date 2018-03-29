@@ -144,7 +144,6 @@ function Container.PutItemsAt(ID,Item,Slot)
 	if world.callScriptedEntity(ID,"IsContainerCore") == true then
 		return world.callScriptedEntity(ID,"ContainerCore.ContainerPutItemsAt",Item,Slot);
 	else
-		sb.logInfo("Calling NORMAL");
 		return world.containerPutItemsAt(ID,Item,Slot);
 	end
 end

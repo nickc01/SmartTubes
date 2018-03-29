@@ -32,6 +32,6 @@
   "conduitType": "sender",
   "scriptDelta": 1,
   "outputNodes": [ [ 0.0, 0.0 ] ],
-  "scripts": [ "Script.lua", "/Core/CableCore.lua" ]
+  "scripts": [ "Script.lua" ]
 
 }

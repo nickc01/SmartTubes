@@ -10,16 +10,19 @@ local SourceID;
 local SourcePosition;
 local Speed = 0;
 local Stack = 0;
+local Color;
+local Colors;
 local Operators = {};
 local Config;
 local ConfigUUID;
 local NewConfig;
-local ConfigHasChanged = false;
+local NewConfigUUID;
+local SettingsUUID;
 local ConfigIndex = 1;
 local ConfigCache = {};
 local AnyNumberTable = setmetatable({},{__index = function(_,k) return k end});
 local ZeroIfNilMetatable = {__index = function(tbl,k)
-	sb.logInfo("Calling Metatable for = " .. sb.print(k));
+	--sb.logInfo("Calling Metatable for = " .. sb.print(k));
 	return rawget(tbl,k) or 0; end};
 local LocalOnConfigUpdate = {};
 --Functions
@@ -35,6 +38,11 @@ local CheckItemWithOperators;
 local SetConfigs;
 local AddConfig;
 local RemoveConfig;
+local UniIter;
+local MakeNumberTable;
+local SpeedUpdate;
+local StackUpdate;
+local ColorUpdate;
 
 --Initializes the Extraction Conduit
 function Extraction.Initialize()
@@ -42,12 +50,26 @@ function Extraction.Initialize()
 	SourcePosition = entity.position();
 	Speed = config.getParameter("Speed",0);
 	Stack = config.getParameter("Stack",0);
+	Color = config.getParameter("Color","red");
+	local ColorData = root.assetJson("/Projectiles/Traversals/Colors.json").Colors;
+	Colors = {};
+	for _,color in ipairs(ColorData) do
+		Colors[#Colors + 1] = color[2];
+	end
+	SettingsUUID = config.getParameter("SettingsUUID");
+	if SettingsUUID == nil then
+		SettingsUUID = sb.makeUuid();
+		 object.setConfigParameter("SettingsUUID",SettingsUUID);
+	end
+	script.setUpdateDelta(60 / (Speed + 1));
 	Config = config.getParameter("Configs",{});
 	ConfigUUID = config.getParameter("ConfigsUUID");
 	if ConfigUUID == nil then
 		 ConfigUUID = sb.makeUuid();
 		 object.setConfigParameter("ConfigUUID",ConfigUUID);
 	end
+	NewConfig = Config;
+	NewConfigUUID = ConfigUUID;
 	ConduitCore.AddConnectionUpdateFunction(function()
 		SetCachedConfigValue("TakeFromSidesWithIDs",nil);
 		SetCachedConfigValue("InsertionConduits",nil);
@@ -63,21 +85,44 @@ end
 
 --Sets the Messages required for this conduit
 SetMessages = function()
-	message.setHandler("SetConfigs",function(_,_,configs)
-		SetConfigs(configs);
+	message.setHandler("SetConfigs",function(_,_,configs,UUID)
+		SetConfigs(MakeNumberTable(configs),UUID);
 	end);
-	message.setHandler("SetSpeed",function(_,_,speed)
-		Speed = speed;
+	message.setHandler("SetSpeed",function(_,_,speed,newSettingsUUID)
+		SettingsUUID = newSettingsUUID or sb.makeUuid();
+		object.setConfigParameter("SettingsUUID",SettingsUUID);
+		if Speed ~= speed then
+			Speed = speed;
+			SpeedUpdate();
+		end
 	end);
-	message.setHandler("SetStack",function(_,_,stack)
-		Stack = stack;
+	message.setHandler("__UIGetSettings__",function(_,_,settingsUUID)
+		if settingsUUID == SettingsUUID then
+			return false;
+		else
+			return {true,SettingsUUID,Speed,Stack,Color};
+		end
 	end);
-	message.setHandler("SetColor",function(_,_,speed)
-		--TODO TODO TODO
+	message.setHandler("SetStack",function(_,_,stack,newSettingsUUID)
+		--Stack = stack;
+		SettingsUUID = newSettingsUUID or sb.makeUuid();
+		object.setConfigParameter("SettingsUUID",SettingsUUID);
+		if Stack ~= stack then
+			Stack = stack;
+			StackUpdate();
+		end
+	end);
+	message.setHandler("SetColor",function(_,_,color,newSettingsUUID)
+		SettingsUUID = newSettingsUUID or sb.makeUuid();
+		object.setConfigParameter("SettingsUUID",SettingsUUID);
+		if Color ~= color then
+			Color = color;
+			ColorUpdate();
+		end
 	end);
 	message.setHandler("__UIGetConfig__",function(_,_,OldUUID)
-		if OldUUID ~= ConfigUUID then
-			return {true,Config,ConfigUUID};
+		if OldUUID ~= NewConfigUUID then
+			return {true,NewConfig,NewConfigUUID};
 		else
 			return false;
 		end
@@ -87,10 +132,6 @@ SetMessages = function()
 	end);
 end
 
---[[function Extraction.Extract()
-	
-end--]]
-
 --Returns the Extraction Conduit's ID
 function Extraction.GetID()
 	return SourceID;
@@ -99,6 +140,24 @@ end
 --Returns the Extraction Conduit's position
 function Extraction.Position()
 	return SourcePosition;
+end
+
+--Gets all the possible traversal colors
+function Extraction.GetColors()
+	return Colors;
+end
+
+--Gets the Currently selected color
+function Extraction.GetSelectedColor()
+	return Color;
+end
+
+--Sets the selected color
+function Extraction.SetSelectedColor(color)
+	if Color ~= color then
+		Color = color;
+		SettingsUUID = sb.makeUuid();
+	end
 end
 
 local function RandomIterator(t)
@@ -121,10 +180,10 @@ end
 
 --Returns an iterator that iterates over all the neighboring containers based off of the config data
 function Extraction.GetContainerIterator()
-	local Config = Extraction.GetConfig();
 	local ExportIDs;
 	--Retrieve the cached id table
 	if not IsCached("TakeFromSidesWithIDs") then
+		local Config = Extraction.GetConfig();
 		local ExportSides;
 		if not IsCached("TakeFromSides") then
 			ExportSides = {};
@@ -273,6 +332,19 @@ end
 
 CheckItemWithOperators = function(item)
 	if item ~= nil and item.count > 0 then
+		if not IsCached("ItemCheckCache") then
+			local ItemCheckCache = {};
+			SetCachedConfigValue("ItemCheckCache",ItemCheckCache);
+		end
+		local ItemCheckCache = GetCachedConfigValue("ItemCheckCache");
+		local CanCache = false;
+		if item.parameters == nil or jsize(item.parameters) == 0 then
+			if ItemCheckCache[item.name] ~= nil then
+				return ItemCheckCache[item.name];
+			else
+				CanCache = true;
+			end
+		end
 		local Config = Extraction.GetConfig();
 		local ItemNames;
 		if not IsCached("ItemCheckers") then
@@ -305,18 +377,29 @@ CheckItemWithOperators = function(item)
 		else
 			ItemNames = GetCachedConfigValue("ItemCheckers");
 		end
-		--sb.logInfo("ItemNames = " .. sb.print(ItemNames));
-		--TODO Implement Check for operators
 		local Valid = true;
 		for _,func in ipairs(ItemNames.Positives) do
 			Valid = func(item);
-			if Valid == false then return false end;
+			if Valid == false then
+				if CanCache then
+					ItemCheckCache[item.name] = false;
+				end
+				return false;
+			end
 		end
 		for _,func in ipairs(ItemNames.Negatives) do
 			Valid = not func(item);
-			if Valid == false then return false end;
+			if Valid == false then
+				if CanCache then
+					ItemCheckCache[item.name] = false;
+				end
+				return false;
+			end
 		end
 		--sb.logInfo("Returning Value = " .. sb.print(Valid));
+		if CanCache then
+			ItemCheckCache[item.name] = Valid;
+		end
 		return Valid;
 	end
 	--sb.logInfo("Returning False 3");
@@ -328,7 +411,7 @@ function Extraction.InsertionConduitFinder()
 	--TODO
 	local InsertionConduits;
 	if not IsCached("InsertionConduits") then
-		sb.logInfo("Insertion Conduits Being Cached " .. sb.print(entity.id()));
+		--sb.logInfo("Insertion Conduits Being Cached " .. sb.print(entity.id()));
 		local NetworkInsertConduits;
 		if not IsCached("NetworkInsertConduits") then
 			local Network = ConduitCore.GetConduitNetwork();
@@ -342,7 +425,7 @@ function Extraction.InsertionConduitFinder()
 		else
 			NetworkInsertConduits = GetCachedConfigValue("NetworkInsertConduits");
 		end
-		sb.logInfo("NetworkInsertConduits = " .. sb.print(NetworkInsertConduits));
+		--sb.logInfo("NetworkInsertConduits = " .. sb.print(NetworkInsertConduits));
 		local InsertIDs;
 		if not IsCached("InsertIDs") then
 			InsertIDs = {
@@ -360,6 +443,7 @@ function Extraction.InsertionConduitFinder()
 		else
 			InsertIDs = GetCachedConfigValue("InsertIDs");
 		end
+		sb.logInfo("Insert IDS = " .. sb.print(InsertIDs));
 		InsertionConduits = {};
 		for k,i in ipairs(NetworkInsertConduits) do
 			local InsertID = world.getObjectParameter(i,"insertID");
@@ -382,11 +466,12 @@ function Extraction.InsertionConduitFinder()
 				InsertionConduits[#InsertionConduits + 1] = i;
 			end
 		end
+		sb.logInfo("FInal INSERTION CONDUITS = " .. sb.print(InsertionConduits));
 		SetCachedConfigValue("InsertionConduits",InsertionConduits);
 	else
 		InsertionConduits = GetCachedConfigValue("InsertionConduits");
 	end
-	sb.logInfo("InsertionConduits = " .. sb.print(InsertionConduits));
+	--sb.logInfo("InsertionConduits = " .. sb.print(InsertionConduits));
 	return RandomIterator(InsertionConduits);
 end
 
@@ -401,25 +486,11 @@ function Extraction.CycleConfigIndex()
 end
 
 --Sets the Config for the Extraction Conduit
-SetConfigs = function(configs)
+SetConfigs = function(configs,UUID)
 	NewConfig = configs;
-	ConfigHasChanged = true;
-end
-
-AddConfig = function(config)
-	--ConfigUUID = sb.makeUuid();
-	LocalOnConfigUpdate[#LocalOnConfigUpdate + 1] = function()
-		Config[#Config + 1] = config;
-	end
-	ConfigHasChanged = true;
-end
-
-RemoveConfig = function(index)
-	--ConfigUUID = sb.makeUuid();
-	LocalOnConfigUpdate[#LocalOnConfigUpdate + 1] = function()
-		table.remove(Config,index);
-	end
-	ConfigHasChanged = true;
+	NewConfigUUID = UUID or sb.makeUuid();
+	object.setConfigParameter("Configs",configs);
+	object.setConfigParameter("ConfigsUUID",NewConfigUUID);
 end
 
 --Gets the latest config
@@ -432,15 +503,11 @@ end
 --Will update the config to the latest version
 function Extraction.RefreshConfig()
 	--sb.logInfo("Config Has Changed = " .. sb.print(ConfigHasChanged));
-	if ConfigHasChanged then
+	if ConfigUUID ~= NewConfigUUID then
 		--sb.logInfo("Refreshed");
 		Config = NewConfig;
+		ConfigUUID = NewConfigUUID;
 		ConfigUpdate();
-		object.setConfigParameter("Configs",configs);
-		ConfigUUID = sb.makeUuid();
-		object.setConfigParameter("ConfigsUUID",ConfigUUID);
-		NewConfig = nil;
-		ConfigHasChanged = false;
 	end
 end
 
@@ -459,7 +526,12 @@ end
 
 --Sets the Speed Upgrades
 function Extraction.SetSpeed(speed)
-	Speed = speed;
+	if Speed ~= speed then
+		Speed = speed;
+		SettingsUUID = sb.makeUuid();
+		object.setConfigParameter("SettingsUUID",SettingsUUID);
+		SpeedUpdate();
+	end
 end
 
 --Gets the Stack Upgrades
@@ -469,7 +541,28 @@ end
 
 --Sets the Stack Upgrades
 function Extraction.SetStack(stack)
-	Stack = stack;
+	if Stack ~= stack then
+		Stack = stack;
+		SettingsUUID = sb.makeUuid();
+		object.setConfigParameter("SettingsUUID",SettingsUUID);
+		StackUpdate();
+	end
+end
+
+--Called when the speed changes
+SpeedUpdate = function()
+	script.setUpdateDelta(60 / (Speed + 1));
+	object.setConfigParameter("Speed",Speed);
+end
+
+--Called when the stack changes
+StackUpdate = function()
+	object.setConfigParameter("Stack",Stack);
+end
+
+--Called when the selected color changes
+ColorUpdate = function()
+	object.setConfigParameter("Color",Color);
 end
 
 --Called when the config is updated
@@ -480,6 +573,7 @@ ConfigUpdate = function()
 		func();
 	end
 	LocalOnConfigUpdate = {};
+	Extraction.ResetConfigIndex();
 end
 
 --Resets the Config Index
@@ -609,5 +703,28 @@ StringToNumbers = function(str)
 		if First ~= nil then
 			return tonumber(First);
 		end
+	end
+end
+
+--Iterates over any type of table
+UniIter = function(tbl)
+	local k,i = nil;
+	return function()
+		k,i = next(tbl,k);
+		return k,i;
+	end
+end
+
+--If the table was intended to have it's indexes as "number" types, this will make sure it will
+--This should be used when passing tables via world.sendEntityMessage because it can convert the indexes to "string" types
+MakeNumberTable = function(tbl)
+	if type(next(tbl)) == "string" then
+		local NewTable = {};
+		for k,i in UniIter(tbl) do
+			NewTable[tonumber(k)] = i;
+		end
+		return NewTable;
+	else
+		return tbl;
 	end
 end

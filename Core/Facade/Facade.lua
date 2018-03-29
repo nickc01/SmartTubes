@@ -22,12 +22,6 @@ function GetFacadeDropItem()
 	return Item;
 end
 
---[[Versioning.AddVersion(1.26,function()
-	if config.getParameter("AltAnimation") == nil then
-		object.setConfigParameter("AltAnimation",root.itemConfig(Relations.GetConduitOfFacade(object.name())).config.animationParts.cables);
-	end
-end);--]]
-
 function init()
 	--Versioning.ExecuteOnce();
 	if config.getParameter("AltAnimation") == nil then

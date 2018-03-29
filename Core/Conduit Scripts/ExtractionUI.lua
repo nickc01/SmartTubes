@@ -13,26 +13,42 @@ local __ExtractionUI__ = __ExtractionUI__;
 --Variables
 local Config;
 local ConfigUUID;
+local SettingsUUID;
 local SourceID;
 local ConfigList = "configArea.itemList";
 local SearchText = "";
-local ListItemIndexer = setmetatable({},{
-	__index = function(tbl,k)
-		for k,i in ipairs(tbl) do
-			if i == k then
-				return k;
+local ListItemIndexer;
+ListItemIndexer = setmetatable({},{
+	__index = function(tbl,index)
+		for configIndex,i in UICore.Rawipairs(tbl) do
+			if i == index then
+				return configIndex;
 			end
 		end
 		return nil;
 	end,
 	__call = function(tbl)
-		tbl = setmetatable({},getmetatable(tbl));
+		ListItemIndexer = setmetatable({},getmetatable(ListItemIndexer));
 	end,
 	__newindex = function(tbl,k,v)
 		rawset(tbl,k,v);
 	end});
+local InverseListItemIndexer = setmetatable({},{
+	__index = function(_,configIndex)
+		return rawget(ListItemIndexer,configIndex);
+	end});
+local UISettings;
 local DefaultTextBoxValues;
 local SlotItem;
+local GetConfigCallIndex;
+local GetSettingsCallIndex;
+local CheckItemCache = setmetatable({},{__mode = "k"});
+local Speed = 0;
+local Stack = 0;
+local Color;
+local Colors = {};
+local ColorToHex = {};
+local TraversalColorImage = "/Blocks/Conduits/Extraction Conduit/UI/Window/White Color.png?setcolor=";
 
 --Functions
 local ConfigUpdated;
@@ -46,6 +62,9 @@ local AddConfigToDisplay;
 local DirectionalFilter;
 local NumericalFilter;
 local SendNewConfig;
+local SpeedChange;
+local StackChange;
+local ColorChange;
 
 
 --Initializes the Extraction UI
@@ -54,7 +73,10 @@ function ExtractionUI.Initialize()
 	if SourceID == nil then
 		SourceID = pane.sourceEntity();
 	end
-	DefaultTextBoxValues = root.assetJson("/Blocks/Conduits/Extraction Conduit/UI/UI Defaults.json").Defaults;
+	sb.logInfo("SourceID = " .. sb.print(SourceID));
+	sb.logInfo("Pane = " .. sb.print(pane));
+	UISettings = root.assetJson("/Blocks/Conduits/Extraction Conduit/UI/UI Settings.json");
+	DefaultTextBoxValues = UISettings.Defaults;
 	UICore.Initialize();
 	widget.setText("itemNameBox",world.getObjectParameter(SourceID,"UIItemName",""));
 	widget.setText("insertIDBox",world.getObjectParameter(SourceID,"UIInsertID",""));
@@ -63,22 +85,52 @@ function ExtractionUI.Initialize()
 	widget.setText("takeFromSlotBox",world.getObjectParameter(SourceID,"UITakeFromSlot",""));
 	widget.setText("insertIntoSlotBox",world.getObjectParameter(SourceID,"UIInsertIntoSlot",""));
 	widget.setText("amountToLeaveBox",world.getObjectParameter(SourceID,"UIAmountToLeave",""));
+	widget.setChecked("specificCheckBox",world.getObjectParameter(SourceID,"UIIsSpecific",false));
+	widget.setChecked("autoCheckBox",world.getObjectParameter(SourceID,"UIAuto",false));
 	Config = world.getObjectParameter(SourceID,"Configs",{});
+	Config = UICore.MakeNumberTable(Config);
 	ConfigUUID = world.getObjectParameter(SourceID,"ConfigUUID");
+	SettingsUUID = world.getObjectParameter(SourceID,"SettingsUUID");
+	local ColorData = root.assetJson("/Projectiles/Traversals/Colors.json").Colors;
+	for _,color in ipairs(ColorData) do
+		Colors[#Colors + 1] = color[2];
+		ColorToHex[color[2]] = color[1];
+	end
+	Speed = world.getObjectParameter(SourceID,"Speed",0);
+	if Speed ~= 0 then SpeedChange() end;
+	Stack = world.getObjectParameter(SourceID,"Stack",0);
+	if Stack ~= 0 then StackChange() end;
+	Color = world.getObjectParameter(SourceID,"Color","red");
+	ColorChange();
 	OnConfigUpdateFunctions(Config);
-	UICore.LoopCallContinuously(SourceID,ConfigUpdated,"__UIGetConfig__",function() return ConfigUUID end);
+	ExtractionUI.DisplayConfigs();
+	GetConfigCallIndex = UICore.LoopCallContinuously(SourceID,ConfigUpdated,"__UIGetConfig__",function() return ConfigUUID end);
+	GetSettingsCallIndex = UICore.LoopCallContinuously(SourceID,SettingsUpdated,"__UIGetSettings__",function() return SettingsUUID end);
 end
 
 
 --Called when the config is updated
 ConfigUpdated = function(NewConfig,NewUUID)
 	Config = NewConfig;
+	Config = UICore.MakeNumberTable(Config);
 	ConfigUUID = NewUUID;
-	--[[for _,func in ipairs(OnConfigUpdateFunctions) do
-		func(Config);
-	end--]]
 	OnConfigUpdateFunctions(Config);
 	ExtractionUI.DisplayConfigs();
+end
+
+--Called when the conduit's settings are updated
+SettingsUpdated = function(NewSettingsUUID,NewSpeed,NewStack,NewColor)
+	SettingsUUID = NewSettingsUUID;
+	if Speed ~= NewSpeed then
+		Speed = NewSpeed;
+		SpeedChange();
+	end
+	if Stack ~= NewStack then
+		StackChange();
+	end
+	if Color ~= NewColor then
+		ColorChange();
+	end
 end
 
 --Add a function that is called when the Config is updated
@@ -95,7 +147,6 @@ end
 function ExtractionUI.DisplayConfigs()
 	widget.clearListItems(ConfigList);
 	ListItemIndexer();
-	sb.logInfo("ALL Configs = " .. sb.printJson(Config,1));
 	for _,config in ipairs(Config) do
 		AddConfigToDisplay(config);
 	end
@@ -128,14 +179,11 @@ AddConfigToDisplay = function(config)
 	end
 end
 
---Sends a message to set the Config
---[[function ExtractionUI.SetConfigs(Configs)
-	
-end--]]
-
 --Sends the UI's config data to the Conduit
 SendNewConfig = function()
-	world.sendEntityMessage(SourceID,"SetConfigs",Config);
+	ConfigUUID = sb.makeUuid();
+	world.sendEntityMessage(SourceID,"SetConfigs",Config,ConfigUUID);
+	UICore.ResetLoopCall(GetConfigCallIndex);
 end
 
 --Sets the text that is from the search bar
@@ -171,7 +219,16 @@ end
 
 --Checks if the item is a real item
 CheckItem = function(Item,exact)
-	return root.itemDescriptorsMatch(Item,root.createItem(Item),exact);
+	if exact ~= true then
+		if CheckItemCache[Item.name] == nil then
+			local Value = root.itemDescriptorsMatch(Item,root.createItem(Item),false);
+			CheckItemCache[Item.name] = Value;
+			return Value;
+		else
+			return CheckItemCache[Item.name];
+		end
+	end
+	return root.itemDescriptorsMatch(Item,root.createItem(Item),exact == true);
 end
 
 --Gets the text of the textbox, or if nothing's in it then sets it to it's default value
@@ -222,14 +279,225 @@ function ExtractionUI.AddNewConfig()
 		specificData = SpecificParameters
 	}
 	SendNewConfig();
+	ExtractionUI.DisplayConfigs();
 end
 
---[[DirectionalFilter = function(text)
-	
-end--]]
+--Removes a config at a specific index, returns true if successful
+function ExtractionUI.RemoveConfig(index)
+	if index > 0 and index <= #Config then
+		table.remove(Config,index);
+		SendNewConfig();
+		ExtractionUI.DisplayConfigs();
+		return true;
+	end
+	return false;
+end
+
+--Moves a config from the original index to the new index, returns true if successful
+function ExtractionUI.MoveConfig(index,newIndex)
+	if index > 0 and index <= #Config and newIndex > 0 and newIndex <= #Config then
+		local config = table.remove(Config,index);
+		table.insert(Config,newIndex,config);
+		SendNewConfig();
+		ExtractionUI.DisplayConfigs();
+		return true;
+	end
+	return false;
+end
+
+--Moves a config up a level in the list, returns true if successful
+function ExtractionUI.MoveUpConfig(index)
+	return ExtractionUI.MoveConfig(index,index - 1);
+end
+
+--Moves a config down a level in the list, returns true if successful
+function ExtractionUI.MoveDownConfig(index)
+	return ExtractionUI.MoveConfig(index,index + 1);
+end
+
+--Removes the selected config from the list, returns true if successful
+function ExtractionUI.RemoveSelectedConfig()
+	local SelectedItem = widget.getListSelected(ConfigList);
+	if SelectedItem ~= nil then
+		local Index = ListItemIndexer[SelectedItem];
+		if Index ~= nil then
+			return ExtractionUI.RemoveConfig(Index);
+		end
+	end
+	return false;
+end
+
+--Returns the selected config and it's index
+function ExtractionUI.GetSelectedConfig()
+	local SelectedItem = widget.getListSelected(ConfigList);
+	if SelectedItem ~= nil then
+		local Index = ListItemIndexer[SelectedItem];
+		if Index ~= nil then
+			return Index,Config[Index];
+		end
+	end
+end
+
+--Sets the selected config, returns true if successful
+function ExtractionUI.SetSelectedConfig(index)
+	local ListID = InverseListItemIndexer[index];
+	if ListID ~= nil then
+		widget.setListSelected(ConfigList,ListID);
+		return true;
+	end
+	return false;
+end
+
+--Called when the Speed Has Changed
+SpeedChange = function()
+	widget.setText("speedUpgrades",Speed);
+end
+
+--Called when the stack has Changed
+StackChange = function()
+	widget.setText("stackUpgrades",Stack);
+end
+
+--Called when the color has Changed
+ColorChange = function()
+	widget.setImage("colorDisplay",TraversalColorImage .. ColorToHex[Color]);
+end
+
+--Gets the current set speed
+function ExtractionUI.GetSpeed()
+	return Speed;
+end
+
+--Sets the speed
+function ExtractionUI.SetSpeed(speed)
+	if Speed ~= speed then
+		Speed = speed;
+		SpeedChange();
+		SettingsUUID = sb.makeUuid();
+		world.sendEntityMessage(SourceID,"SetSpeed",Speed,SettingsUUID);
+		UICore.ResetLoopCall(GetSettingsCallIndex);
+	end
+end
+
+--Gets the current set stack upgrades
+function ExtractionUI.GetStack()
+	return Stack;
+end
+
+--Sets the stack upgrades
+function ExtractionUI.SetStack(stack)
+	if Stack ~= stack then
+		Stack = stack;
+		StackChange();
+		SettingsUUID = sb.makeUuid();
+		world.sendEntityMessage(SourceID,"SetStack",Stack,SettingsUUID);
+		UICore.ResetLoopCall(GetSettingsCallIndex);
+	end
+end
+
+--Gets the current set Color
+function ExtractionUI.GetColor()
+	return Color;
+end
+
+--Sets the color
+function ExtractionUI.SetColor(color)
+	if Color ~= color then
+		Color = color;
+		ColorChange();
+		SettingsUUID = sb.makeUuid();
+		world.sendEntityMessage(SourceID,"SetColor",Color,SettingsUUID);
+		UICore.ResetLoopCall(GetSettingsCallIndex);
+	end
+end
+
+--Increments to selected color to the next one, and returns true if successful
+function ExtractionUI.IncrementColor()
+	local Index;
+	for k,color in ipairs(Colors) do
+		if Color == color then
+			Index = k;
+			break;
+		end
+	end
+	if Index ~= nil then
+		if Index == #Colors then
+			Index = 1;
+		else
+			Index = Index + 1;
+		end
+		ExtractionUI.SetColor(Colors[Index]);
+		return true;
+	end
+	return false;
+end
+
+--Decrements to selected color to the previous one, and returns true if successful
+function ExtractionUI.DecrementColor()
+	local Index;
+	for k,color in ipairs(Colors) do
+		if Color == color then
+			Index = k;
+			break;
+		end
+	end
+	if Index ~= nil then
+		if Index == 1 then
+			Index = #Colors;
+		else
+			Index = Index - 1;
+		end
+		ExtractionUI.SetColor(Colors[Index]);
+		return true;
+	end
+	return false;
+end
+
+--Converts a color to hex
+function ExtractionUI.ColorToHex(color)
+	return ColorToHex[color];
+end
+
+--Gets the settings for the UI
+function ExtractionUI.GetUISettings()
+	return UISettings;
+end
+
+--Returns the source Object of the UI
+function ExtractionUI.GetSourceID()
+	return SourceID;
+end
+
+--Sets all the text boxes based off of the config passed in, and returns true if successful
+function ExtractionUI.SetTextToConfig(config)
+	if type(config) == "number" then
+		config = Config[config];
+	end
+	if config ~= nil then
+		widget.setText("itemNameBox",config.itemName);
+		widget.setText("insertIDBox",config.insertID);
+		widget.setText("takeFromSideBox",config.takeFromSide);
+		widget.setText("insertIntoSideBox",config.insertIntoSide);
+		widget.setText("takeFromSlotBox",config.takeFromSlot);
+		widget.setText("insertIntoSlotBox",config.insertIntoSlot);
+		widget.setText("amountToLeaveBox",config.amountToLeave);
+		widget.setChecked("specificCheckBox",config.isSpecific);
+		if config.isSpecific then
+			SlotItem = {name = config.itemName,count = 1,parameters = config.specificData};
+			widget.setItemSlotItem("itemBox",SlotItem);
+		end
+		return true;
+	end
+	return false;
+end
+
+function ExtractionUI.SetHelpText(text)
+	widget.setText("helpText",text);
+end
 
 --Saves it's settings and uninitializes the conduit
 function ExtractionUI.Uninitialize()
+	sb.logInfo("SourceID = " .. sb.print(SourceID));
 	world.sendEntityMessage(SourceID,"__StoreValue__","UIItemName",widget.getText("itemNameBox"));
 	world.sendEntityMessage(SourceID,"__StoreValue__","UIInsertID",widget.getText("insertIDBox"));
 	world.sendEntityMessage(SourceID,"__StoreValue__","UITakeFromSide",widget.getText("takeFromSideBox"));
@@ -237,4 +505,6 @@ function ExtractionUI.Uninitialize()
 	world.sendEntityMessage(SourceID,"__StoreValue__","UITakeFromSlot",widget.getText("takeFromSlotBox"));
 	world.sendEntityMessage(SourceID,"__StoreValue__","UIInsertIntoSlot",widget.getText("insertIntoSlotBox"));
 	world.sendEntityMessage(SourceID,"__StoreValue__","UIAmountToLeave",widget.getText("amountToLeaveBox"));
+	world.sendEntityMessage(SourceID,"__StoreValue__","UIIsSpecific",widget.getChecked("specificCheckBox"));
+	world.sendEntityMessage(SourceID,"__StoreValue__","UIAuto",widget.getChecked("autoCheckBox"));
 end

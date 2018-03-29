@@ -24,7 +24,7 @@ Relations.Convert = function(FromType,ToType,FromValue)
 	local Config = GetConfig();
 	for i=1,#Config do
 		if Config[i][FromType] == FromValue and Config[i][ToType] ~= nil then
-			sb.logInfo("Value = " .. sb.print(Config[i][ToType]));
+			--sb.logInfo("Value = " .. sb.print(Config[i][ToType]));
 			return Config[i][ToType];
 		end
 	end

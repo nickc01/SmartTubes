@@ -32,6 +32,8 @@ local NetworkUpdateFunctions = {};
 local FunctionTableTemplate;
 local ConnectionUpdateFunctions = {};
 local LocalNetworkUpdateFunctions = {};
+local PostInitFunctions = {};
+local ExtraPathFunctions = {};
 
 --Functions
 local PostInit;
@@ -51,9 +53,10 @@ local DefaultTraversalFunction = function(Traversal,StartPosition,PreviousID,Spe
 		else
 			return {0.5 + StartPosition[1] + (EndPosition[1] - StartPosition[1]) * Time,0.5 + StartPosition[2] + (EndPosition[2] - StartPosition[2]) * Time};
 		end
-	end
-end
+	end end
+local GetObjectByConnectionPoint;
 local TraversalFunction = DefaultTraversalFunction;
+local ValuesToTable;
 
 --Initializes the Conduit
 function ConduitCore.Initialize()
@@ -121,11 +124,24 @@ PostInit = function()
 	ConduitCore.Update();
 	ForceUpdate = false;
 	FirstUpdateComplete = true;
+	for _,func in ipairs(PostInitFunctions) do
+		func();
+	end
+end
+
+--Adds a function that is called during Post Initialization
+function ConduitCore.AddPostInitFunction(func)
+	PostInitFunctions[#PostInitFunctions + 1] = func;
 end
 
 --Returns true if this is a conduit
 function ConduitCore.IsConduit()
 	return true;
+end
+
+--Returns true if the conduit has done it's first update
+function ConduitCore.FirstUpdateCompleted()
+	return FirstUpdateComplete;
 end
 
 --Updates itself and it's connections and returns whether the connections have changed or not
@@ -148,7 +164,7 @@ function ConduitCore.UpdateSelf()
 		Connections = {};
 	end
 	for i=1,NumOfConnections do
-		local Object = world.objectAt({SourcePosition[1] + ConnectionPoints[i][1],SourcePosition[2] + ConnectionPoints[i][2]});
+		local Object = GetObjectByConnectionPoint(i);
 		if Object == nil then
 			if Connections[i] ~= 0 then
 				Connections[i] = 0;
@@ -213,6 +229,17 @@ function ConduitCore.UpdateSelf()
 		ConnectionUpdate();
 	end
 	return ConnectionsAreChanged;
+end
+
+--Forcefully triggers a Network change
+function ConduitCore.TriggerNetworkUpdate(connectionType)
+	NetworkChange(connectionType);
+	__ConduitCore__.CallNetworkChangeFunctions(connectionType);
+end
+
+--Forcefully triggers a Connection change
+function ConduitCore.TriggerConnectionUpdate(connectionType)
+	ConnectionUpdate();
 end
 
 --Called whenever the network changes
@@ -300,7 +327,7 @@ end
 
 --Returns a Path From this conduit to the Entity "To" using the Connection Type
 function ConduitCore.GetPath(ConnectionType,To)
-	if NetworkCache[ConnectionType] == nil then
+	if NetworkCache[ConnectionType] == nil or NetworkCache[ConnectionType].NeedsUpdating == true then
 		ConduitCore.GetNetwork(ConnectionType);
 	end
 	local PathNetwork = NetworkCache[ConnectionType].WithPath;
@@ -337,14 +364,13 @@ function ConduitCore.GetNetwork(ConnectionType)
 	if NetworkCache[ConnectionType] ~= nil and NetworkCache[ConnectionType].NeedsUpdating == false then
 		return NetworkCache[ConnectionType].Normal;
 	end
-	--sb.logInfo("GENERATING NEW NETWORK");
 	local Findings = {};
 	local FindingsWithPath = {};
 	local Next = {{ID = SourceID}};
 	repeat
 		local NewNext = {};
 		for i=1,#Next do
-			local Connections = world.callScriptedEntity(Next[i].ID,"ConduitCore.GetConnections",ConnectionType);
+			local Connections = world.callScriptedEntity(Next[i].ID,"ConduitCore.GetConnectionsWithExtra",ConnectionType);
 			if Connections == nil then goto Continue end;
 			for _,connection in ipairs(Connections) do
 				if connection ~= 0 then
@@ -468,6 +494,11 @@ function ConduitCore.SetConnectionPoints(connections)
 	NumOfConnections = #connections;
 end
 
+--Gets the number of connection Points
+function ConduitCore.NumOfConnectionPoints()
+	return NumOfConnections;
+end
+
 --Sets if the conduit should update continously or not
 function ConduitCore.UpdateContinuously(bool)
 	UpdateContinously = bool == true;
@@ -534,6 +565,67 @@ function ConduitCore.HasConnectionType(ConnectionType)
 	return true;
 end
 
+--Adds a function that is called when the network is needed
+--The function should return any Object IDs that should be part of the network
+function ConduitCore.AddExtraPathFunction(connectionType,func)
+	if ExtraPathFunctions[connectionType] == nil then
+		ExtraPathFunctions[connectionType] = {func};
+	else
+		ExtraPathFunctions[connectionType][#ExtraPathFunctions[connectionType] + 1] = func;
+	end
+end
+
+--Similar to ConduitCore.GetConnections but also includes the ExtraPathFunctions
+function ConduitCore.GetConnectionsWithExtra(connectionType)
+	if ExtraPathFunctions[connectionType] == nil then
+		return ConduitCore.GetConduitConnections(connectionType);
+	else
+		local Final = {};
+		local Connections = ConduitCore.GetConnections(connectionType);
+		if Connections ~= nil then
+			for _,connection in ipairs(Connections) do
+				if connection ~= 0 then
+					Final[#Final + 1] = connection;
+				end
+			end
+		end
+		for _,func in ipairs(ExtraPathFunctions[connectionType]) do
+			local NewConnections = func(connectionType);
+			if type(NewConnections) == "table" then
+				for _,connection in ipairs(NewConnections) do
+					if connection ~= 0 then
+						Final[#Final + 1] = connection;
+					end
+				end
+			else
+				NewConnections[#NewConnections + 1] = NewConnections;
+			end
+		end
+		return Final;
+	end
+end
+
+--Gets the Object based upon the connection point
+GetObjectByConnectionPoint = function(pointIndex)
+	--local Object = world.objectAt({SourcePosition[1] + ConnectionPoints[i][1],SourcePosition[2] + ConnectionPoints[i][2]});
+	local ConnectionPoint = ConnectionPoints[pointIndex];
+	local Type = type(ConnectionPoint);
+	if Type == "table" then
+		return world.objectAt({SourcePosition[1] + ConnectionPoint[1],SourcePosition[2] + ConnectionPoint[2]});
+	elseif Type == "number" then
+		return Type;
+	elseif Type == "function" then
+		local Value = ConnectionPoint();
+		local ValueType = type(Value);
+		if ValueType == "table" then
+			return world.objectAt({SourcePosition[1] + Value[1],SourcePosition[2] + Value[2]});
+		else
+			return Value;
+		end
+	end
+	return nil;
+end
+
 --Uninitializes the Conduit
 function ConduitCore.Uninitialize()
 	if Uninitialized == true then return nil else Uninitialized = true end;
@@ -541,6 +633,18 @@ function ConduitCore.Uninitialize()
 		UpdateOtherConnections();
 	end
 end
+
+--If the first value passed is a table then return that, otherwise return all the values as a table
+--[[ValuesToTable = function(...)
+	if select("#",...) > 0 then
+		local Value = select(1,...);
+		if type(Value) == "table" then
+			return Value;
+		else
+			return {...};
+		end
+	end
+end--]]
 
 
 
