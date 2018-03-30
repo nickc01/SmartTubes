@@ -13,6 +13,8 @@ local __UICore__ = __UICore__;
 --Variables
 local PromiseLoopCalls = {};
 local ResetPromiseLoopCalls = {};
+local SyncedValues = {};
+local DefinitionTable = UICore;
 
 --Functions
 
@@ -124,7 +126,120 @@ function UICore.Rawipairs(tbl)
 	end
 end
 
+--Sets a table that will have the functions defined when calling Server.DefineSyncedValues
+--Defaults to the Server Table
+function UICore.SetDefinitionTable(tbl)
+	DefinitionTable = tbl;
+end
+
+--Loops over the parameters and groups them by the pairs amount
+function UICore.ParameterIter(pairAmount,...)
+	pairAmount = pairAmount or 1;
+	if pairAmount == 1 then
+		local Iterator = UICore.UniIter({...});
+		return function()
+			local _,i = Iterator();
+			return i;
+		end
+	elseif pairAmount > 1 then
+		local ParameterCount = select("#",...);
+		local CurrentStartIndex = 1;
+		local Parameters = {...};
+		return function()
+			::Restart::
+			if CurrentStartIndex > ParameterCount then
+				return nil;
+			end
+			if Parameters[CurrentStartIndex] ~= nil then
+				local ReturnValues = {};
+				for i=0,pairAmount - 1 do
+					ReturnValues[i + 1] = Parameters[CurrentStartIndex + i];
+				end
+				CurrentStartIndex = CurrentStartIndex + pairAmount;
+				return table.unpack(ReturnValues);
+			else
+				CurrentStartIndex = CurrentStartIndex + pairAmount;
+			end
+			goto Restart;
+		end
+	else
+		return function()
+			return nil;
+		end
+	end
+end
+
 --Sets value names to synced over the server under the group name
-function UICore.SetAsSyncedValue(GroupName,...)
-	
+--All the extra values should go under the following
+--ValueName
+--DefaultValue
+
+--The ID can be a number or a function that returns a number
+function UICore.SetAsSyncedValues(GroupName,ID,...)
+	if type(ID) ~= "function" then
+		local IDValue = ID;
+		ID = function() return IDValue end;
+	end
+	local NewSyncedValues = {
+		Values = world.getObjectParameter(ID(),"__" .. GroupName .. "Save"),
+		ValueNames = {},
+		ID = ID,
+		UUID = world.getObjectParameter(ID(),"__" .. GroupName .. "SaveUUID") or sb.makeUuid();
+	};
+	local RetrievedValues = false;
+	if NewSyncedValues.Values ~= nil then
+		RetrievedValues = true;
+	else
+		NewSyncedValues.Values = {};
+	end
+	SyncedValues[GroupName] = NewSyncedValues;
+
+	local CallIndex = PromiseLoopCalls[#PromiseLoopCalls + 1];
+
+	for ValueName,DefaultValue in UICore.ParameterIter(2,...) do
+		NewSyncedValues.ValueNames[#NewSyncedValues.ValueNames + 1] = ValueName;
+		if RetrievedValues == false then
+			NewSyncedValues.Values[ValueName] = DefaultValue;
+		end
+		
+		local SetFunction = function(newValue)
+			if NewSyncedValues.Values[ValueName] ~= newValue then
+				NewSyncedValues.Values[ValueName] = newValue;
+				NewSyncedValues.UUID = sb.makeUuid();
+				world.sendEntityMessage(NewSyncedValues.ID(),ValueName .. "Save",newValue,NewSyncedValues.UUID);
+				UICore.ResetLoopCall(CallIndex);
+			end
+		end
+		DefinitionTable["Set" .. ValueName] = SetFunction;
+
+		local GetFunction = function()
+			return NewSyncedValues.Values[ValueName];
+		end
+
+		DefinitionTable["Get" .. ValueName] = GetFunction;
+	end
+
+	local UpdateName = "Update" .. GroupName;
+	local Promise = world.sendEntityMessage(NewSyncedValues.ID(),UpdateName,NewSyncedValues.UUID);
+	local SettingValues = false;
+	PromiseLoopCalls[#PromiseLoopCalls + 1] = function()
+		if Promise:finished() then
+			sb.logInfo("Test");
+			local Result = Promise:result();
+			if Result ~= nil and Result ~= false then
+				SettingValues = true;
+				for _,valueName in ipairs(NewSyncedValues.ValueNames) do
+					DefinitionTable["Set" .. valueName](Result[valueName]);
+				end
+				SettingValues = false;
+			end
+			Promise = world.sendEntityMessage(NewSyncedValues.ID(),UpdateName,NewSyncedValues.UUID);
+		end
+	end
+	ResetPromiseLoopCalls[#ResetPromiseLoopCalls + 1] = function()
+		if SettingValues == false then
+			Promise = world.sendEntityMessage(NewSyncedValues.ID(),UpdateName,NewSyncedValues.UUID);
+		end
+	end
+	return CallIndex;
 end
