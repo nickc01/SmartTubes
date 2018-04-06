@@ -7,10 +7,14 @@ require("/Core/Conduit Scripts/FacadeWrench.lua");
 --The init function of the item
 function init()
 	if FacadeWrench.Initialize() then
-		sb.logInfo("INIT");
-		UICore.SetAsSyncedValues("testGroup",activeItem.ownerEntityId(),"value1",2,"value2",nil,"value3",6,nil,nil,"value5");
+		
 	end
 end
+
+--[[function update(dt)
+	UICore.SetIndex(UICore.GetIndex() + 1);
+	sb.logInfo("Index = " .. sb.print(UICore.GetIndex()));
+end--]]
 
 --[[function ParamTest(...)
 	local value = select(2,...);

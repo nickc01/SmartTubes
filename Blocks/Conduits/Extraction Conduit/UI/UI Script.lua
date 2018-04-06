@@ -6,27 +6,17 @@ local OldUninit = uninit;
 
 --Functions
 local ConfigUpdate;
+local CopyBufferChange;
 
 --Initializes the Extraction Conduit UI
 function init()
+	widget.setButtonEnabled("pasteButton",false);
 	if OldInit ~= nil then
 		OldInit();
 	end
+	ExtractionUI.AddCopyBufferChangeFunction(CopyBufferChange);
 	ExtractionUI.Initialize();
 end
-
---The Update Loop For the UI
---THIS IS A TEST
---[[local First = false;
-function update(dt)
-	if First == false then
-		First = true;
-		sb.logInfo("Creating Thread");
-		UICore.AwaitTest();
-		sb.logInfo("Exiting First");
-	end
-	sb.logInfo("Main Loop");
-end--]]
 
 --Uninitializes the Extraction UI
 function uninit()
@@ -47,8 +37,24 @@ function itemBoxRight()
 end
 
 --Called when the selected config item changes
-function SelectedItemChange()
+--[[function SelectedItemChange()
 	
+end--]]
+--Called when the player's copy buffer has changed
+CopyBufferChange = function()
+	widget.setButtonEnabled("pasteButton",ExtractionUI.CopyBufferIsSet());
+end
+
+
+--Called when the "copy" button is pressed
+function Copy()
+	ExtractionUI.CopyConfig(ExtractionUI.GetSelectedConfig());
+	widget.setButtonEnabled("pasteButton",true);
+end
+
+--Called when the "paste" button is pressed
+function Paste()
+	ExtractionUI.PasteConfig();
 end
 
 --Called when the "Add" button is clicked
@@ -120,10 +126,21 @@ function Edit()
 	end
 end
 
+--Called when the "save settings" button is pressed
+function Save()
+	world.sendEntityMessage(ExtractionUI.GetSourceID(),"Extraction.SaveParameters",world.entityPosition(player.id()));
+end
+
 --Called when the "right" color button is clicked
 function ColorIncrement()
 	ExtractionUI.IncrementColor();
 end
+
+--Called when the Conduit's name textbox is changed
+function ConduitNameChange()
+	world.sendEntityMessage(ExtractionUI.GetSourceID(),"SetUISaveName",widget.getText("conduitNameBox"));
+end
+
 
 --Called when the "left" color button is clicked
 function ColorDecrement()

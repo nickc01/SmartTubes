@@ -12,12 +12,16 @@ local ItemCore = ItemCore;
 local TransformationGroup;
 local MouseClickCallbacks;
 local MouseRightClickCallbacks;
+local MouseHoldCallbacks;
+local MouseRightHoldCallbacks;
 local PreviousFireMode = "none";
 local ShiftHeld = false;
 
 --Functions
 local MouseClick;
 local MouseRightClick;
+local MouseHeld;
+local RightMouseHeld;
 
 --Initializes the Item
 function ItemCore.Initialize(transformationGroup,position,rotation,rotationPivot)
@@ -36,6 +40,12 @@ function ItemCore.Initialize(transformationGroup,position,rotation,rotationPivot
 				MouseClick();
 			elseif fireMode == "alt" then
 				MouseRightClick();
+			end
+		else
+			if fireMode == "primary" then
+				MouseHeld();
+			elseif fireMode == "alt" then
+				RightMouseHeld();
 			end
 		end
 	end
@@ -92,6 +102,42 @@ function ItemCore.AddMouseRightClickCallback(func)
 	end
 end
 
+--Adds a function that is called when left click is held down
+function ItemCore.AddMouseHoldCallback(func)
+	if MouseClickCallbacks == nil then
+		MouseHoldCallbacks = {func};
+	else
+		MouseHoldCallbacks[#MouseHoldCallbacks + 1] = func;
+	end
+end
+
+--Adds a function that is called when right click is held down
+function ItemCore.AddMouseRightHoldCallback(func)
+	if MouseRightHoldCallbacks == nil then
+		MouseRightHoldCallbacks = {func};
+	else
+		MouseRightHoldCallbacks[#MouseRightHoldCallbacks + 1] = func;
+	end
+end
+
+--Returns if the shift key is down
+function ItemCore.IsShiftHeld()
+	return ShiftHeld;
+end
+
+--Returns "left" if the left mouse button is down
+--Returns "right" if the right mouse button is down
+--Returns "none" if neither of the buttons are down
+function ItemCore.GetCurrentMouseState()
+	if PreviousFireMode == "primary" then
+		return "left";
+	elseif PreviousFireMode == "alt" then
+		return "right";
+	else
+		return "none";
+	end
+end
+
 --Called when the mouse is clicked
 MouseClick = function()
 	if MouseClickCallbacks ~= nil then
@@ -108,4 +154,14 @@ MouseRightClick = function()
 			func();
 		end
 	end
+end
+
+--Called during when the left mouse button is held down
+MouseHeld = function()
+	
+end
+
+--Called during when the right mouse button is held down
+RightMouseHeld = function()
+	
 end

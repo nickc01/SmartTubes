@@ -1,10 +1,15 @@
 require("/Core/ConduitCore.lua");
+require("/Core/ServerCore.lua");
 require("/Core/ContainerHelper.lua");
 --Declaration
 
 --Public Table
 Extraction = {};
 local Extraction = Extraction;
+
+--Private Table, PLEASE DONT TOUCH
+__Extraction__ = {};
+local __Extraction__ = __Extraction__;
 --Variables
 local SourceID;
 local SourcePosition;
@@ -12,6 +17,7 @@ local Speed = 0;
 local Stack = 0;
 local Color;
 local Colors;
+local ColorToHex = {};
 local Operators = {};
 local Config;
 local ConfigUUID;
@@ -25,6 +31,7 @@ local ZeroIfNilMetatable = {__index = function(tbl,k)
 	--sb.logInfo("Calling Metatable for = " .. sb.print(k));
 	return rawget(tbl,k) or 0; end};
 local LocalOnConfigUpdate = {};
+local Data = {};
 --Functions
 local SetMessages;
 local ConfigUpdate;
@@ -51,10 +58,13 @@ function Extraction.Initialize()
 	Speed = config.getParameter("Speed",0);
 	Stack = config.getParameter("Stack",0);
 	Color = config.getParameter("Color","red");
+	--Server.SetDefinitionTable(Data);
+	--Server.DefineSyncedValues("ExtractionName","ConduitName",config.getParameter("shortDescription"));
 	local ColorData = root.assetJson("/Projectiles/Traversals/Colors.json").Colors;
 	Colors = {};
 	for _,color in ipairs(ColorData) do
 		Colors[#Colors + 1] = color[2];
+		ColorToHex[color[2]] = color[1];
 	end
 	SettingsUUID = config.getParameter("SettingsUUID");
 	if SettingsUUID == nil then
@@ -130,6 +140,13 @@ SetMessages = function()
 	message.setHandler("__StoreValue__",function(_,_,Key,Value)
 		object.setConfigParameter(Key,Value);
 	end);
+	message.setHandler("SetUISaveName",function(_,_,name)
+		object.setConfigParameter("UISaveName",name);
+	end);	
+	message.setHandler("Extraction.SaveParameters",function(_,_,dropPosition)
+		__Extraction__.SaveParameters();
+		ConduitCore.DropAndSaveParameters(nil,dropPosition);
+	end);
 end
 
 --Returns the Extraction Conduit's ID
@@ -152,6 +169,25 @@ function Extraction.GetSelectedColor()
 	return Color;
 end
 
+--Saves the Extraction's parameters
+function __Extraction__.SaveParameters(DisplayName)
+	ConduitCore.AddSaveParameter("Speed",Speed);
+	ConduitCore.AddSaveParameter("Stack",Stack);
+	ConduitCore.AddSaveParameter("Color",Color);
+	ConduitCore.AddSaveParameter("Configs",Config);
+	ConduitCore.AddColorToSavedItem(ColorToHex[Color]);
+	local SaveName = config.getParameter("UISaveName","");
+	if SaveName ~= "" then
+		ConduitCore.SetSaveName(SaveName);
+		ConduitCore.AddSaveParameter("UISaveName",SaveName);
+	end
+
+	--If this conduit has an insertion table (ie, this conduit is an io conduit), then save it's parameters too
+	if __Insertion__ ~= nil then
+		__Insertion__.SaveParameters();
+	end
+end
+
 --Sets the selected color
 function Extraction.SetSelectedColor(color)
 	if Color ~= color then
@@ -160,6 +196,7 @@ function Extraction.SetSelectedColor(color)
 	end
 end
 
+--An iterator that iterates through the table in a random order
 local function RandomIterator(t)
 	local indexTable = {};
 	for i=1,#t do
@@ -417,6 +454,8 @@ function Extraction.InsertionConduitFinder()
 			local Network = ConduitCore.GetConduitNetwork();
 			NetworkInsertConduits = {};
 			for k,i in ipairs(Network) do
+				--sb.logInfo("First I = " .. sb.print(i));
+				--sb.logInfo("First InsertID = " .. sb.print(world.getObjectParameter(i,"insertID")));
 				if world.getObjectParameter(i,"insertID") ~= nil then
 					NetworkInsertConduits[#NetworkInsertConduits + 1] = i;
 				end
@@ -443,7 +482,7 @@ function Extraction.InsertionConduitFinder()
 		else
 			InsertIDs = GetCachedConfigValue("InsertIDs");
 		end
-		sb.logInfo("Insert IDS = " .. sb.print(InsertIDs));
+		--sb.logInfo("Insert IDS = " .. sb.print(InsertIDs));
 		InsertionConduits = {};
 		for k,i in ipairs(NetworkInsertConduits) do
 			local InsertID = world.getObjectParameter(i,"insertID");
@@ -466,7 +505,7 @@ function Extraction.InsertionConduitFinder()
 				InsertionConduits[#InsertionConduits + 1] = i;
 			end
 		end
-		sb.logInfo("FInal INSERTION CONDUITS = " .. sb.print(InsertionConduits));
+		--sb.logInfo("FInal INSERTION CONDUITS = " .. sb.print(InsertionConduits));
 		SetCachedConfigValue("InsertionConduits",InsertionConduits);
 	else
 		InsertionConduits = GetCachedConfigValue("InsertionConduits");

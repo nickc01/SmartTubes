@@ -42,6 +42,7 @@ local DefaultTextBoxValues;
 local SlotItem;
 local GetConfigCallIndex;
 local GetSettingsCallIndex;
+local CopyBufferCallIndex;
 local CheckItemCache = setmetatable({},{__mode = "k"});
 local Speed = 0;
 local Stack = 0;
@@ -49,6 +50,8 @@ local Color;
 local Colors = {};
 local ColorToHex = {};
 local TraversalColorImage = "/Blocks/Conduits/Extraction Conduit/UI/Window/White Color.png?setcolor=";
+local CopyBufferChangeFunctions;
+local BufferIsSet = false;
 
 --Functions
 local ConfigUpdated;
@@ -65,6 +68,8 @@ local SendNewConfig;
 local SpeedChange;
 local StackChange;
 local ColorChange;
+local CopyBufferChange;
+local AddPremadeConfig;
 
 
 --Initializes the Extraction UI
@@ -77,7 +82,14 @@ function ExtractionUI.Initialize()
 	sb.logInfo("Pane = " .. sb.print(pane));
 	UISettings = root.assetJson("/Blocks/Conduits/Extraction Conduit/UI/UI Settings.json");
 	DefaultTextBoxValues = UISettings.Defaults;
+	local ConduitNameDefault = "Extraction Conduit";
+	if InsertionUI ~= nil then
+		ConduitNameDefault = "IO Conduit";
+	end
+	widget.setText("conduitNameBox",world.getObjectParameter(SourceID,"UISaveName",ConduitNameDefault));
 	UICore.Initialize();
+	--UICore.SetDefinitionTable(Data);
+	--UICore.SetAsSyncedValues("ExtractionName",SourceID,"ConduitName","");
 	widget.setText("itemNameBox",world.getObjectParameter(SourceID,"UIItemName",""));
 	widget.setText("insertIDBox",world.getObjectParameter(SourceID,"UIInsertID",""));
 	widget.setText("takeFromSideBox",world.getObjectParameter(SourceID,"UITakeFromSide",""));
@@ -106,6 +118,7 @@ function ExtractionUI.Initialize()
 	ExtractionUI.DisplayConfigs();
 	GetConfigCallIndex = UICore.LoopCallContinuously(SourceID,ConfigUpdated,"__UIGetConfig__",function() return ConfigUUID end);
 	GetSettingsCallIndex = UICore.LoopCallContinuously(SourceID,SettingsUpdated,"__UIGetSettings__",function() return SettingsUUID end);
+	CopyBufferCallIndex = UICore.SimpleLoopCall(player.id(),"BufferIsSet",CopyBufferChange);
 end
 
 
@@ -278,6 +291,12 @@ function ExtractionUI.AddNewConfig()
 		isSpecific = IsSpecific,
 		specificData = SpecificParameters
 	}
+	SendNewConfig();
+	ExtractionUI.DisplayConfigs();
+end
+
+AddPremadeConfig = function(config)
+	Config[#Config + 1] = config;
 	SendNewConfig();
 	ExtractionUI.DisplayConfigs();
 end
@@ -466,6 +485,52 @@ end
 --Returns the source Object of the UI
 function ExtractionUI.GetSourceID()
 	return SourceID;
+end
+
+--Adds the config to the player's copy buffer
+function ExtractionUI.CopyConfig(config)
+	if type(config) == "number" then
+		config = Config[config];
+	end
+	if config ~= nil then
+		world.sendEntityMessage(player.id(),"SetCopyBuffer",config);
+		UICore.ResetLoopCall(CopyBufferCallIndex);
+	end
+end
+
+--Pastes the config into this conduit if there is one in the player's copy buffer
+function ExtractionUI.PasteConfig()
+	UICore.CallMessageOnce(player.id(),"GetCopyBuffer",function(copy)
+		if copy ~= nil then
+			AddPremadeConfig(copy);
+		end
+	end);
+end
+
+--Adds a function that is called when the copy buffer of the player is Changed
+function ExtractionUI.AddCopyBufferChangeFunction(func)
+	if CopyBufferChangeFunctions == nil then
+		CopyBufferChangeFunctions = {func};
+	else
+		CopyBufferChangeFunctions[#CopyBufferChangeFunctions + 1] = func;
+	end
+end
+
+--Returns true if the copy buffer has something in it
+function ExtractionUI.CopyBufferIsSet()
+	return BufferIsSet;
+end
+
+--Called when the copy buffer is Changed
+CopyBufferChange = function(newBufferValue)
+	if BufferIsSet ~= newBufferValue then
+		BufferIsSet = newBufferValue;
+	end
+	if CopyBufferChangeFunctions ~= nil then
+		for _,func in ipairs(CopyBufferChangeFunctions) do
+			func();
+		end
+	end
 end
 
 --Sets all the text boxes based off of the config passed in, and returns true if successful

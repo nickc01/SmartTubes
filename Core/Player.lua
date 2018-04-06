@@ -1,29 +1,36 @@
+require("/Core/ServerCore.lua");
+
+--Variables
+local ExtractionConfigBuffer;
+local Data = {};
+
+--Functions
 local oldInit = init;
+local oldUninit = uninit;
 
-local Config = {Index = 1,Breaking = false};
-
-local ExtractionConfigCopy = nil;
 
 function init()
 	if oldInit ~= nil then
 		oldInit();
 	end
-	message.setHandler("GetConfig",function(_,_)
-		return Config;
-	end);
-	message.setHandler("SetConfig",function(_,_,value)
-		Config = value;
-	end);
+	Server.SetDefinitionTable(Data);
+	Server.DefineSyncedValues("Settings","Index",1,"Breaking",false);
 	message.setHandler("SetSwapItem",function(_,_,item)
 		player.setSwapSlotItem(item);
 	end);
-	message.setHandler("SetExtractionConfigCopy",function(_,_,config)
-		ExtractionConfigCopy = config;
+	message.setHandler("SetCopyBuffer",function(_,_,config)
+		ExtractionConfigBuffer = config;
 	end);
-	message.setHandler("RetrieveExtractionConfigCopy",function()
-		return ExtractionConfigCopy;
+	message.setHandler("GetCopyBuffer",function()
+		return ExtractionConfigBuffer;
 	end);
-	message.setHandler("PlayerHasCopy",function()
-		return ExtractionConfigCopy ~= nil;
+	message.setHandler("BufferIsSet",function()
+		return ExtractionConfigBuffer ~= nil;
 	end);
+end
+
+function uninit()
+	if oldUninit ~= nil then
+		oldUninit();
+	end
 end

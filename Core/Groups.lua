@@ -113,11 +113,14 @@ end
 
 --Returns the master of the neighbor
 function Groups.GetMasterID(neighborID)
-	sb.logInfo("NeighborID = " .. sb.print(neighborID));
-	sb.logInfo("GroupDictionary = " .. sb.print(GroupDictionary[neighborID]));
-	if GroupDictionary[neighborID] ~= nil then
-		sb.logInfo("GroupConnections = " .. sb.print(GroupConnections[GroupDictionary[neighborID]]));
-	end
+	--sb.logInfo("NeighborID = " .. sb.print(neighborID));
+	--sb.logInfo("GroupDictionary = " .. sb.print(GroupDictionary[neighborID]));
+	--if GroupDictionary[neighborID] ~= nil then
+	--	sb.logInfo("GroupConnections = " .. sb.print(GroupConnections[GroupDictionary[neighborID]]));
+	--end
+	sb.logInfo("neighborID = " .. sb.print(neighborID));
+	sb.logInfo("GroupDictionary = " .. sb.print(GroupDictionary));
+	sb.logInfo("GroupConnections = " .. sb.print(GroupConnections));
 	if GroupDictionary[neighborID] ~= nil then
 		return GroupConnections[GroupDictionary[neighborID]].Master;
 	end
@@ -334,19 +337,35 @@ GetNeighborsOf = function(ObjectID)
 	return Objects;
 end
 
+--Returns an iterator that iterates over all of the connection's neighbors
+function Groups.AllNeighbors()
+	local k = nil;
+	return function()
+		k = next(GroupDictionary,k);
+		return tonumber(k);
+	end
+end
+
 --Called to uninitialize the groups
 function Groups.Uninitialize()
 	if GroupConnections ~= nil then
 		for _,SelectedGroup in ipairs(GroupConnections) do
 			if SelectedGroup.Object ~= 0 then
+				--Iterate over all the connection to the neighbor
 				for k,i in ipairs(SelectedGroup.Connections) do
+					--If the connection is a different id than SourceID
 					if i ~= SourceID and world.entityExists(i) then
+						--Tell it to remove this SourceID
 						world.callScriptedEntity(i,"__Groups__.RemoveConnection",SelectedGroup.Object,SourceID);
+						--If this connection is the master
 						if SelectedGroup.Master == SourceID then
+							--Get a new potential master
 							local PossibleMaster = __Groups__.GetNewPossibleMaster(SelectedGroup.Object);
 							if PossibleMaster ~= nil then
+								--Set the new master to the new potential master
 								world.callScriptedEntity(i,"__Groups__.SetMasterSelf",SelectedGroup.Object,PossibleMaster);
 							end
+							--Call the master change functions because the master has changed
 							GroupMasterChangeFunctions(SelectedGroup.Object,SelectedGroup.Master,PossibleMaster);
 							SelectedGroup.Master = PossibleMaster;
 						end

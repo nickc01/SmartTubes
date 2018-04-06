@@ -139,6 +139,7 @@ end
 
 --Updates the Path the traversal uses to get to the destination
 UpdatePath = function(SourceObject)
+	--sb.logInfo("_________________INSERTION = " .. sb.print(Insertion.GetID()));
 	if SourceObject ~= nil and world.entityExists(SourceObject) and Insertion ~= nil then
 		Path = world.callScriptedEntity(SourceObject,"ConduitCore.GetPath",ConnectionType,Insertion.GetID());
 		PathIndex = 1;
@@ -148,9 +149,19 @@ UpdatePath = function(SourceObject)
 	end
 end
 
---Nullifies the Insertion Table when the Insertion Conduit is destroyed
+--Sets the Insertion Table that corresponds to the insertion conduit
 function __Traversal__.SetInsertionTable(value)
+--[[	if value == nil then
+		sb.logInfo("Setting Insertion to be = nil");
+	else
+		sb.logInfo("Setting Insertion to be = " .. sb.print(value.GetID()));
+	end--]]
 	Insertion = value;
+end
+
+--Returns the currently set insertion table
+function __Traversal__.GetInsertionTable()
+	return Insertion;
 end
 
 
@@ -201,7 +212,7 @@ end
 
 --Completes the item transportation and adds its contents into the Destination Container
 function Traversal.Finish()
-	if Insertion ~= nil then
+	if Insertion ~= nil--[[ and world.entityExists(Insertion.GetID())--]] then
 		world.callScriptedEntity(Insertion.GetID(),"__Insertion__.InsertTraversalItems",SourceID);
 	else
 		Traversal.Drop();
@@ -212,7 +223,7 @@ end
 
 --Destroys the Traversal and Drops all of its contents
 function Traversal.Drop()
-	if Insertion ~= nil then
+	if Insertion ~= nil--[[ and world.entityExists(Insertion.GetID())--]] then
 		world.callScriptedEntity(Insertion.GetID(),"__Insertion__.DropTraversalItems",SourceID);
 	else
 		local Position = entity.position();

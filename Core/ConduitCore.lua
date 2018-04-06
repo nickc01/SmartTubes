@@ -34,6 +34,28 @@ local ConnectionUpdateFunctions = {};
 local LocalNetworkUpdateFunctions = {};
 local PostInitFunctions = {};
 local ExtraPathFunctions = {};
+local OnSaveRetrieveFunctions = {};
+local Facade = false;
+local FacadeIndicator;
+local FacadeDropItem;
+local IsOccluded = false;
+local Die;
+local DroppingItems = true;
+local DroppingPosition;
+--[[local SaveParameters = false;
+local SavingItem;
+local SavingParameters = {};
+local SavingDisplayName;
+local SavingPosition;
+local SaveColor;--]]
+local SaveSettings = {
+	IsSaving = false,
+	DropItem = nil,
+	Parameters = {},
+	DisplayName = nil,
+	DropPosition = nil,
+	Color = nil
+};
 
 --Functions
 local PostInit;
@@ -57,6 +79,7 @@ local DefaultTraversalFunction = function(Traversal,StartPosition,PreviousID,Spe
 local GetObjectByConnectionPoint;
 local TraversalFunction = DefaultTraversalFunction;
 local ValuesToTable;
+local InitWithSavedParams;
 
 --Initializes the Conduit
 function ConduitCore.Initialize()
@@ -73,6 +96,10 @@ function ConduitCore.Initialize()
 	end
 	SourceID = entity.id();
 	SourcePosition = entity.position();
+	if config.getParameter("__HasSavedParameters") == true then
+		object.setConfigParameter("__HasSavedParameters",nil);
+		InitWithSavedParams(config.getParameter("__SavedValueNames"));
+	end
 	local NoScriptDelta = false;
 	if script.updateDt() == 0 then
 		NoScriptDelta = true;
@@ -102,6 +129,7 @@ function ConduitCore.Initialize()
 			OldDie();
 		end
 		Dying = true;
+		Die();
 	end
 	local OldUninit = uninit;
 	uninit = function()
@@ -111,6 +139,14 @@ function ConduitCore.Initialize()
 		ConduitCore.Uninitialize();
 	end
 	SetMessages();
+end
+
+--Called when the conduit has some saved Parameters
+InitWithSavedParams = function(SavedParameters)
+	--sb.logInfo("SAVED RESULTS = " .. sb.print(SavedParameters));
+	for _,func in ipairs(OnSaveRetrieveFunctions) do
+		func(SavedParameters);
+	end
 end
 
 --Sets the Current Entity's Messages
@@ -356,6 +392,16 @@ function ConduitCore.GetPath(ConnectionType,To)
 	end
 end
 
+--Checks if all the conduits in the Path are occluded (ie, behind a block)
+function ConduitCore.PathIsOccluded(path)
+	for _,id in ipairs(path) do
+		if not world.entityExists(id) or world.callScriptedEntity(id,"ConduitCore.Occluded") ~= true then
+			return false;
+		end
+	end
+	return true;
+end
+
 --Returns the Entire Connection Tree for the Passed In Connection Type
 function ConduitCore.GetNetwork(ConnectionType)
 	if ConnectionTypes[ConnectionType] == nil then
@@ -437,46 +483,49 @@ function ConduitCore.AddNetworkUpdateFunction(func)
 end
 
 UpdateSprite = function()
-	object.setProcessingDirectives("");
-	if Connections[3] ~= 0 and Connections[4] ~= 0 and Connections[1] == 0 and Connections[2] == 0 then
-		animator.setAnimationState("cable","horizontal");
-	elseif Connections[3] == 0 and Connections[4] == 0 and Connections[1] ~= 0 and Connections[2] ~= 0 then
-		animator.setAnimationState("cable","vertical");
-	elseif Connections[3] ~= 0 and Connections[4] == 0 and Connections[1] == 0 and Connections[2] ~= 0 then
-		animator.setAnimationState("cable","corner");
-	elseif Connections[3] ~= 0 and Connections[4] == 0 and Connections[1] ~= 0 and Connections[2] == 0 then
-		animator.setAnimationState("cable","corner");
-		object.setProcessingDirectives("?flipy");
-	elseif Connections[3] == 0 and Connections[4] ~= 0 and Connections[1] ~= 0 and Connections[2] == 0 then
-		animator.setAnimationState("cable","corner");
-		object.setProcessingDirectives("?flipxy");
-	elseif Connections[3] == 0 and Connections[4] ~= 0 and Connections[1] == 0 and Connections[2] ~= 0 then
-		animator.setAnimationState("cable","corner");
-		object.setProcessingDirectives("?flipx");
-	elseif Connections[3] ~= 0 and Connections[4] ~= 0 and Connections[1] == 0 and Connections[2] ~= 0 then
-		animator.setAnimationState("cable","triplehorizontal");
-	elseif Connections[3] ~= 0 and Connections[4] == 0 and Connections[1] ~= 0 and Connections[2] ~= 0 then
-		animator.setAnimationState("cable","triplevertical");
-		object.setProcessingDirectives("?flipx");
-	elseif Connections[3] ~= 0 and Connections[4] ~= 0 and Connections[1] ~= 0 and Connections[2] == 0 then
-		animator.setAnimationState("cable","triplehorizontal");
-		object.setProcessingDirectives("?flipy");
-	elseif Connections[3] == 0 and Connections[4] ~= 0 and Connections[1] ~= 0 and Connections[2] ~= 0 then
-		animator.setAnimationState("cable","triplevertical");
-	elseif Connections[3] ~= 0 and Connections[4] ~= 0 and Connections[1] ~= 0 and Connections[2] ~= 0 then
-		animator.setAnimationState("cable","full");
-	elseif Connections[3] == 0 and Connections[4] == 0 and Connections[1] == 0 and Connections[2] == 0 then
-		animator.setAnimationState("cable","none");
-	elseif Connections[3] ~= 0 and Connections[4] == 0 and Connections[1] == 0 and Connections[2] == 0 then
-		animator.setAnimationState("cable","right");
-	elseif Connections[3] == 0 and Connections[4] ~= 0 and Connections[1] == 0 and Connections[2] == 0 then
-		animator.setAnimationState("cable","right");
-		object.setProcessingDirectives("?flipx");
-	elseif Connections[3] == 0 and Connections[4] == 0 and Connections[1] ~= 0 and Connections[2] == 0 then
-		animator.setAnimationState("cable","up");
-		object.setProcessingDirectives("?flipy");
-	elseif Connections[3] == 0 and Connections[4] == 0 and Connections[1] == 0 and Connections[2] ~= 0 then
-		animator.setAnimationState("cable","up");
+	if not IsOccluded then
+		--sb.logInfo("Name = " .. sb.print(object.name()));
+		object.setProcessingDirectives("");
+		if Connections[3] ~= 0 and Connections[4] ~= 0 and Connections[1] == 0 and Connections[2] == 0 then
+			animator.setAnimationState("cable","horizontal");
+		elseif Connections[3] == 0 and Connections[4] == 0 and Connections[1] ~= 0 and Connections[2] ~= 0 then
+			animator.setAnimationState("cable","vertical");
+		elseif Connections[3] ~= 0 and Connections[4] == 0 and Connections[1] == 0 and Connections[2] ~= 0 then
+			animator.setAnimationState("cable","corner");
+		elseif Connections[3] ~= 0 and Connections[4] == 0 and Connections[1] ~= 0 and Connections[2] == 0 then
+			animator.setAnimationState("cable","corner");
+			object.setProcessingDirectives("?flipy");
+		elseif Connections[3] == 0 and Connections[4] ~= 0 and Connections[1] ~= 0 and Connections[2] == 0 then
+			animator.setAnimationState("cable","corner");
+			object.setProcessingDirectives("?flipxy");
+		elseif Connections[3] == 0 and Connections[4] ~= 0 and Connections[1] == 0 and Connections[2] ~= 0 then
+			animator.setAnimationState("cable","corner");
+			object.setProcessingDirectives("?flipx");
+		elseif Connections[3] ~= 0 and Connections[4] ~= 0 and Connections[1] == 0 and Connections[2] ~= 0 then
+			animator.setAnimationState("cable","triplehorizontal");
+		elseif Connections[3] ~= 0 and Connections[4] == 0 and Connections[1] ~= 0 and Connections[2] ~= 0 then
+			animator.setAnimationState("cable","triplevertical");
+			object.setProcessingDirectives("?flipx");
+		elseif Connections[3] ~= 0 and Connections[4] ~= 0 and Connections[1] ~= 0 and Connections[2] == 0 then
+			animator.setAnimationState("cable","triplehorizontal");
+			object.setProcessingDirectives("?flipy");
+		elseif Connections[3] == 0 and Connections[4] ~= 0 and Connections[1] ~= 0 and Connections[2] ~= 0 then
+			animator.setAnimationState("cable","triplevertical");
+		elseif Connections[3] ~= 0 and Connections[4] ~= 0 and Connections[1] ~= 0 and Connections[2] ~= 0 then
+			animator.setAnimationState("cable","full");
+		elseif Connections[3] == 0 and Connections[4] == 0 and Connections[1] == 0 and Connections[2] == 0 then
+			animator.setAnimationState("cable","none");
+		elseif Connections[3] ~= 0 and Connections[4] == 0 and Connections[1] == 0 and Connections[2] == 0 then
+			animator.setAnimationState("cable","right");
+		elseif Connections[3] == 0 and Connections[4] ~= 0 and Connections[1] == 0 and Connections[2] == 0 then
+			animator.setAnimationState("cable","right");
+			object.setProcessingDirectives("?flipx");
+		elseif Connections[3] == 0 and Connections[4] == 0 and Connections[1] ~= 0 and Connections[2] == 0 then
+			animator.setAnimationState("cable","up");
+			object.setProcessingDirectives("?flipy");
+		elseif Connections[3] == 0 and Connections[4] == 0 and Connections[1] == 0 and Connections[2] ~= 0 then
+			animator.setAnimationState("cable","up");
+		end
 	end
 end
 
@@ -631,6 +680,141 @@ function ConduitCore.Uninitialize()
 	if Uninitialized == true then return nil else Uninitialized = true end;
 	if Dying == true then
 		UpdateOtherConnections();
+	end
+end
+
+--Set this conduit as a facade
+function ConduitCore.SetAsFacade(Indicator,Occluded,DropItem)
+	Facade = true;
+	FacadeIndicator = Indicator;
+	if DropItem ~= nil then
+		if type(DropItem) == "table" then
+			FacadeDropItem = DropItem;
+		else
+			FacadeDropItem = {name = DropItem,count = 1};
+		end
+	end
+	IsOccluded = Occluded or false;
+end
+
+--Returns whether this conduit is facaded
+function ConduitCore.Facaded()
+	return Facade;
+end
+
+--Returns whether this facaded conduit is occluded
+function ConduitCore.Occluded()
+	return IsOccluded;
+end
+
+--Returns the facade Indicator
+function ConduitCore.FacadeIndicator()
+	return FacadeIndicator;
+end
+
+--Destroys the conduit and drops any items at the position specified
+function ConduitCore.Destroy(ItemDropPosition)
+	DroppingPosition = ItemDropPosition;
+	if Facade then
+		object.smash();
+	else
+		object.setHealth(0);
+	end
+end
+
+--Destroys the conduit without dropping anything
+function ConduitCore.Smash()
+	DroppingItems = false;
+	object.smash(true);
+end
+
+--Sets the Item Drop Position
+function ConduitCore.SetDropPosition(position)
+	DroppingPosition = position;
+end
+
+--Drops the conduit and saves some of it's parameters to the DropItem
+function ConduitCore.DropAndSaveParameters(DropItem,dropPosition)
+	SaveSettings.IsSaving = true;
+	SaveSettings.Position = dropPosition;
+	if DropItem ~= nil and type(DropItem) ~= "table" then
+		DropItem = {name = DropItem,count = 1};
+	end
+	SaveSettings.Item = DropItem or FacadeDropItem or {name = object.name(),count = 1};
+	ConduitCore.Smash();
+end
+
+--Adds a parameter that will be saved onto the Item
+function ConduitCore.AddSaveParameter(name,value)
+	SaveSettings.Parameters[name] = value;
+end
+
+--Sets the display name of the saved resulting Item
+function ConduitCore.SetSaveName(name)
+	SaveSettings.DisplayName = name;
+end
+
+--Adds a color outline to the Saved Drop Item (color is in hex)
+function ConduitCore.AddColorToSavedItem(color)
+	SaveSettings.Color = color;
+end
+
+--Returns whether the conduit's parameters are being saved
+function ConduitCore.IsSavingParameters()
+	return SaveSettings.IsSaving;
+end
+
+--Adds a function that is called when the conduit is initialized with save parameters for the first time
+function ConduitCore.AddSaveInitFunction(func)
+	OnSaveRetrieveFunctions[#OnSaveRetrieveFunctions + 1] = func;
+end
+
+--Called when the object is Dying
+Die = function()
+	--sb.logInfo("IsFacaded = " .. sb.print(Facade));
+	--sb.logInfo("DroppingItems = " .. sb.print(DroppingItems));
+	--sb.logInfo("FacadeDropItem = " .. sb.print(FacadeDropItem));
+	if Facade and not SaveSettings.IsSaving and DroppingItems and FacadeDropItem ~= nil then
+		world.spawnItem(FacadeDropItem,DroppingPosition or SourcePosition,1);
+	end
+	if SaveSettings.IsSaving then
+		--TODO -- Save Certain Parameters to the Item
+		local Parameters = {
+			__SavedValueNames = {};
+		};
+		for name,value in pairs(SaveSettings.Parameters) do
+			Parameters[name] = value;
+			Parameters.__SavedValueNames[#Parameters.__SavedValueNames + 1] = name;
+		end
+		if SaveSettings.DisplayName ~= nil and SaveSettings.DisplayName ~= "" then
+			Parameters.__OriginalDisplayName = config.getParameter("shortdescription");
+			Parameters.shortdescription = SaveSettings.DisplayName;
+		end
+		if SaveSettings.Color ~= nil then
+			local Icon = config.getParameter("__OriginalIcon") or config.getParameter("inventoryIcon");
+			Parameters.inventoryIcon = Icon .. "?border=1;" .. SaveSettings.Color .. "?fade=007800;0.1";
+			Parameters.__OriginalIcon = Icon;
+		end
+		Parameters.__HasSavedParameters = true;
+		if Facade then
+			Parameters.__ParametersWithFacade = FacadeDropItem.name;
+		end
+		--[[Parameters.__ExtraValueNames = {};
+		if Parameters.__OriginalDisplayName ~= nil then
+			Parameters.ExtraValueNames[#Parameters.ExtraValueNames + 1] = "_OriginalDisplayName";
+			Parameters.ExtraValueNames[#Parameters.ExtraValueNames + 1] = "shortdescription";
+		end
+		if SaveSettings.Color ~= nil then
+			Parameters.ExtraValueNames[#Parameters.ExtraValueNames + 1] = "__OriginalIcon";
+			Parameters.ExtraValueNames[#Parameters.ExtraValueNames + 1] = "inventoryIcon";
+		end--]]
+
+		sb.logInfo("FINAL PARAMETERS = " .. sb.printJson(Parameters,1));
+		--sb.logInfo("SAVE = " .. sb.printJson(SaveSettings,1));
+		--sb.logInfo("Save Position = " .. sb.print(SaveSettings.Position));
+		--sb.logInfo("DroppingPosition = " .. sb.print(DroppingPosition));
+		--sb.logInfo("Source Position = " .. sb.print(SourcePosition));
+		world.spawnItem(SaveSettings.Item.name,SaveSettings.Position or DroppingPosition or SourcePosition,SaveSettings.Item.count,Parameters);
 	end
 end
 

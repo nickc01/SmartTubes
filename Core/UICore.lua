@@ -25,7 +25,7 @@ function UICore.Initialize()
 		if OldUpdate ~= nil then
 			OldUpdate(dt);
 		end
-		for _,func in ipairs(PromiseLoopCalls) do
+		for _,func in pairs(PromiseLoopCalls) do
 			func();
 		end
 	end
@@ -36,7 +36,8 @@ function UICore.LoopCallContinuously(ID,func,Message,ParamFunc)
 	if not world.entityExists(ID) then error(sb.print(ID) .. " doesn't exist") end;
 	local Promise = world.sendEntityMessage(ID,Message,ParamFunc());
 	--local Parameters = {...};
-	PromiseLoopCalls[#PromiseLoopCalls + 1] = function()
+	local CallID = sb.makeUuid();
+	PromiseLoopCalls[CallID] = function()
 		if Promise:finished() then
 			local Result = Promise:result();
 			if Result ~= nil then
@@ -62,31 +63,51 @@ function UICore.LoopCallContinuously(ID,func,Message,ParamFunc)
 			Promise = world.sendEntityMessage(ID,Message,ParamFunc());
 		end
 	end
-	ResetPromiseLoopCalls[#ResetPromiseLoopCalls + 1] = function()
+	ResetPromiseLoopCalls[CallID] = function()
 		Promise = world.sendEntityMessage(ID,Message,ParamFunc());
 	end
-	return #PromiseLoopCalls;
+	return CallID;
 end
 
 --Calls the message continously but only allows one return value and no parameters
 function UICore.SimpleLoopCall(ID,Message,func)
 	if not world.entityExists(ID) then error(sb.print(ID) .. " doesn't exist") end;
 	local Promise = world.sendEntityMessage(ID,Message);
-	PromiseLoopCalls[#PromiseLoopCalls + 1] = function()
+	local CallID = sb.makeUuid();
+	PromiseLoopCalls[CallID] = function()
 		if Promise:finished() then
-			func(Promise:Result());
+			func(Promise:result());
 			Promise = world.sendEntityMessage(ID,Message);
 		end
 	end
-	ResetPromiseLoopCalls[#ResetPromiseLoopCalls + 1] = function()
+	ResetPromiseLoopCalls[CallID] = function()
 		Promise = world.sendEntityMessage(ID,Message);
 	end
-	return #PromiseLoopCalls;
+	return CallID;
+end
+
+--Calls the message once and passes any results into the passed function
+function UICore.CallMessageOnce(ID,Message,func,...)
+	local Promise = world.sendEntityMessage(ID,Message,...);
+	local CallID = sb.makeUuid();
+	PromiseLoopCalls[CallID] = function()
+		if Promise:finished() then
+			func(Promise:result());
+			--table.remove(PromiseLoopCalls,CallID);
+			--table.remove(ResetPromiseLoopCalls,CallID);
+			PromiseLoopCalls[CallID] = nil;
+			ResetPromiseLoopCalls[CallID] = nil;
+		end
+	end
+	ResetPromiseLoopCalls[CallID] = function()
+		
+	end
+	return CallID;
 end
 
 --Resets a Loop Call To call again, mainly used for stability
-function UICore.ResetLoopCall(Index)
-	ResetPromiseLoopCalls[Index]();
+function UICore.ResetLoopCall(CallID)
+	ResetPromiseLoopCalls[CallID]();
 end
 
 --Iterates over any type of table
@@ -194,20 +215,28 @@ function UICore.SetAsSyncedValues(GroupName,ID,...)
 	end
 	SyncedValues[GroupName] = NewSyncedValues;
 
-	local CallIndex = PromiseLoopCalls[#PromiseLoopCalls + 1];
+	--local CallIndex = #PromiseLoopCalls + 1;
+	local CallID = sb.makeUuid();
 
 	for ValueName,DefaultValue in UICore.ParameterIter(2,...) do
 		NewSyncedValues.ValueNames[#NewSyncedValues.ValueNames + 1] = ValueName;
 		if RetrievedValues == false then
 			NewSyncedValues.Values[ValueName] = DefaultValue;
 		end
+
+		local ChangeFunctions;
 		
 		local SetFunction = function(newValue)
 			if NewSyncedValues.Values[ValueName] ~= newValue then
 				NewSyncedValues.Values[ValueName] = newValue;
+				if ChangeFunctions ~= nil then
+					for _,func in ipairs(ChangeFunctions) do
+						func();
+					end
+				end
 				NewSyncedValues.UUID = sb.makeUuid();
-				world.sendEntityMessage(NewSyncedValues.ID(),ValueName .. "Save",newValue,NewSyncedValues.UUID);
-				UICore.ResetLoopCall(CallIndex);
+				world.sendEntityMessage(NewSyncedValues.ID(),"Set" .. ValueName,newValue,NewSyncedValues.UUID);
+				UICore.ResetLoopCall(CallID);
 			end
 		end
 		DefinitionTable["Set" .. ValueName] = SetFunction;
@@ -217,14 +246,22 @@ function UICore.SetAsSyncedValues(GroupName,ID,...)
 		end
 
 		DefinitionTable["Get" .. ValueName] = GetFunction;
+
+		local AddChangeFunction = function(func)
+			if ChangeFunctions == nil then
+				ChangeFunctions = {func};
+			else
+				ChangeFunctions[#ChangeFunctions + 1] = func;
+			end
+		end
+		DefinitionTable["Add" .. ValueName .. "ChangeFunction"] = AddChangeFunction;
 	end
 
 	local UpdateName = "Update" .. GroupName;
 	local Promise = world.sendEntityMessage(NewSyncedValues.ID(),UpdateName,NewSyncedValues.UUID);
 	local SettingValues = false;
-	PromiseLoopCalls[#PromiseLoopCalls + 1] = function()
+	PromiseLoopCalls[CallID] = function()
 		if Promise:finished() then
-			sb.logInfo("Test");
 			local Result = Promise:result();
 			if Result ~= nil and Result ~= false then
 				SettingValues = true;
@@ -236,10 +273,10 @@ function UICore.SetAsSyncedValues(GroupName,ID,...)
 			Promise = world.sendEntityMessage(NewSyncedValues.ID(),UpdateName,NewSyncedValues.UUID);
 		end
 	end
-	ResetPromiseLoopCalls[#ResetPromiseLoopCalls + 1] = function()
+	ResetPromiseLoopCalls[CallID] = function()
 		if SettingValues == false then
 			Promise = world.sendEntityMessage(NewSyncedValues.ID(),UpdateName,NewSyncedValues.UUID);
 		end
 	end
-	return CallIndex;
+	return CallID;
 end

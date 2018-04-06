@@ -31,10 +31,14 @@ end
 --The Main Extraction Function for the Extraction Conduit
 Extract = function()
 	local Container = Extraction.GetContainer();
+	--sb.logInfo("Container = " .. sb.print(Container));
 	if Container ~= nil then
 		local Item,Slot = Extraction.GetItemFromContainer(Container);
+		--sb.logInfo("Item = " .. sb.print(Item));
+		--sb.logInfo("Slot = " .. sb.print(Slot));
 		if Item ~= nil then
 			for _,Conduit in Extraction.InsertionConduitFinder() do
+				--sb.logInfo("Conduit = " .. sb.print(Conduit));
 				if world.callScriptedEntity(Conduit,"PostExtract",Extraction,Item,Slot,Container) == 0 then
 					return nil;
 				end

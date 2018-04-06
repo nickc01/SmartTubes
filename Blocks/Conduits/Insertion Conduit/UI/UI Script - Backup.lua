@@ -1,8 +1,5 @@
 require("/Core/UICore.lua");
 
---Public table
-InsertionUI = {};
-
 --Variables
 local SourceID;
 local InsertID;

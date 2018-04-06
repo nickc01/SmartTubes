@@ -59,9 +59,17 @@ function Server.DefineSyncedValues(GroupName,...)
 		if RetrievedValues == false then
 			NewSyncedValues.Values[ValueName] = DefaultValue;
 		end
+
+		local ChangeFunctions;
+
 		local SetFunction = function(newValue,newUUID)
 			if NewSyncedValues.Values[ValueName] ~= newValue then
 				NewSyncedValues.Values[ValueName] = newValue;
+				if ChangeFunctions ~= nil then
+					for _,func in ipairs(ChangeFunctions) do
+						func();
+					end
+				end
 				NewSyncedValues.UUID = newUUID or sb.makeUuid();
 				if object ~= nil then
 					object.setConfigParameter("__" .. GroupName .. "SaveUUID",NewSyncedValues.UUID);
@@ -75,6 +83,14 @@ function Server.DefineSyncedValues(GroupName,...)
 		end
 		DefinitionTable["Get" .. ValueName] = GetFunction;
 
+		local AddChangeFunction = function(func)
+			if ChangeFunctions == nil then
+				ChangeFunctions = {func};
+			else
+				ChangeFunctions[#ChangeFunctions + 1] = func;
+			end
+		end
+
 		message.setHandler("Set" .. ValueName,function(_,_,newValue,newUUID)
 			SetFunction(newValue,newUUID);
 		end);
@@ -84,8 +100,8 @@ function Server.DefineSyncedValues(GroupName,...)
 			return false;
 		else
 			local ReturnTable = {};
-			for ValueName,value in ipairs(NewSyncedValues.Values) do
-				ReturnTable[ValueName] = value;
+			for _,valueName in ipairs(NewSyncedValues.ValueNames) do
+				ReturnTable[valueName] = NewSyncedValues.Values[valueName];
 			end
 			return ReturnTable;
 		end

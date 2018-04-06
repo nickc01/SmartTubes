@@ -6,6 +6,6 @@ function init()
 		projectile.die();
 	end);
 	message.setHandler("Refresh",function()
-		projectile.setTimeToLive(1);
+		projectile.setTimeToLive(5);
 	end);
 end
