@@ -72,7 +72,7 @@ function init()
 	if oldinit ~= nil then
 		oldinit();
 	end
-	--sb.logInfo("Insertion UI");
+	
 	SourceID = config.getParameter("MainObject");
 	if SourceID == nil then
 		SourceID = pane.sourceEntity();

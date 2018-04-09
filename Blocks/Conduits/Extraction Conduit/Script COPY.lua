@@ -139,7 +139,7 @@ local function SetDelta()
 	if Value < 10 then
 		Value = 10;
 	end
-	--sb.logInfo("Delta Value = " .. sb.print(Value));
+	
 	DELTA = Value;
 	script.setUpdateDelta(Value);
 end
@@ -171,7 +171,7 @@ function init()
 	if oldinit ~= nil then
 		oldinit();
 	end
-	--sb.logInfo("Extraction INIT");
+	
 	Cables = CableCore;
 	Speed = config.getParameter("Speed",0);
 	Stack = config.getParameter("Stack",0);
@@ -188,9 +188,9 @@ function init()
 		CompatibilityLink();
 	end
 	--CompatibilityLink();
-	--sb.logInfo("EntityID = " .. sb.print(entity.id()));
+	
 	math.randomseed(entity.id());
-	--sb.logInfo("Random = " .. sb.print(math.random(80,160)));
+	
 	script.setUpdateDelta(math.random(80,160));
 	--script.setUpdateDelta(80);
 	AddHandlers();
@@ -328,14 +328,14 @@ CompatibilityLink = function()
 end
 
 OnCableUpdate = function()
-	--sb.logInfo("Cable Update");
+	
 	ResetPathCache();
 	--ExtractCache.ExportSides = nil;
 end
 
 local FirstRun = false;
 Extract = function()
-	--sb.logInfo("Start");
+	
 	if FirstRun == false then
 		FirstRun = true;
 		SetDelta();
@@ -370,7 +370,7 @@ Extract = function()
 		local SelectedContainer;
 			if Cables.CableTypes.Containers ~= nil then
 				--ExtractCache.ExportSides = {};
-				--sb.logInfo("NotCache");
+				
 				for k,i in RandomIter(ExportSides) do
 					if i == "right" then
 						if Cables.CableTypes.Containers[4] > 0 then
@@ -409,11 +409,11 @@ Extract = function()
 		else
 			ContainerSize = world.containerSize(SelectedContainer);
 		end
-		--sb.logInfo("ContainerSize = " .. sb.print(ContainerSize));
-		--sb.logInfo("A");
+		
+		
 		--local ContainerSize = world.containerSize(SelectedContainer);
 		if ContainerSize == nil then return nil end;
-		--sb.logInfo("AB");
+		
 		if HasValue("TakeFromSlots") == true then
 			local Numbers = Retrieve("TakeFromSlots");
 			for i=1,#Numbers do
@@ -432,9 +432,9 @@ Extract = function()
 			end
 			Store("TakeFromSlots",Numbers);
 		end
-		--sb.logInfo("AC");
+		
 		if SelectedSlot == nil then return nil end;
-		--sb.logInfo("B");
+		
 		if HasValue("InsertIntoSides") == false then
 			local InsertIntoSides = {};
 			for str in string.gmatch(Config[ConfigIndex].insertIntoSide,"[^,]+") do
@@ -449,9 +449,9 @@ Extract = function()
 		end
 		CheckInsertIDs();
 		local InsertionConduit,Path,Occluded = FindInsertionConduit();
-		--sb.logInfo("C");
+		
 		if InsertionConduit ~= nil then
-			--sb.logInfo("D");
+			
 			local InsertIntoSides = Retrieve("InsertIntoSides");
 			local InsertIntoSlots = nil;
 			if HasValue("InsertIntoSlots") == true then
@@ -463,9 +463,9 @@ Extract = function()
 				end
 				Store("InsertIntoSlots",InsertIntoSlots);
 			end
-			--sb.logInfo("Exists Before 1 = " .. sb.print(world.entityExists(InsertionConduit)));
-			--sb.logInfo("A");
-			--sb.logInfo("Occluded = " .. sb.print(Occluded));
+			
+			
+			
 			if world.entityExists(InsertionConduit) == true then
 				world.sendEntityMessage(InsertionConduit,"ExtractAndSend",FoundItem,SelectedSlot,SelectedContainer,Path,InsertIntoSides,InsertIntoSlots,nil,Colors[SelectedColor],Speed + 1,nil,Retrieve("InsertID"),Occluded--[[,Retrieve("InsertID")--]]);
 				return true;
@@ -478,10 +478,10 @@ end
 
 local function FulFillsConditions(Item)
 	if Item ~= nil then
-		--sb.logInfo("Scanning Item = " .. sb.print(Item));
-		--sb.logInfo("Config For Item = " .. sb.printJson(root.itemConfig(Item)));
-		--sb.logInfo("Item Tags = " .. sb.print(root.itemTags(Item.name)));
-		--sb.logInfo("Item Type = " .. sb.print(root.itemType(Item.name)));
+		
+		
+		
+		
 		if HasValue("Items") == true then
 			Items = Retrieve("Items");
 			local FulFills = false;
@@ -747,9 +747,9 @@ FindInsertionConduit = function()
 	if ExtractCache.Findings ~= nil and ExtractCache.InsertionConduits[ConfigIndex] ~= nil then
 		Findings = ExtractCache.Findings;
 		InsertConduits = ExtractCache.InsertionConduits[ConfigIndex];
-		--sb.logInfo("Cached!");
+		
 	else
-		--sb.logInfo("Not Cached!");
+		
 		local ValidInsertionConduits = nil;
 		if HasValue("InsertID") == true then
 			ValidInsertionConduits = Retrieve("InsertID");
@@ -888,5 +888,5 @@ function die()
 end
 
 function uninit()
-	--sb.logInfo("Extraction Conduit UNINIT");
+	
 end

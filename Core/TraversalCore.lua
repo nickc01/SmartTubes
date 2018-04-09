@@ -35,7 +35,7 @@ function __Traversal__.Initialize(insertion,destination,connectionType,speed,aut
 	Destination = destination;
 	ConnectionType = connectionType or "Conduits";
 	Speed = speed or 1;
-	sb.logInfo("Auto = " .. sb.print(auto));
+	
 	if auto == nil then auto = true end;
 	Initialized = true;
 	if auto == true then
@@ -95,7 +95,7 @@ UpdateMovement = function()
 			end
 		end
 	end
-	--sb.logInfo("Setting Movement Function");
+	
 	MovementFunction = function(dt)
 		if not world.entityExists(NextConduit) then
 			return Traversal.Drop();
@@ -139,7 +139,7 @@ end
 
 --Updates the Path the traversal uses to get to the destination
 UpdatePath = function(SourceObject)
-	--sb.logInfo("_________________INSERTION = " .. sb.print(Insertion.GetID()));
+	
 	if SourceObject ~= nil and world.entityExists(SourceObject) and Insertion ~= nil then
 		Path = world.callScriptedEntity(SourceObject,"ConduitCore.GetPath",ConnectionType,Insertion.GetID());
 		PathIndex = 1;
@@ -152,9 +152,9 @@ end
 --Sets the Insertion Table that corresponds to the insertion conduit
 function __Traversal__.SetInsertionTable(value)
 --[[	if value == nil then
-		sb.logInfo("Setting Insertion to be = nil");
+		
 	else
-		sb.logInfo("Setting Insertion to be = " .. sb.print(value.GetID()));
+		
 	end--]]
 	Insertion = value;
 end
@@ -241,7 +241,7 @@ function Traversal.Respawn(NewPosition,AmountToMoveForward)
 	NewPosition = NewPosition or world.entityPosition(Path[PathIndex]);
 	AmountToMoveForward = AmountToMoveForward or 1;
 	local NewTraversal = world.spawnProjectile(projectile.getParameter("projectileName"),NewPosition);
-	sb.logInfo("Respawning");
+	
 	world.callScriptedEntity(NewTraversal,"__Traversal__.InitializeAfterRespawn",Traversal,Insertion,ConnectionType,Predictions,PredictionsForTossing,Path,PathIndex + AmountToMoveForward);
 	projectile.die();
 	return NewTraversal;

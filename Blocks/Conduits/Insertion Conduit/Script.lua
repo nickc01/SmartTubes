@@ -48,21 +48,21 @@ end
 
 --Called when the extraction is requesting an item to be sent
 function PostExtract(Extraction,ExtractItem,ExtractSlot,ExtractContainer)
-	--sb.logInfo("Post Extract");
+	
 	if not Insertion.Ready() then return 4 end;
-	--sb.logInfo("Ready");
+	
 	for _,side in RandomIterator(Extraction.GetInsertSides()) do
-		--sb.logInfo("Side = " .. sb.print(side));
+		
 		local Object = SideToConnection[side];
-		--sb.logInfo("Object = " .. sb.print(Object));
+		
 		if Object ~= nil and Object ~= 0 then
 			local Item,Slot = Insertion.ItemCanFit(Object,ExtractItem,Extraction.GetInsertSlots());
-			--sb.logInfo("Insert Item = " .. sb.print(Item));
-			--sb.logInfo("Insert Slot = " .. sb.print(Slot));
+			
+			
 			if Item ~= nil then
 				if ContainerHelper.ConsumeAt(ExtractContainer,ExtractSlot - 1,Item.count) ~= nil then
 					if Insertion.SendItem(Item,Object,Slot,Extraction.GetID(),Extraction.GetInsertSlots(),Extraction.GetSelectedColor(),Extraction.GetSpeed() + 1) == true then
-						--sb.logInfo("Sent");
+						
 						return 0;
 					end
 					return 2;

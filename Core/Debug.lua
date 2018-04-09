@@ -16,7 +16,7 @@ end
 
 local CanPrint;
 
-function sb.logInfo(value)
+function 
 	DPrint(value);
 end
 

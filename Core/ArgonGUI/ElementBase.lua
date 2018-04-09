@@ -34,41 +34,41 @@ function CreateElement(CanvasName)
 
 	Element.GetClippingBoundaries = function()
 		if Element.Parent ~= nil then
-			--sb.logInfo("Calling Parent");
+			
 			local ParentClip = Element.Parent.GetClippingBoundaries();
-			--sb.logInfo("After Parent Call = " .. sb.print(ParentClip));
-		--	sb.logInfo("Parent Clip = " .. sb.print(ParentClip));
+			
+		--	
 			local LocalClip;
 			if Clippable == true then
 				LocalClip = rect.vecAdd(Element.GetLocalClippingBounds(),Element.GetController().GetAbsolutePosition());
 			end
 			if ParentClip == nil then
-				--sb.logInfo("E");
+				
 				return LocalClip;
 			end
 			if ParentClip == "none" then
-				--sb.logInfo("D");
+				
 				return ParentClip;
 			end
 			if LocalClip == nil then
-				--sb.logInfo("C");
+				
 				return ParentClip;
 			end
 			if rect.intersects(ParentClip,LocalClip) then
-				--sb.logInfo("B");
+				
 				return rect.intersection(ParentClip,LocalClip);
 			else
-				--sb.logInfo("A");
+				
 				return "none";
 			end
 		else
 			local LocalClip;
-			--sb.logInfo("Top Parent");
+			
 			if Clippable == true then
 				LocalClip = rect.vecAdd(Element.GetLocalClippingBounds(),Element.GetController().GetAbsolutePosition());
 			end
-			--sb.logInfo("Top Mask = " .. sb.print(LocalClip));
-			--sb.logInfo("Top Parent Clip + " .. sb.print(LocalClip));
+			
+			
 			return LocalClip;
 		end
 	end
@@ -76,33 +76,33 @@ function CreateElement(CanvasName)
 	local function UpdateClips()
 		if Active == true then
 			local Boundaries = Element.GetClippingBoundaries();
-			--sb.logInfo("Boundaries = " .. sb.print(Boundaries));
-			--sb.logInfo("Sprites Here = " .. sb.print(Sprites));
+			
+			
 			for k,i in ipairs(Sprites) do
-				--sb.logInfo("Clip Index = " .. sb.print(k));
-				--sb.logInfo("CLipping = " .. sb.print(i.Name));
+				
+				
 				if Boundaries == nil then
-					--sb.logInfo("1");
+					
 					i.Rejected = false;
 					i.Rect = i.OriginalRect;
-					--sb.logInfo("I = " .. sb.printJson(i,1));
-					--sb.logInfo("Setting Rect To " .. sb.print(i.OriginalRect));
+					
+					
 					i.TextureRect = i.OriginalTextureRect;
 				elseif Boundaries == "none" then
 					i.Rejected = true;
-					--sb.logInfo("2");
+					
 				else
 					if rect.isInverted(Boundaries) then
 						i.Rejected = true;
-						--sb.logInfo("3");
+						
 					else
 						local Final,Offset = rect.cut(Boundaries,rect.vecAdd(i.OriginalRect,Element.GetController().GetAbsolutePosition()));
 						if rect.isInverted(Final) then
 							i.Rejected = true;
-							--sb.logInfo("4");
+							
 						else
 							Final = rect.vecSub(Final,Element.GetController().GetAbsolutePosition());
-							--sb.logInfo("5");
+							
 							i.Rejected = false;
 							i.Rect = Final;
 							i.TextureRect = rect.vecAdd(rect.minimize(Final),{Offset[1],Offset[2]});
@@ -255,16 +255,16 @@ function CreateElement(CanvasName)
 	end
 
 	Element.SetSpriteRect = function(Name,Rect)
-	--[[	sb.logInfo("Sprites AT SET = " .. sb.print(Sprites));
+	--[[	
 		for k,i in ipairs(Sprites) do
-			sb.logInfo("Name = " .. sb.print(i.Name));
+			
 		end--]]
 		--[[for k,i in ipairs(Sprites) do
 			if i.Name == Name then
-				--sb.logInfo("Setting Rect for " .. sb.print(i.Name));
-				--sb.logInfo("Current Rect = " .. sb.print(Rect));
+				
+				
 				i.OriginalRect = rect.copy(Rect);
-				--sb.logInfo("I In Set = " .. sb.print(i));
+				
 				Element.UpdateClips();
 				return nil;
 			end
@@ -325,21 +325,21 @@ function CreateElement(CanvasName)
 
 	Element.OnHover = function(Position)
 		--TODO
-		sb.logInfo("Hovered Sprites = " .. sb.print(HoveredSprites));
+		
 		if #HoveredSprites > 0 then
 			for i=#HoveredSprites,1,-1 do
-				sb.logInfo("Mouse Is outside = " .. sb.print(MouseIsOutSide(Position,Canvas:size())));
-				sb.logInfo("Is Not within = " .. sb.print(not rect.isPosWithin(rect.vecAdd(HoveredSprites[i].Rect,Element.GetAbsolutePosition()),Position)));
-				sb.logInfo("MousePos = " .. sb.print(Position));
-				sb.logInfo("Rect = " .. sb.print(rect.vecAdd(HoveredSprites[i].Rect,Element.GetAbsolutePosition())));
-				sb.logInfo("Size = " .. sb.print(Canvas:size()));
+				
+				
+				
+				
+				
 				if MouseIsOutSide(Position,Canvas:size()) or not rect.isPosWithin(rect.vecAdd(HoveredSprites[i].Rect,Element.GetAbsolutePosition()),Position) then
 					HoveredSprites[i].HoverFunc(Position,false);
-					--sb.logInfo("Hovered Sprites = " .. sb.print(HoveredSprites));
-					--sb.logInfo("I = " .. sb.print(i));
+					
+					
 					HoveredSprites[i].Hovering = nil;
 					table.remove(HoveredSprites,i);
-					--sb.logInfo("Hovered Sprites After = " .. sb.print(HoveredSprites));
+					
 				end
 			end
 		end
@@ -351,14 +351,14 @@ function CreateElement(CanvasName)
 				if i.Hovering ~= true and i.Rejected == false then
 					FullyRejected = false;
 					if i.HoverFunc ~= nil then
-						--sb.logInfo("B");
-						--sb.logInfo("Rect = " .. sb.print(rect.vecAdd(i.Rect,Element.GetAbsolutePosition())));
-						--sb.logInfo("Mouse Pos = " .. sb.print(Position));
-						--sb.logInfo("Mouse Position = " .. sb.print(Position));
-						--sb.logInfo("Size = " .. sb.print(Canvas:size()));
-						--sb.logInfo("MouseIsOutSide = " .. sb.print( MouseIsOutSide(Position,Canvas:size())));
+						
+						
+						
+						
+						
+						
 						if not MouseIsOutSide(Position,Canvas:size()) and rect.isPosWithin(rect.vecAdd(i.Rect,Element.GetAbsolutePosition()),Position) then
-							--sb.logInfo("A");
+							
 							HoveredSprites[#HoveredSprites + 1] = i;
 							i.Hovering = true;
 							i.HoverFunc(Position,true);
@@ -432,10 +432,10 @@ function CreateElement(CanvasName)
 	end
 
 	Element.SetSpriteImage = function(Name,Image)
-		--sb.logInfo("Test");
+		
 		if SpritesByName[Name] ~= nil then
 			Sprites[SpritesByName[Name]].Image = Image;
-			--sb.logInfo("Sprite = " .. sb.print(Sprites[SpritesByName[Name]]));
+			
 		else
 			error("Sprite of " .. sb.print(Name) .. " doesn't exist");
 		end
@@ -456,11 +456,11 @@ function CreateElement(CanvasName)
 				FullyRejected = false;
 			end
 			for k,i in ipairs(Sprites) do
-				--sb.logInfo("Rendering Sprite of " .. sb.print(i.Name));
+				
 				if i.Rejected == false then
 					FullyRejected = false;
 					--[[if i.Name == "Scroller" then
-						sb.logInfo("Scroller's Rect = " .. sb.print(i.Rect));
+						
 					end--]]
 					if i.IsTiled == true then
 						Canvas:drawTiledImage(i.Image,i.TextureOffset,rect.vecAdd(i.Rect,Controller.GetAbsolutePosition()),nil,i.Color);
@@ -532,7 +532,7 @@ function CreateElement(CanvasName)
 			ParentMode = true;
 			if noController ~= true then
 				for k,i in pairs(ParentingController) do
-					--sb.logInfo("Adding Values!!!!!!");
+					
 					if Finished == false then
 						ControllerBase[k] = i;
 					else
@@ -694,7 +694,7 @@ function CreateElement(CanvasName)
 	ParentingController.MoveChildUp = function(controller)
 		for k,i in ipairs(Children) do
 			if i.GetController() == controller then
-				--sb.logInfo("MOVING UP");
+				
 				table.remove(Children,k);
 				table.insert(Children,k - 1,i);
 			end
@@ -704,7 +704,7 @@ function CreateElement(CanvasName)
 	ParentingController.MoveChildDown = function(controller)
 		for k,i in ipairs(Children) do
 			if i.GetController() == controller then
-				--sb.logInfo("MOVING DOWN");
+				
 				table.remove(Children,k);
 				table.insert(Children,k + 1,i);
 			end

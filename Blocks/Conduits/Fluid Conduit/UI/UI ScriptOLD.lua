@@ -37,7 +37,7 @@ function init()
 	ContainerCore.SetCanvasAsInventory("inventoryCanvas",nil,nil,{1,1});
 	widget.blur("inventoryCanvas");
 	--widget.setVisible("inventoryCanvas",false);
-	--sb.logInfo("Player = " .. sb.print(player));
+	
 	for i=1,#Sides do
 		InitState(Sides[i]);
 		UpdateImage(Sides[i]);
@@ -46,7 +46,7 @@ function init()
 end
 
 function update(dt)
-	--sb.logInfo("Updating");
+	
 	ContainerCore.Update();
 end
 

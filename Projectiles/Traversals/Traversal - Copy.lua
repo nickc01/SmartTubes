@@ -32,7 +32,7 @@ end
 
 local function SetSource(_,_,NewSource)
 	SourceID = NewSource;
-	--sb.logInfo("NEWID_E ___________________________________________ = " .. sb.print(SourceID));
+	
 	--PossibleConduits[#PossibleConduits + 1] = NewSource;
 end
 
@@ -43,7 +43,7 @@ function init()
 end
 
 local function Finish()
-	--sb.logInfo("Finished Traversing");
+	
 	world.sendEntityMessage(SourceID,"AddToInventory",EntityID,ContainerID);
 	projectile.die();
 	return nil;
@@ -54,17 +54,17 @@ end
 end--]]
 
 local function Drop()
-	--sb.logInfo("Dropping Item");
-	--sb.logInfo("SOURCE ID = " .. sb.print(SourceID));
-	--sb.logInfo("ENTITYID = " .. sb.print(EntityID));
-	--sb.logInfo("ContainerID = " .. sb.print(ContainerID));
-	--sb.logInfo("entity.position() = " .. sb.print(entity.position()));
-	--sb.logInfo("SourceID Position = " .. sb.print(world.entityPosition(SourceID)));
+	
+	
+	
+	
+	
+	
 	world.sendEntityMessage(SourceID,"DropItems",EntityID,ContainerID,entity.position());
 	if DroppingItems ~= nil then
 		local Position = entity.position();
 		for i=1,#DroppingItems do
-			--sb.logInfo("DROPPINGH");
+			
 			world.spawnItem(DroppingItems[i],Position,DroppingItems[i].count,DroppingItems[i].parameters);
 		end
 	end
@@ -74,10 +74,10 @@ local function Drop()
 end
 
 --[[function uninit()
-	sb.logInfo("Dropping Item = " .. sb.print(DroppingItems));
+	
 	if DroppingItems ~= nil then
 		for i=1,#DroppingItems do
-			sb.logInfo("DROPPING");
+			
 			world.spawnItem(DroppingItems[i],LastPosition,DroppingItems[i].count,DroppingItems[i].parameters);
 		end
 	end
@@ -87,10 +87,10 @@ function ChangeContainer(NewContainer)
 end
 
 local function RecalculatePath(StartingPoint)
-	--sb.logInfo(stringTable(PossibleConduits,"PossibleConduits"));
+	
 	local StartingConduit = world.objectAt(StartingPoint);
-	--sb.logInfo("StartingConduit = " .. StartingConduit);
-	--sb.logInfo("Start is " .. sb.print(StartingPoint));
+	
+	
 	if StartingConduit == nil then return nil end;
 	local Findings = {{ID = StartingConduit}};
 	local Next = {};
@@ -101,8 +101,8 @@ local function RecalculatePath(StartingPoint)
 			Next[#Next + 1] = {ID = StartingConduits[i],Previous = 1};
 		end
 	end
-	--sb.logInfo("Conduits to Start = " .. #StartingConduits);
-	--sb.logInfo("PossibleConduits = " .. sb.print(PossibleConduits));
+	
+	
 	repeat
 		local NewNext = {};
 		for i=1,#Next do
@@ -154,14 +154,14 @@ local function RecalculatePath(StartingPoint)
 		Path[#Path + 1] = Point.ID;
 		NextLevel = Point.Previous;
 	until NextLevel == nil
-	--sb.logInfo("RB");
+	
 	return Path,SelectedInsertionConduit.ID;
 end
 
 local function ResetTraversal()
 	--[[if DroppingItems ~= nil then
 		for i=1,#DroppingItems do
-			--sb.logInfo("DROPPING");
+			
 			world.spawnItem(DroppingItems[i],LastPosition,DroppingItems[i].count,DroppingItems[i].parameters);
 		end
 		projectile.die();
@@ -174,7 +174,7 @@ local function ResetTraversal()
 		if Path[PathIndex] == SourceID and DroppingItems == nil then
 			return Finish();
 		else
-			--sb.logInfo("DROPA");
+			
 			return Drop();
 		end
 	end
@@ -182,7 +182,7 @@ local function ResetTraversal()
 	local Position = world.entityPosition(Path[PathIndex]);
 	if Position == nil or world.getObjectParameter(Path[PathIndex],"conduitType") == nil then
 		--return nil;
-		--sb.logInfo("DROPB");
+		
 		return Drop();
 	end
 	local StartX = Position[1] + 0.5;
@@ -196,23 +196,23 @@ local function ResetTraversal()
 	if EndPosition == nil or world.getObjectParameter(Path[PathIndex - 1],"conduitType") == nil then
 		local NewID;
 		local NewPath;
-		--sb.logInfo("PositionC = " .. sb.print(Position));
+		
 		NewPath,NewID = RecalculatePath(Position);
-		--sb.logInfo("Path = " .. sb.print(Path[PathIndex]));
+		
 		if NewPath == nil or (world.entityExists(Path[PathIndex]) == true and world.getObjectParameter(Path[PathIndex],"conduitType") == "curved") then
 			--return nil;
-			--sb.logInfo("DROPC");
+			
 			return Drop();
 		end
 		Path = NewPath;
 		SourceID = NewID;
-		--sb.logInfo("NEWID_D ___________________________________________ = " .. sb.print(SourceID));
+		
 		PathIndex = #Path;
 		EndPosition = world.entityPosition(Path[PathIndex - 1]);
 		if EndPosition == nil or world.getObjectParameter(Path[PathIndex - 1],"conduitType") == nil then
 			--Drop();
 			--return nil;
-			--sb.logInfo("DROPD");
+			
 			return Drop();
 		end
 	end
@@ -225,12 +225,12 @@ local function ResetTraversal()
 		if world.callScriptedEntity(Path[PathIndex],"IsConnectedWirelesslyTo",Path[PathIndex - 1]) == true then
 			local NewTraversal = world.spawnProjectile(projectile.getParameter("projectileName"),{EndX,EndY},SourceID);
 			world.sendEntityMessage(SourceID,"ChangeTransferID",EntityID,NewTraversal,ContainerID);
-			--sb.logInfo("SourceID Before = " .. sb.print(SourceID));
+			
 			world.callScriptedEntity(NewTraversal,"StartTraversing",Path,Speed,ContainerID,PathIndex - 1,SourceID,PossibleConduits,ConduitLimits,SideLimits);
 			projectile.die();
 			return nil;
 		else
-			--sb.logInfo("DROPE");
+			
 			return Drop();
 		end
 	end
@@ -268,7 +268,7 @@ local function ResetTraversal()
 					end
 				end
 			else
-				--sb.logInfo("DROPF");
+				
 				return Drop();
 			end
 		else
@@ -303,7 +303,7 @@ local function ResetTraversal()
 					end
 				end
 			else
-				--sb.logInfo("DROPG");
+				
 				return Drop();
 			end
 		end
@@ -326,27 +326,27 @@ local function ResetTraversal()
 end
 local ReRouting = false;
 function ReRoute(possibleConduits,removePossiblity)
-	--sb.logInfo("CALLING REROUTED _____________________________");
+	
 	if ReRouting == false then
 		ReRouting = true;
 		--[[PossibleConduits = {};
-		sb.logInfo("Possibilites Before = " .. sb.print(possibleConduits));
+		
 		for i=1,#possibleConduits do
 			if possibleConduits[i] ~= removePossiblity then
 				PossibleConduits[#PossibleConduits + 1] = possibleConduits[i];
 			end
 		end--]]
-		--sb.logInfo("Possibilites Before = " .. sb.print(PossibleConduits));
+		
 		ApplyLimits(possibleConduits,ConduitLimits,SideLimits,removePossiblity);
-		--sb.logInfo("Possibilites After = " .. sb.print(PossibleConduits));
+		
 		--SourceID = NewSource;
-		--sb.logInfo("NEWID_A ___________________________________________ = " .. sb.print(SourceID));
+		
 		if world.entityExists(Path[PathIndex]) == true and world.getObjectParameter(Path[PathIndex],"conduitType") ~= "curved" and world.entityExists(Path[PathIndex - 1]) == true and world.getObjectParameter(Path[PathIndex - 1],"conduitType") ~= "curved" then
 			ReRoutedPath,ReRoutedID = RecalculatePath(world.entityPosition(Path[PathIndex]));
 		end
-		--sb.logInfo("DONE!");
-		--sb.logInfo("Path = " .. sb.print(ReRoutedPath));
-		--sb.logInfo("ID = " .. sb.print(ReRoutedID));
+		
+		
+		
 		return ReRoutedID;
 	else
 		return "done";
@@ -357,7 +357,7 @@ function StartTraversing(path,speed,containerID,pathIndex,altID,possibleConduits
 	EntityID = entity.id();
 	Started = true;
 	SourceID = altID or projectile.sourceEntity();
-	--sb.logInfo("NEWID_B ___________________________________________ = " .. sb.print(SourceID));
+	
 	Path = path;
 	ApplyLimits(possibleConduits,conduitLimits,sideLimits,nil);
 	--PossibleConduits = possibleConduits;
@@ -449,15 +449,15 @@ function update(dt)
 	end
 	if Traverser ~= nil then
 		if ReRouting == true then
-			--sb.logInfo("R is TRUE");
+			
 			ReRouting = false;
 			if ReRoutedPath ~= nil then
-				--sb.logInfo("REROUTED _____________________________");
+				
 				Path = ReRoutedPath;
 				ReRoutedPath = nil;
 				PathIndex = #Path;
 				SourceID = ReRoutedID;
-				--sb.logInfo("NEWID_C ___________________________________________ = " .. sb.print(SourceID));
+				
 				ReRoutedID = nil;
 				ResetTraversal();
 			end
@@ -467,5 +467,5 @@ function update(dt)
 end
 
 --[[function uninit()
-	sb.logInfo("TRAVERAL UNINIT");
+	
 end--]]

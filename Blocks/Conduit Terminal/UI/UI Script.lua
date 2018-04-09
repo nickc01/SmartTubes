@@ -61,7 +61,7 @@ end
 
 local function SetupAnimationInfoForType(ConduitType,TestObject)
 	Animations[ConduitType] = world.getObjectParameter(TestObject,"CustomAnimations");
-	sb.logInfo("Animations = " .. sb.printJson(Animations or {},1));
+	
 end
 
 local MainCanvas;
@@ -130,20 +130,20 @@ function init()
 	widget.setSliderValue("satSlider",Sat);
 	MainCanvas = widget.bindCanvas("mainCanvas");
 	--"/Blocks/Conduits/Curved/5x/TR/Curve.png"
-	--sb.logInfo("Returned Frame = " .. sb.print(ImageCore.GetFrameOfImage("/Projectiles/Traversals/Yellow/Traversal.png")));
+	
 	ImageCore.MakeImageCanvasRenderable(ImageCore.MakePathAbsolute("Terminal.png:default",SourceID));
 	local AnimationTest = ImageCore.ParseObjectAnimation(SourceID);
 	if type(AnimationTest) == "table" then
-		sb.logInfo("AnimationTest = " .. sb.printJson(AnimationTest,1));
+		
 	else
-		sb.logInfo("AnimationTest = " .. sb.print(AnimationTest));
+		
 	end
-	--sb.logInfo("Result of function = " .. sb.print({pcall(function() sb.logInfo("Generate Name Result = " .. sb.print(root.generateName("/Blocks/Conduits/Curved/5x/Curve.frame"))); end)}));
+	
 	SourcePos = world.entityPosition(SourceID);
 	UpdateNetwork();
 	OnNetworkUpdate();
 	Initialized = true;
-	--sb.logInfo("Start 1");
+	
 	UIUpdateMessage = world.sendEntityMessage(SourceID,"UINeedsUpdate",true);
 end
 
@@ -185,13 +185,13 @@ UpdateNetwork = function(NewConduits)
 end
 
 OnNetworkUpdate = function(extractionNodes)
-	--sb.logInfo("Conduits = " .. sb.print(Conduits));
+	
 	ExtractionNodes = extractionNodes;
 	ExtractionNodeData = {};
-	--sb.logInfo("EXTRACTION NODES = " .. sb.print(ExtractionNodes));
+	
 	if ExtractionNodes ~= nil then
 		for k,i in ipairs(ExtractionNodes) do
-			--sb.logInfo("Image for " .. sb.print(i) .. " is = " .. sb.print(ImageCore.ObjectToImage(i)));
+			
 			ExtractionNodeData[i] = ImageCore.ObjectToImage(i);
 			if ExtractionNodeData[i] ~= nil then
 				ExtractionNodeData[i].Position = world.entityPosition(i);
@@ -237,7 +237,7 @@ Render = function()
 						RenderCoords[4] = Y + (Animations[k].States[State].Size[2] * CanvasScale);
 					end
 					
-				--	sb.logInfo("Conduit RenderCoords = " .. sb.print(RenderCoords));
+				--	
 					--RenderCoords = RectVecSub(RenderCoords,Animations[k].States[State].Offset);
 					--TexCoords[1],TexCoords[2],TexCoords[3],TexCoords[4] = TexCoords[1] * CanvasScale,TexCoords[2] * CanvasScale,TexCoords[3] * CanvasScale,TexCoords[4] * CanvasScale;
 					local Image = NetworkData[n].Image();
@@ -275,7 +275,7 @@ Render = function()
 					RenderCoords[2] = Y;
 					RenderCoords[4] = Y + (n.Height * CanvasScale);
 					
-					--sb.logInfo("Object RenderCoords = " .. sb.print(RenderCoords));
+					
 					local TexCoords = n.TextureRect;
 					--TexCoords[1],TexCoords[2],TexCoords[3],TexCoords[4] = TexCoords[1] * CanvasScale,TexCoords[2] * CanvasScale,TexCoords[3] * CanvasScale,TexCoords[4] * CanvasScale;
 					MainCanvas:drawImageRect(n.Image,TexCoords,RenderCoords);
@@ -288,17 +288,17 @@ end
 
 function update(dt)
 	if UIUpdateMessage == nil then
-		--sb.logInfo("Start 2");
+		
 		UIUpdateMessage = world.sendEntityMessage(SourceID,"UINeedsUpdate");
 	else
 		if UIUpdateMessage:finished() then
-		--	sb.logInfo("Finished");
+		--	
 			local Result,NewConduits,Extra = table.unpack(UIUpdateMessage:result() or {});
 			if Result == true then
 				UpdateNetwork(NewConduits);
 				OnNetworkUpdate(table.unpack(Extra));
 			end
-			--sb.logInfo("Restart");
+			
 			UIUpdateMessage = world.sendEntityMessage(SourceID,"UINeedsUpdate");
 		end
 	end

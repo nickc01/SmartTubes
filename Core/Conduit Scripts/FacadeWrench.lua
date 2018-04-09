@@ -140,7 +140,7 @@ end
 
 --Places the facade in the block at the position, and adds any parameters specified to the block
 function FacadeWrench.PlaceFacade(position,parameters)
-	sb.logInfo("PLACING");
+	
 	local CurrentConfig = FacadeConfig[Data.GetIndex()];
 	if CurrentConfig ~= nil then
 		local Info = {}
@@ -186,9 +186,9 @@ UpdateCursor = function()
 			NewCursor = "cursorInvalid";
 		end
 	end
-	--sb.logInfo("CursorType = " .. sb.print(CursorType));
+	
 	if CursorType ~= NewCursor then
-		--sb.logInfo("Setting Cursor Type to = " .. sb.print(NewCursor));
+		
 		--Destroy the old cursor and spawn the new one
 		if Cursor ~= nil then
 			world.sendEntityMessage(Cursor,"Destroy");
@@ -197,7 +197,7 @@ UpdateCursor = function()
 		Cursor = world.spawnProjectile(CursorType,{AimPosition[1] + 0.5,AimPosition[2] + 0.5});
 	else
 		--Move the current cursor to the new position
-		--sb.logInfo("Cursor = " .. sb.print(Cursor));
+		
 		if Cursor ~= nil then
 			world.sendEntityMessage(Cursor,"SetPosition",{AimPosition[1] + 0.5,AimPosition[2] + 0.5});
 		else
@@ -208,7 +208,7 @@ end
 
 --Called when the mouse is right clicked
 RightClick = function()
-	sb.logInfo("Right Click");
+	
 	if ItemCore.IsShiftHeld() then
 		DisableForPosition = false;
 		Data.SetBreaking(not Data.GetBreaking());
@@ -228,7 +228,7 @@ end
 
 --Called when the mouse is left clicked
 LeftClick = function()
-	sb.logInfo("Left Click");
+	
 	if Data.GetBreaking() == true then
 		if FacadeWrench.CanBreakFacade(AimPosition) then
 			local Object = world.objectAt(AimPosition);
@@ -252,14 +252,14 @@ LeftClick = function()
 			elseif player.hasItemWithParameter("__ParametersWithFacade",ItemName) then
 				local ParameterizedItem = player.getItemWithParameter("__ParametersWithFacade",ItemName);
 				player.consumeItemWithParameter("__ParametersWithFacade",ItemName,1);
-				sb.logInfo("PARAMETERIZED ITEM = " .. sb.print(ParameterizedItem));
+				
 				Valid = true;
 				ItemParameters = ParameterizedItem.parameters;
 			elseif player.hasItem({name = ItemName,count = 1}) == true then
 				--Check for any facade items with stored parameters
 				
 				local ConsumedItem = player.consumeItem({name = ItemName,count = 1});
-				sb.logInfo("CONSUMED ITEM = " .. sb.printJson(ConsumedItem,1));
+				
 				Valid = true;
 			end
 			if Valid then

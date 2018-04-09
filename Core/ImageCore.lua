@@ -9,7 +9,7 @@ end
 
 function ImageCore.SplitFrames(FrameFile)
 	local Frames = root.assetJson(FrameFile);
-	sb.logInfo("Frames = " .. sb.printJson(Frames,1));
+	
 end
 
 local function GetJson(File)
@@ -26,7 +26,7 @@ function ImageCore.GetFrameOfImage(Image,Object)
 		if Json ~= nil then
 			return CachedValue;
 		else
-			sb.logInfo("ATTENTION: THE ABOVE ERROR THAT YOU SEE IS NOT AN ERROR, SO IF YOU SEE IT, JUST IGNORE IT, IF YOU WANT TO KNOW WHY, ITS JUST AN ISSUE WITH ROOT.ASSETJSON THAT CAN'T BE WORKED AROUND AT THE MOMENT       : SMART TUBES");
+			
 		end
 	end
 	if string.find(Image,"^/") == nil then
@@ -38,14 +38,14 @@ function ImageCore.GetFrameOfImage(Image,Object)
 	end
 	local Frame = string.gsub(Image,"%.png",".frames");
 	while Frame ~= nil do
-		--sb.logInfo("Scanning Frame = " .. sb.print());
+		
 		local Json = GetJson(Frame);
 		if Json == nil then
-			sb.logInfo("ATTENTION: THE ABOVE ERROR THAT YOU SEE IS NOT AN ERROR, SO IF YOU SEE IT, JUST IGNORE IT, IF YOU WANT TO KNOW WHY, ITS JUST AN ISSUE WITH ROOT.ASSETJSON THAT CAN'T BE WORKED AROUND AT THE MOMENT       : SMART TUBES");
+			
 			local Default = ImageCore.SetFileName(Frame,"default.frames");
 			Json = GetJson(Default);
 			if Json == nil then
-				sb.logInfo("ATTENTION: THE ABOVE ERROR THAT YOU SEE IS NOT AN ERROR, SO IF YOU SEE IT, JUST IGNORE IT, IF YOU WANT TO KNOW WHY, ITS JUST AN ISSUE WITH ROOT.ASSETJSON THAT CAN'T BE WORKED AROUND AT THE MOMENT       : SMART TUBES");
+				
 				local NewFrame = ImageCore.MoveUpDirectory(Frame);
 				if NewFrame ~= nil then
 					Frame = ImageCore.SetFileName(NewFrame,ImageCore.GetFileName(Frame));
@@ -75,9 +75,9 @@ end
 
 function ImageCore.SetFileName(Path,FileName,Extension)
 	if string.find(Path,".+%..+") ~= nil then
-		sb.logInfo("FileName = " .. sb.print(FileName));
-		sb.logInfo("Path = " .. sb.print(Path));
-		sb.logInfo("Match = " .. sb.print(string.match(Path,"(.+/)")));
+		
+		
+		
 		if Extension == nil then
 			return string.match(Path,"(.+/)") .. FileName;
 		else
@@ -140,7 +140,7 @@ local function TranslateImage(AnimationImage,PartImage,GlobalTags)
 	if string.find(AnimationImage,":") ~= nil then
 		Frame = ImageCore.GetFrameOfImage(PartImage or AnimationImage);
 	end
-	sb.logInfo("FINAL = " .. sb.print(Final));
+	
 	return Final,Frame;
 end
 
@@ -154,22 +154,22 @@ function ImageCore.MakeImageCanvasRenderable(img)
 	if string.find(Image,":") == nil then
 		return Image;
 	else
-		--sb.logInfo("Image = " .. sb.print(Image));
+		
 		if Frame == nil then
-			--sb.logInfo("Frame Nil 1");
+			
 			return nil;
 		end
-		--sb.logInfo();
+		
 		--TODO TODO TODO -------------------------------------------------------------
 		local FrameData = root.assetJson(Frame);
-		--sb.logInfo("FrameData = " .. sb.printJson(FrameData,1));
+		
 		local FrameLink = string.match(Image,":(.*)");
-		--sb.logInfo("FrameData = " .. sb.printJson(FrameData,1));
+		
 		if FrameData.aliases ~= nil then
-			--sb.logInfo("A");
+			
 			local AliasesChecked = false;
 			while (not AliasesChecked) do
-			--sb.logInfo("B");			
+						
 				for k,i in pairs(FrameData.aliases) do
 					if FrameLink == k then
 						FrameLink = i;
@@ -181,8 +181,8 @@ function ImageCore.MakeImageCanvasRenderable(img)
 			end
 		end
 		local Pos;
-		--sb.logInfo("Names = " .. sb.printJson(FrameData.frameGrid.names,1));
-		--sb.logInfo("FrameLink = " .. sb.print(FrameLink));
+		
+		
 		for k,i in ipairs(FrameData.frameGrid.names) do
 			for m,n in ipairs(i) do
 				if FrameLink == n then
@@ -201,11 +201,11 @@ function ImageCore.MakeImageCanvasRenderable(img)
 				Width = Size[1],
 				Height = Size[2]
 			};
-			--sb.logInfo("CanvasTable = " .. sb.print(CanvasTable));
+			
 			CanvasImagesCache[img] = CanvasTable;
 			return CanvasTable;
 		end
-		--sb.logInfo("End of function");
+		
 	end
 end
 
@@ -215,9 +215,9 @@ function ImageCore.ObjectToImage(object)
 		ID = object;
 		object = world.entityName(object);
 	end
-	sb.logInfo("Name = " .. sb.print(object));
+	
 	if object == nil then
-		sb.logInfo("Nil2 for " .. sb.print(object));
+		
 		return nil;
 	end
 	local Config = root.itemConfig({name = object,count = 1}).config;
@@ -240,7 +240,7 @@ function ImageCore.ObjectToImage(object)
 		Images = {Orientation.image};
 	end
 	if Images == nil then
-		sb.logInfo("Nil1 for " .. sb.print(object));
+		
 		return nil;
 	end
 	Offset = Orientation.imagePosition or {0,0};
@@ -251,7 +251,7 @@ function ImageCore.ObjectToImage(object)
 	for k,i in ipairs(Images) do
 		FinalImages[#FinalImages + 1] = ImageCore.MakeImageCanvasRenderable(ImageCore.MakePathAbsolute(i,object));
 	end
-	sb.logInfo("Final for " .. sb.print(object));
+	
 	return {Images = FinalImages,Offset = Offset,Flip = Flip};
 end
 

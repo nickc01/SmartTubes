@@ -70,7 +70,7 @@ local PostInit;
 --Initializes the Insertion Conduit
 function Insertion.Initialize()
 --	object.say("THIS IS A TEST");
-	sb.logInfo("Insert INITIALIZE = " .. sb.print(entity.id()));
+	
 	SourcePosition = entity.position();
 	SourceID = entity.id();
 	Groups.Initialize();
@@ -128,7 +128,7 @@ PostInit = function()
 	local LoadedPredictions = LoadPredictions("StoredPredictions");
 	local LoadedPredictionsForTossing = LoadPredictions("StoredPredictionsForTossing");
 	--[[if LoadedPredictions ~= nil then
-		sb.logInfo("Loaded Predictions = " .. sb.printJson(LoadedPredictions,1));
+		
 	end--]]
 	for container,predictions in pairs(LoadedPredictions) do
 		container = tonumber(container);
@@ -152,15 +152,15 @@ PostInit = function()
 	end
 	--Compatibility with older version of the mod
 	if config.getParameter("Predictions") ~= nil then
-		sb.logInfo("COMPATIBILITY INSERTION CODE");
+		
 		local PreviousContainers = config.getParameter("PreviousContainers");
-		sb.logInfo("PreviousContainers = " .. sb.print(PreviousContainers));
+		
 		local OldPredictions = config.getParameter("Predictions");
 		if OldPredictions ~= nil then
-			sb.logInfo("OldPredictions = " .. sb.printJson(OldPredictions,1));
+			
 			for k,data in pairs(OldPredictions) do
 				local Container = tonumber(k);
-				sb.logInfo("CONTAINER = " .. sb.print(Container));
+				
 				if PreviousContainers ~= nil then
 					local Index;
 					for i,value in ipairs(PreviousContainers) do
@@ -171,23 +171,23 @@ PostInit = function()
 					end
 					if Index ~= nil then
 						local Connections = ConduitCore.GetConnections("Containers");
-						sb.logInfo("COMPAT CONNECTIONS = " .. sb.print(Connections));
+						
 						Container = Connections[Index] or -10;
-						sb.logInfo("New Container = " .. sb.print(Container));
+						
 					end
 				end
 				if world.entityExists(Container) then
 					for _,p in ipairs(data) do
 						local Item = ContainerHelper.PutItemsAt(Container,p.Item,p.Slot - 1);
-						sb.logInfo("C");
+						
 						if Item ~= nil and Item.count > 0 then
-							sb.logInfo("B");
+							
 							world.spawnItem(Item,SourcePosition,Item.count,Item.parameters);
 						end
 					end
 				else
 					for _,p in ipairs(data) do
-						sb.logInfo("A");
+						
 						world.spawnItem(p.Item,SourcePosition,p.Item.count,p.Item.parameters);
 					end
 				end
@@ -199,7 +199,7 @@ PostInit = function()
 			for _,data in pairs(OldTossings) do
 				for _,prediction in ipairs(data) do
 					world.spawnItem(p.Item,SourcePosition,p.Item.count,p.Item.parameters);
-					sb.logInfo("D");
+					
 				end
 			end
 		end
@@ -253,7 +253,7 @@ end
 --Called when a group is added
 GroupAdd = function(Object,Connections,Master)
 	--Add a prediction setup for the object
-	--sb.logInfo("Adding Group");
+	
 	if Master == SourceID then
 		Predictions[Object] = {};
 		PredictionsForTossing[Object] = {};
@@ -262,26 +262,26 @@ end
 
 --Called when a group is removed
 GroupRemove = function(Object,Connections,OldMaster,NewMaster)
-	--sb.logInfo("Removing Group");
-	--sb.logInfo("Object = " .. sb.print(Object));
-	--sb.logInfo("Connections = " .. sb.print(Connections));
-	--sb.logInfo("OldMaster = " .. sb.print(OldMaster));
-	--sb.logInfo("New Master = " .. sb.print(NewMaster));
-	--sb.logInfo("SourceID = " .. sb.print(SourceID));
+	
+	
+	
+	
+	
+	
 	--If this entity is the master
 	if OldMaster == SourceID then
-		--sb.logInfo(sb.print(SourceID) .. " was the original Master");
+		
 		--If no new master exists
-		--sb.logInfo("New Master = " .. sb.print(NewMaster));
+		
 		if NewMaster == nil then
 			--Delete all the predictions for the object
-			--sb.logInfo("Deleting all predictions");
+			
 			Predictions[Object] = {};
 			PredictionsForTossing[Object] = {};
 		else
 			--Send the predictions to the new master
-			--sb.logInfo("Sending the predictions to the new master");
-			--sb.logInfo("Predictions to send = " .. sb.print(Predictions[Object]));
+			
+			
 			world.callScriptedEntity(Groups.GetMasterID(Object),"__Insertion__.SetPredictions",Object,Predictions[Object],PredictionsForTossing[Object]);
 			Predictions[Object] = {};
 			PredictionsForTossing[Object] = {};
@@ -292,10 +292,10 @@ end
 --Called when a group's master is changed
 GroupMasterChange = function(Object,OldMaster,NewMaster)
 	--if this entity was the original master
-	--sb.logInfo("Master Changed = " .. sb.print(entity.id()));
-	--sb.logInfo("Object = " .. sb.print(Object));
-	--sb.logInfo("OldMaster = " .. sb.print(OldMaster));
-	--sb.logInfo("NewMaster = " .. sb.print(NewMaster));
+	
+	
+	
+	
 	if OldMaster == SourceID then
 		--If there is a new master
 		if NewMaster ~= nil then
@@ -333,7 +333,7 @@ end
 
 --
 function __Insertion__.SetPredictions(Object,predictions,predictionsForTossing)
-	--sb.logInfo("Setting the predictions at " .. sb.print(SourceID) .. " to " .. sb.print(Predictions));
+	
 	Predictions[Object] = predictions;
 	for k,i in ipairs(predictions) do
 		if world.entityExists(i.Traversal) then
@@ -476,7 +476,7 @@ function __Insertion__.GetMasterPredictions(Object,Tossing)
 	Tossing = Tossing or false;
 	local Master = Groups.GetMasterID(Object);
 	if Master == SourceID then
-		--sb.logInfo(sb.print(SourceID) .. " is the master");
+		
 		if Tossing then
 			return PredictionsForTossing;
 		else
@@ -679,12 +679,12 @@ end
 function Insertion.Uninitialize()
 	Uninitializing = true;
 	if Predictions ~= nil then
-		--sb.logInfo("Predictions = " .. sb.printJson(Predictions,1));
-	--	sb.logInfo("PredictionsForTossing = " .. sb.printJson(PredictionsForTossing,1));
+		
+	--	
 		for k,i in pairs(Predictions) do
 			for m,prediction in ipairs(i) do
 				if world.entityExists(prediction.Traversal) then
-					--sb.logInfo("CALLING");
+					
 					world.callScriptedEntity(prediction.Traversal,"__Traversal__.SetInsertionTable",nil);
 				end
 			end
@@ -692,7 +692,7 @@ function Insertion.Uninitialize()
 	end
 	--Set the Insertion Tables of the traversal coming here to the master
 	for object in Groups.AllNeighbors() do
-		--sb.logInfo("OBJECT = " .. sb.print(object));
+		
 		local Master = Groups.GetMasterID(object);
 		if world.entityExists(Master) then
 			--If the master doesn't even exist then skip this step
@@ -702,33 +702,33 @@ function Insertion.Uninitialize()
 			--Set the Insertion tables to be the new master's one
 			local MasterPredictions = __Insertion__.GetMasterPredictions(object,false);
 			local MasterPredictionsForTossing = __Insertion__.GetMasterPredictions(object,true);
-			sb.logInfo("MasterPredictions = " .. sb.print(MasterPredictions));
-		--	sb.logInfo("Master Predictions = " .. sb.printJson(MasterPredictions,1));
+			
+		--	
 			local MasterInsertionTable = world.callScriptedEntity(Master,"__Insertion__.GetInsertionTable");
 			for k,i in ipairs(MasterPredictions[object]) do
 				if world.entityExists(i.Traversal) and world.callScriptedEntity(i.Traversal,"__Traversal__.GetInsertionTable") == Insertion then
-					--sb.logInfo("CALLING");
+					
 					world.callScriptedEntity(i.Traversal,"__Traversal__.SetInsertionTable",MasterInsertionTable);
 				end
 			end
 			for k,i in ipairs(MasterPredictionsForTossing[object]) do
 				if world.entityExists(i.Traversal) and world.callScriptedEntity(i.Traversal,"__Traversal__.GetInsertionTable") == Insertion then
-					--sb.logInfo("CALLING");
+					
 					world.callScriptedEntity(i.Traversal,"__Traversal__.SetInsertionTable",MasterInsertionTable);
 				end
 			end
 		else
 			--Set the Insertion tables to be nil
-			--sb.logInfo("Predictions = " .. sb.printJson(Predictions,1));
+			
 			for k,i in ipairs(Predictions[object]) do
 				if world.entityExists(i.Traversal) then
-				--	sb.logInfo("CALLING");
+				--	
 					world.callScriptedEntity(i.Traversal,"__Traversal__.SetInsertionTable",nil);
 				end
 			end
 			for k,i in ipairs(PredictionsForTossing[object]) do
 				if world.entityExists(i.Traversal) then
-					--sb.logInfo("CALLING");
+					
 					world.callScriptedEntity(i.Traversal,"__Traversal__.SetInsertionTable",nil);
 				end
 			end
@@ -744,11 +744,11 @@ end
 
 --Saves the Predictions to the Conduit
 SavePredictions = function(pred,saveName)
-	--sb.logInfo("SAVING ENTITYID = " .. sb.print(SourceID));
+	
 	pred = pred or Predictions;
 	saveName = saveName or "StoredPredictions";
 	if pred ~= nil then
-		--sb.logInfo("Predictions to be saved = " .. sb.printJson(pred,1));
+		
 		local SavingPredictions = setmetatable({},StringTableMetatable);
 		local Connections = ConduitCore.GetConnections("Containers");
 		for group,predictions in pairs(pred) do
@@ -764,7 +764,7 @@ SavePredictions = function(pred,saveName)
 				SavingPredictions[Index] = predictions;
 			end
 		end
-		--sb.logInfo("Final Saving Predictions = " .. sb.printJson(SavingPredictions,1));
+		
 		object.setConfigParameter(saveName,SavingPredictions);
 	else
 		object.setConfigParameter(saveName,nil);
@@ -776,18 +776,18 @@ LoadPredictions = function(saveName)
 	local StoredPredictions = setmetatable(config.getParameter(saveName,{}),StringTableMetatable);
 	local FinalPredictions = setmetatable({},StringTableMetatable);
 	local Connections = ConduitCore.GetConnections("Containers");
-	--sb.logInfo("ALL CONNECTIONS = " .. sb.print(Connections));
-	--sb.logInfo("Loaded Predictions = " .. sb.printJson(StoredPredictions,1));
+	
+	
 	for ConnectionIndex,predictions in pairs(StoredPredictions) do
 		ConnectionIndex = tonumber(ConnectionIndex);
-		--sb.logInfo("ConnectionIndex = " .. sb.print(ConnectionIndex));
+		
 		if Connections[ConnectionIndex] ~= nil and Connections[ConnectionIndex] ~= 10 then
 			FinalPredictions[Connections[ConnectionIndex]] = predictions;
 		else
 			FinalPredictions[-ConnectionIndex] = predictions;
 		end
 	end
-	--sb.logInfo("FINAL PREDICTIONS = " .. sb.printJson(FinalPredictions,1));
+	
 	return FinalPredictions;
 end
 

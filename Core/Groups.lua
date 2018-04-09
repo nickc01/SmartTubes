@@ -113,14 +113,14 @@ end
 
 --Returns the master of the neighbor
 function Groups.GetMasterID(neighborID)
-	--sb.logInfo("NeighborID = " .. sb.print(neighborID));
-	--sb.logInfo("GroupDictionary = " .. sb.print(GroupDictionary[neighborID]));
+	
+	
 	--if GroupDictionary[neighborID] ~= nil then
-	--	sb.logInfo("GroupConnections = " .. sb.print(GroupConnections[GroupDictionary[neighborID]]));
+	--	
 	--end
-	sb.logInfo("neighborID = " .. sb.print(neighborID));
-	sb.logInfo("GroupDictionary = " .. sb.print(GroupDictionary));
-	sb.logInfo("GroupConnections = " .. sb.print(GroupConnections));
+	
+	
+	
 	if GroupDictionary[neighborID] ~= nil then
 		return GroupConnections[GroupDictionary[neighborID]].Master;
 	end

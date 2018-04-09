@@ -79,7 +79,7 @@ end
 
 --Called when the conduit image needs to be updated
 UpdateConduitImage = function()
-	--sb.logInfo("Index R = " .. sb.print(Data.GetIndex()));
+	
 	local Facade = FacadeConfig[Data.GetIndex()];
 	if Facade == nil then
 		widget.setImage("conduitDisplay","");

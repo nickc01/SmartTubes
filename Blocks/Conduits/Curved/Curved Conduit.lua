@@ -14,7 +14,7 @@ local TraversalFunction;
 
 --The Init Function of the Curved Conduit
 function init()
-	sb.logInfo("TEST");
+	
 	ConduitCore.Initialize();
 	SetConnectionPoints();
 end
@@ -153,8 +153,8 @@ end
 --Called when the sprite needs updating
 SpriteUpdate = function()
 	local Connections = ConduitCore.GetGlobalConnections();
-	--sb.logInfo("CONNECTIONS = " .. sb.print(Connections));
-	--sb.logInfo("Sprite Change");
+	
+	
 	if Connections[1] ~= 0 and Connections[2] ~= 0 then
 		animator.setAnimationState("curveState","3");
 	elseif Connections[1] ~= 0 and Connections[2] == 0 then

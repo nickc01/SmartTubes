@@ -10,13 +10,13 @@ function update(dt)
 	if Info ~= nil and world.material(Info.Position,"foreground") == false then
 		PlaceObject();
 	end
-	sb.logInfo("Update");
+	
 end
 
 --Recieves the information about the facade to be placed
 function ReceiveInfo(info)
 	Info = info;
-	sb.logInfo("Info Received");
+	
 end
 
 --Places the object into the world

@@ -145,12 +145,12 @@ function update(dt)
 		end
 		--script.setUpdateDelta(1);
 		--ContainerCore.ContainerAddItems({name = "coalore",count = 1});
-		--sb.logInfo("ContainerItems = " .. sb.print(ContainerCore.ContainerItemsRef()));
+		
 	end
 end
 
 function onInputNodeChange(args)
-	--sb.logInfo("Active = " .. sb.print(not args.level));
+	
 	Active = not args.level;
 end
 
@@ -173,7 +173,7 @@ local LiquidBuffers = setmetatable({},{__mode = "v"});
 
 local function FindValidLiquidItem()
 	for i=1,ContainerCore.ContainerSize() do
-		--sb.logInfo("I = " .. sb.print(i));
+		
 		local Item = ContainerCore.ContainerItemAt(i - 1);
 		if Item ~= nil then
 			local Config = GetItemConfig(Item.name);
@@ -190,7 +190,7 @@ end
 local function PumpLiquid(Position,TargetAmount)
 	local MaxAmount = TargetAmount or 1.0;
 	local Liquid = world.liquidAt(Position);
-	--sb.logInfo("Here");
+	
 	if Liquid == nil then
 		Liquid = {0,0};
 	end
@@ -210,25 +210,25 @@ local function PumpLiquid(Position,TargetAmount)
 				else
 					if world.spawnLiquid(Position,root.liquidId(LiquidName),MaxAmount - Liquid[2]) and ContainerCore.ContainerAvailable(Item) > 0 then
 						local AmountTaken = math.ceil(MaxAmount - LiquidBuffers[LiquidName].Amount);
-						--sb.logInfo("Amount Taken = " .. sb.print(AmountTaken));
-						--sb.logInfo("LiquidBuffer = " .. sb.print(LiquidBuffers[LiquidName].Amount));
+						
+						
 
 						LiquidBuffers[LiquidName].Amount = LiquidBuffers[LiquidName].Amount + AmountTaken;
 						LiquidBuffers[LiquidName].Amount = LiquidBuffers[LiquidName].Amount - (MaxAmount - Liquid[2]);
-						--sb.logInfo("LiquidBuffer MID = " .. sb.print(LiquidBuffers[LiquidName].Amount));
+						
 						if LiquidBuffers[LiquidName].Amount > 1.0 then
-							--sb.logInfo("Changing");
+							
 							local Modulus = LiquidBuffers[LiquidName].Amount % 1;
-							--sb.logInfo("Modulus = " .. sb.print(Modulus));
+							
 							local Difference = LiquidBuffers[LiquidName].Amount - Modulus;
 							AmountTaken = AmountTaken - Difference;
 							LiquidBuffers[LiquidName].Amount = Modulus;
 						end
-						--sb.logInfo("LiquidBuffer FINAL = " .. sb.print(LiquidBuffers[LiquidName].Amount));
+						
 						--Item.count = Item.count - AmountTaken;
-						--sb.logInfo("Consuming = " .. sb.print(Item) .. " Count = " .. sb.print(AmountTaken));
+						
 						ContainerCore.ContainerConsume(Item,AmountTaken);
-						--sb.logInfo("Consumed = " .. sb.print(ContainerCore.ContainerConsume(Item,AmountTaken)));
+						
 								
 					end
 				end
@@ -240,7 +240,7 @@ end
 
 Pump = function()
 	for k,i in LoopBackIter(InputPositions,InputIndex) do
-		--sb.logInfo("Input Position " .. k);
+		
 		InputIndex = k;
 		local Liquid = world.liquidAt(i);
 		if Liquid ~= nil then
@@ -255,16 +255,16 @@ Pump = function()
 			end
 		end
 	end
-	--[[sb.logInfo("Input Positions = " .. sb.print(InputPositions));
+	--[[
 	for k,i in LoopBackIter(InputPositions,InputIndex) do
 		InputIndex = k;
-		--sb.logInfo("Looping");
+		
 		local Liquid = world.liquidAt(i);
 		if Liquid ~= nil then
 			local LiquidConfig = GetFluidConfig(Liquid[1]);
 			if ContainerCore.ContainerItemsCanFit({name = LiquidConfig.itemDrop,count = 1}) > 0 then
 				world.destroyLiquid(i);
-				sb.logInfo("Liquid = " .. sb.print(Liquid));
+				
 				local LiquidName = root.liquidName(Liquid[1]);
 				if LiquidBuffers[LiquidName] == nil then
 					LiquidBuffers[LiquidName] = 0;
@@ -273,7 +273,7 @@ Pump = function()
 					Buffer = 0;
 					BufferLiquid = Liquid[1];
 				end
-				sb.logInfo(sb.printJson(GetFluidConfig(Liquid[1])));
+				
 				local OriginalBuffer = LiquidBuffers[LiquidName];
 				LiquidBuffers[LiquidName] = LiquidBuffers[LiquidName] + Liquid[2];
 				if LiquidBuffers[LiquidName] >= 1 then
@@ -294,7 +294,7 @@ Pump = function()
 						end
 					end
 					--[[local Result = ContainerCore.ContainerAddItems({name = LiquidConfig.itemDrop,count = math.floor(Buffer)});
-					sb.logInfo("Result = " .. Result);
+					
 					if Result == nil then
 						Buffer = Buffer - math.floor(Buffer);
 						world.destroyLiquid(i);
@@ -306,7 +306,7 @@ Pump = function()
 			end
 		end
 		--[[if Liquid[2] == 1 then
-			sb.logInfo(sb.printJson(GetFluidConfig(Liquid[1])));
+			
 		end
 	end--]]
 
@@ -321,8 +321,8 @@ Pump = function()
 			local AmountCanFit = ContainerCore.ContainerItemsCanFit(Item);
 			if AmountCanFit > 0 then
 				LiquidBuffers[k].Open = true;
-				--sb.logInfo("AmountCanFit = " .. sb.print(AmountCanFit));
-				--sb.logInfo("I.Amount = " .. sb.print(i.Amount));
+				
+				
 				if AmountCanFit > i.Amount then
 					AmountCanFit = math.floor(i.Amount);
 				end
@@ -344,7 +344,7 @@ Pump = function()
 		OutputIndex = k;
 		if Mode == "ToLevel" then
 			--[[local Liquid = world.liquidAt(i);
-			sb.logInfo("Here");
+			
 			if Liquid == nil then
 				Liquid = {0,0};
 			end
@@ -375,7 +375,7 @@ Pump = function()
 		elseif Mode == "Fill" then
 			PumpLiquid(i,1.5);
 			--[[local Liquid = world.liquidAt(i);
-			--sb.logInfo("Here");
+			
 			if Liquid == nil then
 				Liquid = {0,0};
 			end
@@ -396,25 +396,25 @@ Pump = function()
 						else
 							if world.spawnLiquid(i,root.liquidId(LiquidName),MaxAmount - Liquid[2]) and ContainerCore.ContainerAvailable(Item) > 0 then
 								local AmountTaken = math.ceil(MaxAmount - LiquidBuffers[LiquidName].Amount);
-								--sb.logInfo("Amount Taken = " .. sb.print(AmountTaken));
-								--sb.logInfo("LiquidBuffer = " .. sb.print(LiquidBuffers[LiquidName].Amount));
+								
+								
 
 								LiquidBuffers[LiquidName].Amount = LiquidBuffers[LiquidName].Amount + AmountTaken;
 								LiquidBuffers[LiquidName].Amount = LiquidBuffers[LiquidName].Amount - (MaxAmount - Liquid[2]);
-								--sb.logInfo("LiquidBuffer MID = " .. sb.print(LiquidBuffers[LiquidName].Amount));
+								
 								if LiquidBuffers[LiquidName].Amount > 1.0 then
-									--sb.logInfo("Changing");
+									
 									local Modulus = LiquidBuffers[LiquidName].Amount % 1;
-									--sb.logInfo("Modulus = " .. sb.print(Modulus));
+									
 									local Difference = LiquidBuffers[LiquidName].Amount - Modulus;
 									AmountTaken = AmountTaken - Difference;
 									LiquidBuffers[LiquidName].Amount = Modulus;
 								end
-								--sb.logInfo("LiquidBuffer FINAL = " .. sb.print(LiquidBuffers[LiquidName].Amount));
+								
 								--Item.count = Item.count - AmountTaken;
-								--sb.logInfo("Consuming = " .. sb.print(Item) .. " Count = " .. sb.print(AmountTaken));
+								
 								ContainerCore.ContainerConsume(Item,AmountTaken);
-								--sb.logInfo("Consumed = " .. sb.print(ContainerCore.ContainerConsume(Item,AmountTaken)));
+								
 								
 							end
 						end

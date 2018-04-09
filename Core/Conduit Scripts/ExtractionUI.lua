@@ -78,8 +78,8 @@ function ExtractionUI.Initialize()
 	if SourceID == nil then
 		SourceID = pane.sourceEntity();
 	end
-	sb.logInfo("SourceID = " .. sb.print(SourceID));
-	sb.logInfo("Pane = " .. sb.print(pane));
+	
+	
 	UISettings = root.assetJson("/Blocks/Conduits/Extraction Conduit/UI/UI Settings.json");
 	DefaultTextBoxValues = UISettings.Defaults;
 	local ConduitNameDefault = "Extraction Conduit";
@@ -562,7 +562,7 @@ end
 
 --Saves it's settings and uninitializes the conduit
 function ExtractionUI.Uninitialize()
-	sb.logInfo("SourceID = " .. sb.print(SourceID));
+	
 	world.sendEntityMessage(SourceID,"__StoreValue__","UIItemName",widget.getText("itemNameBox"));
 	world.sendEntityMessage(SourceID,"__StoreValue__","UIInsertID",widget.getText("insertIDBox"));
 	world.sendEntityMessage(SourceID,"__StoreValue__","UITakeFromSide",widget.getText("takeFromSideBox"));

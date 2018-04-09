@@ -150,7 +150,7 @@ end
 
 --Called when the conduit has some saved Parameters
 InitWithSavedParams = function(SavedParameters)
-	--sb.logInfo("SAVED RESULTS = " .. sb.print(SavedParameters));
+	
 	for _,func in ipairs(OnSaveRetrieveFunctions) do
 		func(SavedParameters);
 	end
@@ -179,21 +179,21 @@ end
 
 --Returns true if the position fits inside any of the connection Points
 function ConduitCore.FitsInConnectionPoints(position)
-	--sb.logInfo("CALLED");
-	--sb.logInfo("POSITION = " .. sb.print(position));
+	
+	
 	if type(position[1]) == "table" then
-		--sb.logInfo("Positions = " .. sb.print(position));
+		
 		--has multiple positions
 		for _,pos in ipairs(position) do
 			for point in ConnectionPointIter() do
-				--sb.logInfo("point = " .. sb.print(point));
-				--sb.logInfo("pos = " .. sb.print(pos));
+				
+				
 				if point[1] + SourcePosition[1] == pos[1] and point[2] + SourcePosition[2] == pos[2] then
 					return true;
 				end
 			end
 		end
-		--sb.logInfo("IS FALSE");
+		
 	else
 		--It's a single position
 		for point in ConnectionPointIter() do
@@ -349,9 +349,9 @@ end
 
 --Calls all the network change functions of the Connection Type and removes them
 function __ConduitCore__.CallNetworkChangeFunctions(ConnectionType)
-	--sb.logInfo("__CONNECTIONTYPE = " .. sb.print(ConnectionType));
+	
 	--NetworkChange(ConnectionType);
-	--sb.logInfo("Post");
+	
 	if NetworkUpdateFunctions[ConnectionType] ~= nil then
 		for i=#NetworkUpdateFunctions[ConnectionType],1,-1 do
 			local func = NetworkUpdateFunctions[ConnectionType][i];
@@ -429,7 +429,7 @@ function ConduitCore.GetPath(ConnectionType,To)
 		end
 		local NewPath = {};
 		for i=#Path,1,-1 do
-			--sb.logInfo("Path Index in Pathfinder = " .. sb.print(Path[i]));
+			
 			NewPath[#NewPath + 1] = Path[i].ID;
 		end
 		return NewPath;
@@ -528,7 +528,7 @@ end
 
 UpdateSprite = function()
 	if not IsOccluded then
-		--sb.logInfo("Name = " .. sb.print(object.name()));
+		
 		object.setProcessingDirectives("");
 		if Connections[3] ~= 0 and Connections[4] ~= 0 and Connections[1] == 0 and Connections[2] == 0 then
 			animator.setAnimationState("cable","horizontal");
@@ -831,9 +831,9 @@ end
 
 --Called when the object is Dying
 Die = function()
-	--sb.logInfo("IsFacaded = " .. sb.print(Facade));
-	--sb.logInfo("DroppingItems = " .. sb.print(DroppingItems));
-	--sb.logInfo("FacadeDropItem = " .. sb.print(FacadeDropItem));
+	
+	
+	
 	if Facade and not SaveSettings.IsSaving and DroppingItems and FacadeDropItem ~= nil then
 		world.spawnItem(FacadeDropItem,DroppingPosition or SourcePosition,1);
 	end
@@ -869,11 +869,11 @@ Die = function()
 			Parameters.ExtraValueNames[#Parameters.ExtraValueNames + 1] = "inventoryIcon";
 		end--]]
 
-		sb.logInfo("FINAL PARAMETERS = " .. sb.printJson(Parameters,1));
-		--sb.logInfo("SAVE = " .. sb.printJson(SaveSettings,1));
-		--sb.logInfo("Save Position = " .. sb.print(SaveSettings.Position));
-		--sb.logInfo("DroppingPosition = " .. sb.print(DroppingPosition));
-		--sb.logInfo("Source Position = " .. sb.print(SourcePosition));
+		
+		
+		
+		
+		
 		world.spawnItem(SaveSettings.Item.name,SaveSettings.Position or DroppingPosition or SourcePosition,SaveSettings.Item.count,Parameters);
 	end
 end

@@ -145,8 +145,8 @@ function ContainerCore.ContainerItemsCanFit(Item)
 		if Container[Index] == nil then
 			Times = Times + (math.floor(MaxStack / Item.count));
 		else
-			--sb.logInfo("Item = " .. sb.print(Item));
-			--sb.logInfo("Container Item = " .. sb.print(Container[Index]));
+			
+			
 			if root.itemDescriptorsMatch(Item,Container[Index],true) then
 				Times = Times + (math.floor((MaxStack - Container[Index].count) / Item.count));
 			end
@@ -160,7 +160,7 @@ function IsContainerCore()
 end
 
 function ContainerCore.ContainerAddItems(Item)
-	--sb.logInfo("Adding = " .. sb.print(Item));
+	
 	local Count = Item.count;
 	if Count == 0 then
 		return nil;
@@ -237,7 +237,7 @@ function ContainerCore.ContainerStackItems(Item)
 end
 
 function ContainerCore.ContainerPutItemsAt(Item,slot)
-	--sb.logInfo("Attempting To Put In Slot " .. sb.print(slot + 1));
+	
 	--local ItemConfig = root.itemConfig(Item);
 	--local MaxStack;
 	local Count = Item.count;
@@ -257,7 +257,7 @@ function ContainerCore.ContainerPutItemsAt(Item,slot)
 			Count = Container[Index].count + Count - MaxStack;
 			return {name = Item.name,count = Count,parameters = Item.parameters};
 		end--]]
-		--sb.logInfo("Container Slot of " .. Index .. " = " .. sb.print(Container[Index]));
+		
 		if root.itemDescriptorsMatch(Item,Container[Index],true) then
 			if Container[Index].count + Count <= MaxStack then
 				Container[Index].count = Container[Index].count + Count;
@@ -351,7 +351,7 @@ function ContainerCore.ContainerConsumeAt(Slot,Count)
 	end
 	local Item = ContainerCore.ContainerItemAtRef(Slot);
 	if Item ~= nil and Item.count >= Count then
-		--sb.logInfo("Subtracting " .. sb.print(Count));
+		
 		Item.count = Item.count - Count;
 		if Item.count == 0 then
 			SetSlotNull(Slot);
@@ -372,10 +372,10 @@ function ContainerCore.LeftClick(_,_,slot,player,currentSwapItem)
 		Item,Container[Index] = Container[Index],nil;
 		world.sendEntityMessage(player,"SetSwapItem",Item);
 	else
-		--sb.logInfo("Item Container Before = " .. sb.print(Container[Index]));
+		
 		local Item = ContainerCore.ContainerSwapItems(currentSwapItem,slot);
-		--sb.logInfo("Swapping");
-		--sb.logInfo("Item Container After = " .. sb.print(Container[Index]));
+		
+		
 		world.sendEntityMessage(player,"SetSwapItem",Item);
 	end
 end

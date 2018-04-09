@@ -207,9 +207,9 @@ function init()
 		DefaultName = "IO Conduit";
 	end
 	--DefaultName = world.getObjectParameter(SourceID,"OriginalDescription") or world.getObjectParameter(SourceID,"shortdescription");
-	--sb.logInfo("Default Name = " .. sb.print(DefaultName));
+	
 	ConduitName = world.getObjectParameter(SourceID,"ConduitName") or world.getObjectParameter(SourceID,"OriginalDescription") or world.getObjectParameter(SourceID,"shortdescription");
-	--sb.logInfo("Conduit Name = " .. sb.print(ConduitName));
+	
 	if ConduitName == DefaultName then
 		ConduitName = "";
 	end
@@ -278,9 +278,9 @@ function update(dt)
 	if CanPasteMessage == nil then
 		CanPasteMessage = world.sendEntityMessage(player.id(),"PlayerHasCopy");
 	end
-	--sb.logInfo("Finished = " .. sb.print(CanPasteMessage:finished()));
+	
 	if CanPasteMessage:finished() then
-		sb.logInfo("Can Paste = " .. sb.print(CanPasteMessage:result()));
+		
 		if CanPasteMessage:result() ~= CanPaste then
 			CanPaste = CanPasteMessage:result();
 			UpdatePasteButton();
@@ -298,7 +298,7 @@ function update(dt)
 			PasteMessage = nil;
 		end
 	end
-	--sb.logInfo("CanPasteMessage = " .. sb.print(CanPasteMessage));
+	
 end
 
 UpdatePasteButton = function()
@@ -489,12 +489,12 @@ function ColorDecrement()
 end
 
 function Copy()
-	sb.logInfo("Copy Pressed");
+	
 	local SelectedItem = widget.getListSelected(ItemList);
 	local Index = 0;
 	for k,i in ipairs(ListItems) do
 		if SelectedItem == i then
-			sb.logInfo("Sending " .. sb.print(Configs[k]) .. " to player");
+			
 			world.sendEntityMessage(player.id(),"SetExtractionConfigCopy",Configs[k]);
 			break;
 		end
@@ -530,9 +530,9 @@ function Save()
 	local Object = pane.sourceEntity();
 	if Object ~= nil then
 		local Params = world.getObjectParameter(Object,"RetainingParameters");
-		--sb.logInfo("Params = " .. sb.print(Params));
+		
 		local Pos = world.entityPosition(Object);
-		--sb.logInfo(stringTable(world,"World"));
+		
 		local Configs = {};
 		if Params ~= nil then
 			for k,i in ipairs(Params) do
@@ -552,7 +552,7 @@ function Save()
 			else
 				Configs["shortdescription"] = DefaultName;
 			end
-			--sb.logInfo("Configs = " .. sb.printJson(Configs,1));
+			
 			world.sendEntityMessage(Object,"SmashCableBlockAndSpawnItem",nil,world.entityPosition(Object),10,Configs);
 		end
 		--world.sendEntityMessage(Object,"SetRetainingMode");
@@ -561,7 +561,7 @@ end
 
 function ConduitNameChange()
 	ConduitName = widget.getText("conduitNameBox");
-	sb.logInfo("Conduit name Changed to = " .. sb.print(ConduitName));
+	
 	world.sendEntityMessage(SourceID,"SetValue","ConduitName",ConduitName);
 end
 

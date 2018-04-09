@@ -132,7 +132,7 @@ function update(dt)
 		Pump();
 		script.setUpdateDelta(1);
 		--ContainerCore.ContainerAddItems({name = "coalore",count = 1});
-		--sb.logInfo("ContainerItems = " .. sb.print(ContainerCore.ContainerItemsRef()));
+		
 	end
 end
 
@@ -151,17 +151,17 @@ local LiquidBuffers = setmetatable({},{__mode = "v"});
 --local Buffer;
 
 Pump = function()
-	--sb.logInfo("Test");
-	--sb.logInfo("Input Positions = " .. sb.print(InputPositions));
+	
+	
 	for k,i in LoopBackIter(InputPositions,InputIndex) do
 		InputIndex = k;
-		--sb.logInfo("Looping");
+		
 		local Liquid = world.liquidAt(i);
 		if Liquid ~= nil then
 			local LiquidConfig = GetFluidConfig(Liquid[1]);
 			if ContainerCore.ContainerItemsCanFit({name = LiquidConfig.itemDrop,count = 1}) > 0 then
 				world.destroyLiquid(i);
-				--sb.logInfo("Liquid = " .. sb.print(Liquid));
+				
 				local LiquidName = root.liquidName(Liquid[1]);
 				if LiquidBuffers[LiquidName] == nil then
 					LiquidBuffers[LiquidName] = 0;
@@ -170,7 +170,7 @@ Pump = function()
 					Buffer = 0;
 					BufferLiquid = Liquid[1];
 				end--]]
-				--sb.logInfo(sb.printJson(GetFluidConfig(Liquid[1])));
+				
 				local OriginalBuffer = LiquidBuffers[LiquidName];
 				LiquidBuffers[LiquidName] = LiquidBuffers[LiquidName] + Liquid[2];
 				if LiquidBuffers[LiquidName] >= 1 then
@@ -191,7 +191,7 @@ Pump = function()
 						end
 					end
 					--[[local Result = ContainerCore.ContainerAddItems({name = LiquidConfig.itemDrop,count = math.floor(Buffer)});
-					sb.logInfo("Result = " .. Result);
+					
 					if Result == nil then
 						Buffer = Buffer - math.floor(Buffer);
 						world.destroyLiquid(i);
@@ -203,7 +203,7 @@ Pump = function()
 			end
 		end
 		--[[if Liquid[2] == 1 then
-			sb.logInfo(sb.printJson(GetFluidConfig(Liquid[1])));
+			
 		end--]]
 	end
 end

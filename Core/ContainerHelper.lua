@@ -62,7 +62,7 @@ function Container.Items(ID)
 				end
 			end
 		end
-		--sb.logInfo("Metatable = " .. sb.print(getmetatable(Items)));
+		
 		return Items;
 	end
 end

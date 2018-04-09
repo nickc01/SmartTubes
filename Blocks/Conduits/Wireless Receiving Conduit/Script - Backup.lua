@@ -12,10 +12,10 @@ local function UniIter(t)
 end
 
 local function GetWirelessConnectedConduits()
-	sb.logInfo("Input Is Connected = " .. sb.print(object.isInputNodeConnected(0)));
+	
 	if object.isInputNodeConnected(0) == true then
 		local Inputs = object.getInputNodeIds(0);
-		sb.logInfo("Inputs = " .. sb.printJson(Inputs));
+		
 		local Final = {};
 		for i,_ in UniIter(Inputs) do
 			if world.getObjectParameter(i,"conduitType") == "sender" then
@@ -93,7 +93,7 @@ function IsConnectedWirelesslyTo(ID)
 end
 
 function onNodeConnectionChange(args)
-	--sb.logInfo("Updated");
+	
 	Cables.UpdateExtractionConduits();
 	WirelessBuffer = GetWirelessConnectedConduits();
 end

@@ -94,7 +94,7 @@ function onNodeConnectionChange()
 	if ConduitCore ~= nil then
 		ConduitCore.TriggerNetworkUpdate("Conduits");
 	end
-	sb.logInfo("Wireless Connection Change");
+	
 	if NodeChangeFunctions ~= nil then
 		for _,func in ipairs(NodeChangeFunctions) do
 			func();

@@ -113,12 +113,12 @@ function Creator.Create(CanvasName,Rect,ListImages,Direction,Scrollbar)
 			BottomRect = {LowPoint,0,LowPoint + ListArea[3] - ListArea[1],ListArea[4] - ListArea[2]};
 			TopRect = {(HighPoint + ElementSize[1]) - (BottomRect[3] - BottomRect[1]),0,HighPoint + ElementSize[1],ListArea[4] - ListArea[2]};
 		end
-		--sb.logInfo("FirstChildPos = " .. sb.print(FirstChildPos));
-		--sb.logInfo("LastChildPos = " .. sb.print(LastChildPos));
-		--sb.logInfo("TopRect = " .. sb.print(TopRect));
-		--sb.logInfo("BottomRect = " .. sb.print(BottomRect));
+		
+		
+		
+		
 		local Final = RectLerp(TopRect,BottomRect,Value);
-		--sb.logInfo("FInal = " .. sb.print(Final));
+		
 		if Direction == "up" or Direction == "down" then
 			--AnchorPoint.SetPosition({Final[1],-Final[2],Final[3],(Final[4] - Final[2]) - Final[2]});
 			AnchorPoint.SetPosition({0,-Final[2]});
@@ -185,22 +185,22 @@ function Creator.Create(CanvasName,Rect,ListImages,Direction,Scrollbar)
 	Element.AddControllerValue("AddElement",function()
 		Element.SetSelectedElement(nil);
 		local Position = GetLastElementPosition();
-		--sb.logInfo("Last Element Position = " .. sb.print(Position));
+		
 		local NextElementPosition = vec.add(Position,Offset);
-		--sb.logInfo("Next Element Position = " .. sb.print(NextElementPosition));
+		
 		local NewChild = Argon.CreateElement("Mask",CanvasName,{NextElementPosition[1],NextElementPosition[2],NextElementPosition[1] + ElementSize[1],NextElementPosition[2] + ElementSize[2]});
 		--AnchorPoint.SetPosition({0,0});
 		AnchorPoint.AddChild(NewChild);
 		NewChild.AddChild(Argon.CreateElement("ListImage",CanvasName,nil,ListImages,Element));
-		--sb.logInfo("Rel Pos = " .. sb.print(NewChild.GetPosition()));
-		--sb.logInfo("Abs Pos = " .. sb.print(NewChild.GetAbsolutePosition()));
+		
+		
 		RecalculatePosition();
-		--sb.logInfo("Anchor Position = " .. sb.print(AnchorPoint.GetPosition()));
-		--sb.logInfo("Element Position = " .. sb.print(Element.GetPosition()));
+		
+		
 		return NewChild;
 	end);
 	Element.AddControllerValue("RemoveElement",function(controller)
-		--sb.logInfo("Controller = " .. sb.print(AnchorPoint));
+		
 		if AnchorPoint.RemoveChild(controller) == false then
 			error("This List Element wasn't able to be removed");
 		else

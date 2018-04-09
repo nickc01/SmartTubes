@@ -93,7 +93,7 @@ function die()
 end
 
 function onNodeConnectionChange(args)
-	--sb.logInfo("Updated");
+	
 	Cables.UpdateExtractionConduits();
 	WirelessBuffer = GetWirelessConnectedConduits();
 end

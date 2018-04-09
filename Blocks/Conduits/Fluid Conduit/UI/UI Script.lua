@@ -42,7 +42,7 @@ function init()
 end
 
 function update(dt)
-	--sb.logInfo("Updating");
+	
 	ContainerCore.Update();
 end
 

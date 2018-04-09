@@ -28,7 +28,7 @@ local ConfigIndex = 1;
 local ConfigCache = {};
 local AnyNumberTable = setmetatable({},{__index = function(_,k) return k end});
 local ZeroIfNilMetatable = {__index = function(tbl,k)
-	--sb.logInfo("Calling Metatable for = " .. sb.print(k));
+	
 	return rawget(tbl,k) or 0; end};
 local LocalOnConfigUpdate = {};
 local Data = {};
@@ -281,7 +281,7 @@ function Extraction.GetItemFromContainer(container)
 	local Slots;
 	if not IsCached("TakeFromSlots") then
 		Slots = {};
-		--sb.logInfo("Config = " .. sb.print(Config));
+		
 		for number in StringToNumbers(Config.takeFromSlot) do
 			Slots[#Slots + 1] = number;
 		end
@@ -326,43 +326,43 @@ function Extraction.GetItemFromContainer(container)
 				if Item.count > (Stack + 1) ^ 2 then
 					Item.count = (Stack + 1) ^ 2;
 				end
-				--sb.logInfo("Beginning Check on " .. sb.print(Item));
+				
 				if ForEntireInventory then
-					--sb.logInfo("A");
+					
 					local TotalInInventory = ContainerHelper.Available(container,{name = Item.name,count = 1,parameters = Item.parameters});
-					--sb.logInfo("Total In Inventory = " .. sb.print(TotalInInventory));
+					
 					local AmountCanTake = TotalInInventory - AmountToLeave[1];
 					if Item.count <= AmountCanTake then
-						--sb.logInfo("B");
+						
 						--CheckItemWithOperators(Item); TODO
 						if CheckItemWithOperators(Item) then
-							--sb.logInfo("D");
+							
 							return Item,slot;
 						end
 					else
-						--sb.logInfo("C");
+						
 						--local Count = AmountCanTake;
 						Item = {name = Item.name,count = AmountCanTake,parameters = Item.parameters};
 						--CheckItemWithOperators(Item); 
 						if CheckItemWithOperators(Item) then
-							--sb.logInfo("E");
+							
 							return Item,slot;
 						end
 					end
 				else
-					--sb.logInfo("F");
+					
 					if AmountToLeave[slot] ~= 0 then
-						--sb.logInfo("Amount To Leave = " .. sb.print(AmountToLeave[slot]));
-						--sb.logInfo("G");
+						
+						
 						Item = {name = Item.name,count = Item.count - AmountToLeave[slot],parameters = Item.parameters};
 						--CheckItemWithOperators(Item); TODO
 						if CheckItemWithOperators(Item) then
-							--sb.logInfo("H");
+							
 							return Item,slot;
 						end
 					else
 						if CheckItemWithOperators(Item) then
-							--sb.logInfo("I");
+							
 							return Item,slot;
 						end
 					end
@@ -377,7 +377,7 @@ CheckItemWithOperators = function(item)
 		local Config = Extraction.GetConfig();
 		--If the item is specific
 		if Config.isSpecific == true then
-			sb.logInfo("SPECIFIC");
+			
 			return root.itemDescriptorsMatch(item,{name = item.name,count = item.count,parameters = Config.specificData},true);
 		end
 		if not IsCached("ItemCheckCache") then
@@ -443,13 +443,13 @@ CheckItemWithOperators = function(item)
 				return false;
 			end
 		end
-		--sb.logInfo("Returning Value = " .. sb.print(Valid));
+		
 		if CanCache then
 			ItemCheckCache[item.name] = Valid;
 		end
 		return Valid;
 	end
-	--sb.logInfo("Returning False 3");
+	
 	return false;
 end
 
@@ -458,15 +458,15 @@ function Extraction.InsertionConduitFinder()
 	--TODO
 	local InsertionConduits;
 	if not IsCached("InsertionConduits") then
-		--sb.logInfo("Insertion Conduits Being Cached " .. sb.print(entity.id()));
+		
 		local NetworkInsertConduits;
 		if not IsCached("NetworkInsertConduits") then
 			local Network = ConduitCore.GetConduitNetwork();
-			sb.logInfo("NETWORK = " .. sb.print(Network));
+			
 			NetworkInsertConduits = {};
 			for k,i in ipairs(Network) do
-				--sb.logInfo("First I = " .. sb.print(i));
-				--sb.logInfo("First InsertID = " .. sb.print(world.getObjectParameter(i,"insertID")));
+				
+				
 				if world.getObjectParameter(i,"insertID") ~= nil then
 					NetworkInsertConduits[#NetworkInsertConduits + 1] = i;
 				end
@@ -475,7 +475,7 @@ function Extraction.InsertionConduitFinder()
 		else
 			NetworkInsertConduits = GetCachedConfigValue("NetworkInsertConduits");
 		end
-		--sb.logInfo("NetworkInsertConduits = " .. sb.print(NetworkInsertConduits));
+		
 		local InsertIDs;
 		if not IsCached("InsertIDs") then
 			InsertIDs = {
@@ -493,7 +493,7 @@ function Extraction.InsertionConduitFinder()
 		else
 			InsertIDs = GetCachedConfigValue("InsertIDs");
 		end
-		--sb.logInfo("Insert IDS = " .. sb.print(InsertIDs));
+		
 		InsertionConduits = {};
 		for k,i in ipairs(NetworkInsertConduits) do
 			local InsertID = world.getObjectParameter(i,"insertID");
@@ -516,12 +516,12 @@ function Extraction.InsertionConduitFinder()
 				InsertionConduits[#InsertionConduits + 1] = i;
 			end
 		end
-		--sb.logInfo("FInal INSERTION CONDUITS = " .. sb.print(InsertionConduits));
+		
 		SetCachedConfigValue("InsertionConduits",InsertionConduits);
 	else
 		InsertionConduits = GetCachedConfigValue("InsertionConduits");
 	end
-	--sb.logInfo("InsertionConduits = " .. sb.print(InsertionConduits));
+	
 	return RandomIterator(InsertionConduits);
 end
 
@@ -552,9 +552,9 @@ end
 
 --Will update the config to the latest version
 function Extraction.RefreshConfig()
-	--sb.logInfo("Config Has Changed = " .. sb.print(ConfigHasChanged));
+	
 	if ConfigUUID ~= NewConfigUUID then
-		--sb.logInfo("Refreshed");
+		
 		Config = NewConfig;
 		ConfigUUID = NewConfigUUID;
 		ConfigUpdate();
@@ -617,7 +617,7 @@ end
 
 --Called when the config is updated
 ConfigUpdate = function()
-	--sb.logInfo("Config is updated");
+	
 	ResetCache();
 	for _,func in ipairs(LocalOnConfigUpdate) do
 		func();

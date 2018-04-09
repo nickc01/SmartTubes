@@ -13,7 +13,7 @@ function init()
 	ConduitCore.Initialize();
 	ConduitCore.AddExtraPathFunction("Conduits",ExtraPathFunction);
 	Wireless.AddNodeChangeFunction(OnNodeChangeFunction);
-	sb.logInfo("SENDER = " .. sb.print(entity.id()));
+	
 end
 
 --Called when the network path is needed

@@ -64,11 +64,11 @@ function init()
 	SetupAim();
 	FacadeConfig = root.assetJson("/Blocks/Conduits/Facades.json").Facades;
 	UIConfig = root.assetJson("/Items/Facade Wrench/UI/UI Config.config");
-	--sb.logInfo("Before = " .. sb.print(config.getParameter("test1")));
+	
 	--activeItem.setInstanceValue("test1","thisisatest");
-	--sb.logInfo("After = " .. sb.print(config.getParameter("test1")));
-	--sb.logInfo("EntityID = " .. sb.print(entity.id()));
-	--sb.logInfo("ValueTest = " .. sb.print(config.getParameter("ValueTest")));
+	
+	
+	
 	UpdateAfterLimit();
 end
 
@@ -82,7 +82,7 @@ UpdateAfterLimit = function()
 		end
 	end
 	Indicators = {};
-	--sb.logInfo("Aim Position = " .. sb.print(vecFloor(activeItem.ownerAimPosition())));
+	
 	local Pos = activeItem.ownerAimPosition()--world.entityPosition(vecFloor(activeItem.ownerAimPosition()));
 	if Pos ~= nil then
 		local Objects = world.objectQuery(Pos,10);
@@ -102,7 +102,7 @@ function update(dt,fireMode,shiftHeld)
 	if First == false then
 		First = true;
 		local PreviousConfig = config.getParameter("PreviousConfig");
-		--sb.logInfo("Previous Config = " .. sb.print(PreviousConfig));
+		
 		if PreviousConfig ~= nil then
 			world.sendEntityMessage(activeItem.ownerEntityId(),"SetConfig",PreviousConfig);
 			Config = PreviousConfig;
@@ -115,7 +115,7 @@ function update(dt,fireMode,shiftHeld)
 	end
 	if Promise ~= nil then
 		if Promise:finished() == true then
-			--sb.logInfo("Finished = " .. sb.print(Promise:finished()));
+			
 			local Interaction = Promise:result();
 			if Interaction ~= nil then
 				activeItem.interact(Interaction[1],Interaction[2],activeItem.ownerEntityId());
@@ -152,10 +152,10 @@ end
 local function GetBlock(Material)
 	local config = root.materialConfig(Material);
 	if config ~= nil and config.config.renderParameters ~= nil and config.config.renderParameters.occludesBelow == true then
-		--sb.logInfo("OCCLUDED");
+		
 		return FacadeConfig[Config.Index].occludedBlock,true;
 	end
-	--sb.logInfo("NORMAL");
+	
 	return FacadeConfig[Config.Index].normalBlock,false;
 end
 
@@ -174,8 +174,8 @@ local function EmbedInBlock(Position)
 		HasBackground = Background;
 	end
 	local Object,IsOccluded = GetBlock(Foreground);
-	--sb.logInfo("Material Above = " .. sb.print(world.objectAt(vecAdd(Position,{0,1}))));
-	sb.logInfo("Item = " .. sb.print(ItemConsumed));
+	
+	
 	local Info = 
 	{
 		--ADD OCLUDED BOOLEAN
@@ -200,15 +200,15 @@ local function OnClick(shiftHeld)
 	if IsValid == true then
 		if Config.Breaking == false and (player.isAdmin() or player.hasItem({name = FacadeConfig[Config.Index].item,count = 1}) == true) then
 			local ConsumedItem = player.getItemWithParameter("ContainsStoredInfoFor",FacadeConfig[Config.Index].item);
-			sb.logInfo("Contains Item with stored Info = " .. sb.print(player.hasItemWithParameter("ContainsStoredInfoFor",FacadeConfig[Config.Index].item)));
+			
 			if ConsumedItem ~= nil then
 				player.consumeItemWithParameter("ContainsStoredInfoFor",FacadeConfig[Config.Index].item,1);
-				sb.logInfo("Consumed with parameter");
+				
 				ItemConsumed = ConsumedItem;
 			else
 				if player.isAdmin() == false then
 					ItemConsumed = {name = FacadeConfig[Config.Index].item,count = 1};
-					sb.logInfo("Consumed without parameter");
+					
 					player.consumeItem(ItemConsumed);
 				else
 					ItemConsumed = {name = FacadeConfig[Config.Index].item,count = 1};

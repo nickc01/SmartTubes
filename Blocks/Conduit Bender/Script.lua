@@ -44,7 +44,7 @@ end
 function update(dt)
 	if AbleToCraft == true then
 		Progress = Progress + (dt * (Speed + 1));
-		--sb.logInfo("Progress = " .. sb.print(Progress));
+		
 		object.setConfigParameter("Progress",Progress);
 		if Progress >= 1 then
 			world.containerConsumeAt(EntityID,0,RequiredConduits);
@@ -56,7 +56,7 @@ function update(dt)
 end
 
 function containerCallback()
-	--sb.logInfo("Container Changed!");
+	
 	local InputSlot = world.containerItemAt(EntityID,0);
 	local OutputSlot = world.containerItemAt(EntityID,1);
 	if InputSlot ~= nil and InputSlot.name == "itemconduit" and InputSlot.count >= RequiredConduits and (OutputSlot == nil or (OutputSlot.name == ItemName and OutputSlot.count < 1000)) then
@@ -66,7 +66,7 @@ function containerCallback()
 		Progress = 0;
 		object.setConfigParameter("Progress",Progress);
 	end
-	--sb.logInfo("Able To Craft = " .. sb.print(AbleToCraft));
+	
 end
 
 function die()
@@ -141,7 +141,7 @@ function init()
 end
 
 function containerCallback()
-	sb.logInfo("Container Changed!");
+	
 	local Item = world.containerItemAt(EntityID,0);
 	local Output = world.containerItemAt(EntityID,1);
 	if Item ~= nil and Item.name == "itemconduit" and Item.count >= RequiredConduits and (Output == nil or Output.name == ItemName) then

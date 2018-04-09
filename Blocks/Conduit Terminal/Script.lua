@@ -44,7 +44,7 @@ function init()
 		local Extra;
 		if UINeedsUpdate == true or Force == true then
 			--if Force == true then
-				--sb.logInfo("Force = " .. sb.print(Force));
+				
 			--end
 			if Force == true then
 				Value = true;
@@ -79,7 +79,7 @@ function uninit()
 end
 
 OnUIUpdate = function(NewNetwork)
-	sb.logInfo("Updating UI");
+	
 	ExtractionNodes = {};
 	if NewNetwork.extraction ~= nil then
 		for k,i in ipairs(NewNetwork.extraction) do
@@ -94,7 +94,7 @@ OnUIUpdate = function(NewNetwork)
 			--ExtractionNodes[#ExtractionNodes + 1] = i;
 		end
 	end
-	sb.logInfo("ExtractionNodes to send = " .. sb.print(ExtractionNodes));
+	
 	return ExtractionNodes;
 end
 

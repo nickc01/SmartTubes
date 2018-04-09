@@ -42,19 +42,19 @@ function init()
 	message.setHandler("AddItemToDrop",AddItemToDrop);
 	message.setHandler("SetSource",SetSource);
 	ENTITYID = entity.id();
-	sb.logInfo("Creating Traversal of " .. sb.print(entity.id()));
+	
 end
 
 local function Finish()
-	sb.logInfo(sb.print(entity.id()) .. " adding to inventory to " .. sb.print(SourceID));
+	
 	world.sendEntityMessage(SourceID,"AddToInventory",EntityID,ContainerID);
 	projectile.die();
-	sb.logInfo(sb.print(entity.id()) .. " finished");
+	
 	return nil;
 end
 
 local function Drop()
-	sb.logInfo(sb.print(entity.id()) .. " dropping to " .. sb.print(SourceID));
+	
 	world.sendEntityMessage(SourceID,"DropItems",EntityID,ContainerID,entity.position());
 	if DroppingItems ~= nil then
 		local Position = entity.position();
@@ -72,7 +72,7 @@ function ChangeContainer(NewContainer)
 end
 
 local function RecalculatePath(StartingPoint)
-	sb.logInfo(sb.print(entity.id()) .. " recalc");
+	
 	local StartingConduit = world.objectAt(StartingPoint);
 	if StartingConduit == nil then return nil end;
 	local Findings = {{ID = StartingConduit}};
@@ -136,7 +136,7 @@ local function RecalculatePath(StartingPoint)
 		Path[#Path + 1] = Point.ID;
 		NextLevel = Point.Previous;
 	until NextLevel == nil
-	--sb.logInfo("RB");
+	
 	return Path,SelectedInsertionConduit.ID;
 end
 --[[local function SetTraversalFromCurve(UseEdge,DecreaseAmount)
@@ -372,7 +372,7 @@ function ReRoute(possibleConduits,removePossiblity)
 end
 
 function StartTraversing(path,speed,containerID,pathIndex,altID,possibleConduits,conduitLimits,sideLimits)
-	sb.logInfo(sb.print(entity.id()) .. " starting traverse");
+	
 	EntityID = entity.id();
 	Started = true;
 	SourceID = altID or projectile.sourceEntity();
@@ -464,5 +464,5 @@ function update(dt)
 end
 
 --[[function uninit()
-	sb.logInfo(sb.print(ENTITYID) .. " UNINIT");
+	
 end--]]

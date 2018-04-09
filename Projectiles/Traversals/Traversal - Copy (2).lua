@@ -36,7 +36,7 @@ end
 
 local function SetSource(_,_,NewSource)
 	SourceID = NewSource;
-	--sb.logInfo("NEWID_E ___________________________________________ = " .. sb.print(SourceID));
+	
 	--PossibleConduits[#PossibleConduits + 1] = NewSource;
 end
 
@@ -45,15 +45,15 @@ function init()
 	message.setHandler("SetSource",SetSource);
 	--LastPosition = entity.position();
 	ENTITYID = entity.id();
-	sb.logInfo("Creating Traversal of " .. sb.print(entity.id()));
+	
 end
 
 local function Finish()
-	--sb.logInfo("Finished Traversing");
-	sb.logInfo(sb.print(entity.id()) .. " adding to inventory to " .. sb.print(SourceID));
+	
+	
 	world.sendEntityMessage(SourceID,"AddToInventory",EntityID,ContainerID);
 	projectile.die();
-	sb.logInfo(sb.print(entity.id()) .. " finished");
+	
 	return nil;
 end
 
@@ -62,12 +62,12 @@ end
 end--]]
 
 local function Drop()
-	sb.logInfo(sb.print(entity.id()) .. " dropping to " .. sb.print(SourceID));
+	
 	world.sendEntityMessage(SourceID,"DropItems",EntityID,ContainerID,entity.position());
 	if DroppingItems ~= nil then
 		local Position = entity.position();
 		for i=1,#DroppingItems do
-			--sb.logInfo("DROPPINGH");
+			
 			world.spawnItem(DroppingItems[i],Position,DroppingItems[i].count,DroppingItems[i].parameters);
 		end
 	end
@@ -81,11 +81,11 @@ function ChangeContainer(NewContainer)
 end
 
 local function RecalculatePath(StartingPoint)
-	sb.logInfo(sb.print(entity.id()) .. " recalc");
-	--sb.logInfo(stringTable(PossibleConduits,"PossibleConduits"));
+	
+	
 	local StartingConduit = world.objectAt(StartingPoint);
-	--sb.logInfo("StartingConduit = " .. StartingConduit);
-	--sb.logInfo("Start is " .. sb.print(StartingPoint));
+	
+	
 	if StartingConduit == nil then return nil end;
 	local Findings = {{ID = StartingConduit}};
 	local Next = {};
@@ -97,8 +97,8 @@ local function RecalculatePath(StartingPoint)
 			Next[#Next + 1] = {ID = StartingConduits[i],Previous = 1};
 		end
 	end
-	--sb.logInfo("Conduits to Start = " .. #StartingConduits);
-	--sb.logInfo("PossibleConduits = " .. sb.print(PossibleConduits));
+	
+	
 	repeat
 		local NewNext = {};
 		for i=1,#Next do
@@ -150,7 +150,7 @@ local function RecalculatePath(StartingPoint)
 		Path[#Path + 1] = Point.ID;
 		NextLevel = Point.Previous;
 	until NextLevel == nil
-	--sb.logInfo("RB");
+	
 	return Path,SelectedInsertionConduit.ID;
 end
 
@@ -288,7 +288,7 @@ function ReRoute(possibleConduits,removePossiblity)
 end
 
 function StartTraversing(path,speed,containerID,pathIndex,altID,possibleConduits,conduitLimits,sideLimits)
-	sb.logInfo(sb.print(entity.id()) .. " starting traverse");
+	
 	EntityID = entity.id();
 	Started = true;
 	SourceID = altID or projectile.sourceEntity();
@@ -382,16 +382,16 @@ function update(dt)
 	end
 	if Traverser ~= nil then
 		if ReRouting == true then
-			--sb.logInfo("R is TRUE");
+			
 			ReRouting = false;
 			if ReRoutedPath ~= nil then
-				--sb.logInfo("REROUTED _____________________________");
+				
 				if RedirectionIsCurved == false then
 					Path = ReRoutedPath;
 					ReRoutedPath = nil;
 					PathIndex = #Path;
 					SourceID = ReRoutedID;
-					--sb.logInfo("NEWID_C ___________________________________________ = " .. sb.print(SourceID));
+					
 					ReRoutedID = nil;
 					ResetTraversal();
 				else
@@ -402,7 +402,7 @@ function update(dt)
 						SourceID = ReRoutedID;
 						RedirectionIsCurved = false;
 						RedirectPathNumber = 0;
-						--sb.logInfo("NEWID_C ___________________________________________ = " .. sb.print(SourceID));
+						
 						ReRoutedID = nil;
 						ResetTraversal();
 					end
@@ -414,5 +414,5 @@ function update(dt)
 end
 
 function uninit()
-	sb.logInfo(sb.print(ENTITYID) .. " UNINIT");
+	
 end

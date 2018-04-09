@@ -51,7 +51,7 @@ function Creator.Create(CanvasName,Position,Font,CenterPos)
 					StartPos[1] = StartPos[1] + (Font.WidthOfSpace or Font.TextSize[1]);
 				else
 					local Image = Font.Image;
-					--sb.logInfo("word = " .. sb.print(word));
+					
 					if string.match(Image,"^/") == nil then
 						Image = Argon.GetArgonDirectory() .. Image;
 					end
