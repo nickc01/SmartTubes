@@ -329,7 +329,7 @@ function Extraction.GetItemFromContainer(container)
 				--sb.logInfo("Beginning Check on " .. sb.print(Item));
 				if ForEntireInventory then
 					--sb.logInfo("A");
-					local TotalInInventory = ContainerHelper.Available(container,{name = Item.name,count = 1});
+					local TotalInInventory = ContainerHelper.Available(container,{name = Item.name,count = 1,parameters = Item.parameters});
 					--sb.logInfo("Total In Inventory = " .. sb.print(TotalInInventory));
 					local AmountCanTake = TotalInInventory - AmountToLeave[1];
 					if Item.count <= AmountCanTake then
@@ -342,7 +342,7 @@ function Extraction.GetItemFromContainer(container)
 					else
 						--sb.logInfo("C");
 						--local Count = AmountCanTake;
-						Item = {name = Item.name,count = AmountCanTake};
+						Item = {name = Item.name,count = AmountCanTake,parameters = Item.parameters};
 						--CheckItemWithOperators(Item); 
 						if CheckItemWithOperators(Item) then
 							--sb.logInfo("E");
@@ -354,7 +354,7 @@ function Extraction.GetItemFromContainer(container)
 					if AmountToLeave[slot] ~= 0 then
 						--sb.logInfo("Amount To Leave = " .. sb.print(AmountToLeave[slot]));
 						--sb.logInfo("G");
-						Item = {name = Item.name,count = Item.count - AmountToLeave[slot]};
+						Item = {name = Item.name,count = Item.count - AmountToLeave[slot],parameters = Item.parameters};
 						--CheckItemWithOperators(Item); TODO
 						if CheckItemWithOperators(Item) then
 							--sb.logInfo("H");
@@ -374,6 +374,12 @@ end
 
 CheckItemWithOperators = function(item)
 	if item ~= nil and item.count > 0 then
+		local Config = Extraction.GetConfig();
+		--If the item is specific
+		if Config.isSpecific == true then
+			sb.logInfo("SPECIFIC");
+			return root.itemDescriptorsMatch(item,{name = item.name,count = item.count,parameters = Config.specificData},true);
+		end
 		if not IsCached("ItemCheckCache") then
 			local ItemCheckCache = {};
 			SetCachedConfigValue("ItemCheckCache",ItemCheckCache);
@@ -387,7 +393,6 @@ CheckItemWithOperators = function(item)
 				CanCache = true;
 			end
 		end
-		local Config = Extraction.GetConfig();
 		local ItemNames;
 		if not IsCached("ItemCheckers") then
 			ItemNames = {

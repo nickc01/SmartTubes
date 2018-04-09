@@ -263,7 +263,7 @@ function ConduitCore.UpdateSelf()
 		else
 			local Added = false;
 			for ConnectionType,ConnectionData in pairs(ConnectionTypes) do
-				if ConnectionData.Condition(Object) == true and (world.callScriptedEntity(Object,"ConduitCore.IsConduit") ~= true or world.callScriptedEntity(Object,"ConduitCore.FitsInConnectionPoints",ConduitCore.GetAllSpaces(SourceID)) == true) --[[world.callScriptedEntity(Object,"ConduitCore.FitsInConnectionPoints",ConduitCore.GetAllSpaces(SourceID)) == true--]] then
+				if world.entityExists(Object) and ConnectionData.Condition(Object) == true and (world.callScriptedEntity(Object,"ConduitCore.IsConduit") ~= true or world.callScriptedEntity(Object,"ConduitCore.FitsInConnectionPoints",ConduitCore.GetAllSpaces(SourceID)) == true) then
 					if Added == false then
 						Added = true;
 						if Connections[i] ~= Object then

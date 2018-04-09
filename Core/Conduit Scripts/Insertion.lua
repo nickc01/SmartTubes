@@ -151,12 +151,16 @@ PostInit = function()
 		end
 	end
 	--Compatibility with older version of the mod
-	if config.getParameter("Dump") ~= nil then
+	if config.getParameter("Predictions") ~= nil then
+		sb.logInfo("COMPATIBILITY INSERTION CODE");
 		local PreviousContainers = config.getParameter("PreviousContainers");
+		sb.logInfo("PreviousContainers = " .. sb.print(PreviousContainers));
 		local OldPredictions = config.getParameter("Predictions");
 		if OldPredictions ~= nil then
+			sb.logInfo("OldPredictions = " .. sb.printJson(OldPredictions,1));
 			for k,data in pairs(OldPredictions) do
-				local Container = k;
+				local Container = tonumber(k);
+				sb.logInfo("CONTAINER = " .. sb.print(Container));
 				if PreviousContainers ~= nil then
 					local Index;
 					for i,value in ipairs(PreviousContainers) do
@@ -166,19 +170,24 @@ PostInit = function()
 						end
 					end
 					if Index ~= nil then
-						local Connections = ContainerCore.GetConnections("Containers");
+						local Connections = ConduitCore.GetConnections("Containers");
+						sb.logInfo("COMPAT CONNECTIONS = " .. sb.print(Connections));
 						Container = Connections[Index] or -10;
+						sb.logInfo("New Container = " .. sb.print(Container));
 					end
 				end
 				if world.entityExists(Container) then
 					for _,p in ipairs(data) do
 						local Item = ContainerHelper.PutItemsAt(Container,p.Item,p.Slot - 1);
+						sb.logInfo("C");
 						if Item ~= nil and Item.count > 0 then
+							sb.logInfo("B");
 							world.spawnItem(Item,SourcePosition,Item.count,Item.parameters);
 						end
 					end
 				else
 					for _,p in ipairs(data) do
+						sb.logInfo("A");
 						world.spawnItem(p.Item,SourcePosition,p.Item.count,p.Item.parameters);
 					end
 				end
@@ -190,6 +199,7 @@ PostInit = function()
 			for _,data in pairs(OldTossings) do
 				for _,prediction in ipairs(data) do
 					world.spawnItem(p.Item,SourcePosition,p.Item.count,p.Item.parameters);
+					sb.logInfo("D");
 				end
 			end
 		end
