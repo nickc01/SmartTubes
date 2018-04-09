@@ -6,12 +6,18 @@ require("/Core/ConduitCore.lua");
 --Functions
 local OldInit = init;
 local PlaceMaterials;
+local CompatibilityLink;
 
 function init()
 	if OldInit ~= nil then
 		OldInit();
 	end
-	local Info = config.getParameter("FacadeInfo");
+	local Info;
+	if config.getParameter("IsOccluded") ~= nil then
+		Info = CompatibilityLink();
+	else
+		Info = config.getParameter("FacadeInfo");
+	end
 	if Info ~= nil then
 		ConduitCore.SetAsFacade(Info.Indicator,Info.Occluded,Info.Item);
 		object.setConfigParameter("FacadeIndicator",Info.Indicator);
@@ -52,11 +58,27 @@ function init()
 	end
 end
 
+--Allows compatibility with older versions of the mod
+CompatibilityLink = function()
+	object.setConfigParameter("MaterialIsPlaced",true);
+	object.setConfigParameter("IsAFacade",true);
+	local FacadeInfo = {};
+	FacadeInfo.Occluded = config.getParameter("IsOccluded") or false;
+	object.setConfigParameter("IsOccluded",nil);
+	FacadeInfo.Position = entity.position();
+	FacadeInfo.Indicator = config.getParameter("FacadeIndicator");
+	object.setConfigParameter("FacadeInfo",FacadeInfo);
+	return FacadeInfo;
+end
+
 
 --Places the Materials on top of the Facade
 PlaceMaterials = function(Info)
 	world.placeMaterial(Info.Position,"foreground",Info.Foreground,nil,true);
 	if Info.Background == false then
 		world.damageTiles({Info.Position},"background",Info.Position,"explosive",9999,0);
+	end
+	if Info.Mod ~= nil and Info.Mod ~= false then
+		world.placeMod(Info.Position,"foreground",Info.Mod,nil,true);
 	end
 end

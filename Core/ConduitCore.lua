@@ -42,6 +42,7 @@ local IsOccluded = false;
 local Die;
 local DroppingItems = true;
 local DroppingPosition;
+local LocalRegionRect;
 --[[local SaveParameters = false;
 local SavingItem;
 local SavingParameters = {};
@@ -80,6 +81,7 @@ local GetObjectByConnectionPoint;
 local TraversalFunction = DefaultTraversalFunction;
 local ValuesToTable;
 local InitWithSavedParams;
+local ConnectionPointIter;
 
 --Initializes the Conduit
 function ConduitCore.Initialize()
@@ -96,6 +98,7 @@ function ConduitCore.Initialize()
 	end
 	SourceID = entity.id();
 	SourcePosition = entity.position();
+	LocalRegionRect = {SourcePosition[1] - 2,SourcePosition[2] - 2,SourcePosition[1] + 2,SourcePosition[2] + 2};
 	if config.getParameter("__HasSavedParameters") == true then
 		object.setConfigParameter("__HasSavedParameters",nil);
 		InitWithSavedParams(config.getParameter("__SavedValueNames"));
@@ -109,6 +112,10 @@ function ConduitCore.Initialize()
 	update = function(dt)
 		if OldUpdate ~= nil then
 			OldUpdate(dt);
+		end
+		if not world.regionActive(LocalRegionRect) then
+			world.loadRegion(LocalRegionRect);
+			return nil;
 		end
 		PostInit();
 		update = function(dt)
@@ -170,6 +177,43 @@ function ConduitCore.AddPostInitFunction(func)
 	PostInitFunctions[#PostInitFunctions + 1] = func;
 end
 
+--Returns true if the position fits inside any of the connection Points
+function ConduitCore.FitsInConnectionPoints(position)
+	--sb.logInfo("CALLED");
+	--sb.logInfo("POSITION = " .. sb.print(position));
+	if type(position[1]) == "table" then
+		--sb.logInfo("Positions = " .. sb.print(position));
+		--has multiple positions
+		for _,pos in ipairs(position) do
+			for point in ConnectionPointIter() do
+				--sb.logInfo("point = " .. sb.print(point));
+				--sb.logInfo("pos = " .. sb.print(pos));
+				if point[1] + SourcePosition[1] == pos[1] and point[2] + SourcePosition[2] == pos[2] then
+					return true;
+				end
+			end
+		end
+		--sb.logInfo("IS FALSE");
+	else
+		--It's a single position
+		for point in ConnectionPointIter() do
+			if point[1] + SourcePosition[1] == position[1] and point[2] + SourcePosition[2] == position[2] then
+				return true;
+			end
+		end
+	end
+	return false;
+end
+
+--[[function ConduitCore.FitsInConnectionPoints(position)
+	for point in ConnectionPointIter() do
+		if point[1] == position[1] and point[2] == position[2] then
+			return true;
+		end
+	end
+	return false;
+end--]]
+
 --Returns true if this is a conduit
 function ConduitCore.IsConduit()
 	return true;
@@ -219,7 +263,7 @@ function ConduitCore.UpdateSelf()
 		else
 			local Added = false;
 			for ConnectionType,ConnectionData in pairs(ConnectionTypes) do
-				if ConnectionData.Condition(Object) == true then
+				if ConnectionData.Condition(Object) == true and (world.callScriptedEntity(Object,"ConduitCore.IsConduit") ~= true or world.callScriptedEntity(Object,"ConduitCore.FitsInConnectionPoints",ConduitCore.GetAllSpaces(SourceID)) == true) --[[world.callScriptedEntity(Object,"ConduitCore.FitsInConnectionPoints",ConduitCore.GetAllSpaces(SourceID)) == true--]] then
 					if Added == false then
 						Added = true;
 						if Connections[i] ~= Object then
@@ -468,7 +512,7 @@ function ConduitCore.GetConnections(ConnectionType)
 end
 
 --Sets the function that is called when the sprite needs to be updated
-function ConduitCore.SetSpriteUpdateFunction(func)
+function ConduitCore.SetSpriteFunction(func)
 	UpdateSprite = func;
 end
 
@@ -654,6 +698,11 @@ function ConduitCore.GetConnectionsWithExtra(connectionType)
 	end
 end
 
+--Gets the all the connection points, ignoring any ConnectionTypes
+function ConduitCore.GetGlobalConnections()
+	return Connections;
+end
+
 --Gets the Object based upon the connection point
 GetObjectByConnectionPoint = function(pointIndex)
 	--local Object = world.objectAt({SourcePosition[1] + ConnectionPoints[i][1],SourcePosition[2] + ConnectionPoints[i][2]});
@@ -769,6 +818,17 @@ function ConduitCore.AddSaveInitFunction(func)
 	OnSaveRetrieveFunctions[#OnSaveRetrieveFunctions + 1] = func;
 end
 
+--Returns the positions that the object occupies
+function ConduitCore.GetAllSpaces(object)
+	local Pos = world.entityPosition(object);
+	local Spaces = world.objectSpaces(object);
+	local Final = {};
+	for _,space in ipairs(Spaces) do
+		Final[#Final + 1] = {Pos[1] + space[1],Pos[2] + space[2]};
+	end
+	return Final;
+end
+
 --Called when the object is Dying
 Die = function()
 	--sb.logInfo("IsFacaded = " .. sb.print(Facade));
@@ -818,17 +878,32 @@ Die = function()
 	end
 end
 
---If the first value passed is a table then return that, otherwise return all the values as a table
---[[ValuesToTable = function(...)
-	if select("#",...) > 0 then
-		local Value = select(1,...);
-		if type(Value) == "table" then
-			return Value;
-		else
-			return {...};
+--Iterates through the connection points and returns a position vector for each
+ConnectionPointIter = function()
+	local k = 0;
+	local Max = #ConnectionPoints;
+	return function()
+		::Continue::
+		k = k + 1;
+		if k <= Max then
+			local Type = type(ConnectionPoints[k]);
+			if Type == "table" then
+				return ConnectionPoints[k];
+			elseif Type == "number" then
+				return world.entityPosition(ConnectionPoints[k]);
+			elseif Type == "function" then
+				local Value = ConnectionPoint();
+				local ValueType = type(Value);
+				if ValueType == "table" then
+					return Value;
+				else
+					return world.entityPosition(Value);
+				end
+			end
+			goto Continue;
 		end
 	end
-end--]]
+end
 
 
 

@@ -35,6 +35,6 @@
     "curves" : "Curve.png"
   },
   "conduitType" : "curved",
-  "scripts": [ "/Blocks/Conduits/Curved/Curved Conduit.lua", "/Core/CableCore.lua" ],
+  "scripts": [ "/Blocks/Conduits/Curved/Curved Conduit.lua" ],
   "scriptDelta" : 1
 }

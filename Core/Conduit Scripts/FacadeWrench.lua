@@ -127,6 +127,17 @@ function FacadeWrench.SetBreakMode(bool)
 	Data.SetBreaking(bool);
 end
 
+--Info Template :
+--Background
+--Foreground
+--Occluded
+--Mod
+--Position
+--Object
+--Parameters
+--Item
+--Indicator
+
 --Places the facade in the block at the position, and adds any parameters specified to the block
 function FacadeWrench.PlaceFacade(position,parameters)
 	sb.logInfo("PLACING");

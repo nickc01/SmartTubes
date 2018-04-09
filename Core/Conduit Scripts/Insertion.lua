@@ -150,6 +150,51 @@ PostInit = function()
 			world.spawnItem(prediction.Item,SourcePosition);
 		end
 	end
+	--Compatibility with older version of the mod
+	if config.getParameter("Dump") ~= nil then
+		local PreviousContainers = config.getParameter("PreviousContainers");
+		local OldPredictions = config.getParameter("Predictions");
+		if OldPredictions ~= nil then
+			for k,data in pairs(OldPredictions) do
+				local Container = k;
+				if PreviousContainers ~= nil then
+					local Index;
+					for i,value in ipairs(PreviousContainers) do
+						if Container == value then
+							Index = i;
+							break;
+						end
+					end
+					if Index ~= nil then
+						local Connections = ContainerCore.GetConnections("Containers");
+						Container = Connections[Index] or -10;
+					end
+				end
+				if world.entityExists(Container) then
+					for _,p in ipairs(data) do
+						local Item = ContainerHelper.PutItemsAt(Container,p.Item,p.Slot - 1);
+						if Item ~= nil and Item.count > 0 then
+							world.spawnItem(Item,SourcePosition,Item.count,Item.parameters);
+						end
+					end
+				else
+					for _,p in ipairs(data) do
+						world.spawnItem(p.Item,SourcePosition,p.Item.count,p.Item.parameters);
+					end
+				end
+			end
+		end
+		object.setConfigParameter("Predictions",nil);
+		local OldTossings = config.getParameter("Dump");
+		if OldTossings ~= nil then
+			for _,data in pairs(OldTossings) do
+				for _,prediction in ipairs(data) do
+					world.spawnItem(p.Item,SourcePosition,p.Item.count,p.Item.parameters);
+				end
+			end
+		end
+		object.setConfigParameter("Dump",nil);
+	end
 end
 
 --Adds any messages for the object to call

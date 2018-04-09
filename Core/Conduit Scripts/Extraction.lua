@@ -57,7 +57,6 @@ function Extraction.Initialize()
 	SourcePosition = entity.position();
 	Speed = config.getParameter("Speed",0);
 	Stack = config.getParameter("Stack",0);
-	Color = config.getParameter("Color","red");
 	--Server.SetDefinitionTable(Data);
 	--Server.DefineSyncedValues("ExtractionName","ConduitName",config.getParameter("shortDescription"));
 	local ColorData = root.assetJson("/Projectiles/Traversals/Colors.json").Colors;
@@ -65,6 +64,12 @@ function Extraction.Initialize()
 	for _,color in ipairs(ColorData) do
 		Colors[#Colors + 1] = color[2];
 		ColorToHex[color[2]] = color[1];
+	end
+	if config.getParameter("SelectedColor") ~= nil then
+		Color = Colors[config.getParameter("SelectedColor")];
+		object.setConfigParameter("SelectedColor",nil);
+	else
+		Color = config.getParameter("Color","red");
 	end
 	SettingsUUID = config.getParameter("SettingsUUID");
 	if SettingsUUID == nil then
@@ -452,6 +457,7 @@ function Extraction.InsertionConduitFinder()
 		local NetworkInsertConduits;
 		if not IsCached("NetworkInsertConduits") then
 			local Network = ConduitCore.GetConduitNetwork();
+			sb.logInfo("NETWORK = " .. sb.print(Network));
 			NetworkInsertConduits = {};
 			for k,i in ipairs(Network) do
 				--sb.logInfo("First I = " .. sb.print(i));

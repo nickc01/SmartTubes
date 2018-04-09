@@ -1,22 +1,24 @@
-require("/Core/ConduitCore.lua");
+local Cables = nil;
 
---TODO
+local NewFunc = nil;
+local OldFunc = nil;
+local CenterPoint = nil;
+local CableConnections = nil;
 
---Variables
-local EdgePoints;
-local CenterPoint;
-local ConnectionPoints;
+local ConduitSize = nil;
 
---Functions
-local SetConnectionPoints;
-local SpriteUpdate;
-local TraversalFunction;
+local EdgePoints = nil;
 
---The Init Function of the Curved Conduit
-function init()
-	sb.logInfo("TEST");
-	ConduitCore.Initialize();
-	SetConnectionPoints();
+local function AfterFunction()
+	if Cables.CablesFound[1] ~= nil and Cables.CablesFound[2] ~= nil then
+		animator.setAnimationState("curveState","3");
+	elseif Cables.CablesFound[1] ~= nil and Cables.CablesFound[2] == nil then
+		animator.setAnimationState("curveState","2");
+	elseif Cables.CablesFound[1] == nil and Cables.CablesFound[2] ~= nil then
+		animator.setAnimationState("curveState","1");
+	elseif Cables.CablesFound[1] == nil and Cables.CablesFound[2] == nil then
+		animator.setAnimationState("curveState","0");
+	end
 end
 
 local function Distance(A,B)
@@ -59,18 +61,18 @@ end
 function GetCurveFunction(StartPoint,EndPoint,Speed,UseEdge)
 	local EntityPos = entity.position();
 	if EndPoint == nil then
-		local StartDistances = {Distance(StartPoint,vecAdd(ConnectionPoints[1],EntityPos)),Distance(StartPoint,vecAdd(ConnectionPoints[2],EntityPos))};
+		local StartDistances = {Distance(StartPoint,vecAdd(CableConnections[1],EntityPos)),Distance(StartPoint,vecAdd(CableConnections[2],EntityPos))};
 		if StartDistances[1] > StartDistances[2] then
 			if UseEdge == true then
 				EndPoint = vecAdd(EdgePoints[1],EntityPos);
 			else
-				EndPoint = vecAdd(ConnectionPoints[1],EntityPos);
+				EndPoint = vecAdd(CableConnections[1],EntityPos);
 			end
 		else
 			if UseEdge == true then
 				EndPoint = vecAdd(EdgePoints[2],EntityPos);
 			else
-				EndPoint = vecAdd(ConnectionPoints[2],EntityPos);
+				EndPoint = vecAdd(CableConnections[2],EntityPos);
 			end
 		end
 		EndPoint = vecAdd(EndPoint,{0.5,0.5});
@@ -107,42 +109,16 @@ function GetCurveFunction(StartPoint,EndPoint,Speed,UseEdge)
 
 end
 
+local TraversalPathFunction = function(SourceTraversalID,StartPosition,NextID,Speed)
+	local NextConduit = world.callScriptedEntity(SourceTraversalID,"GetConduitInPath",2);
 
---Sets the Connection Points for this specific curved Conduit
-SetConnectionPoints = function()
-	local ObjectName = object.name();
-	local ConduitSize = tonumber(string.match(ObjectName,"%d+"));
-	if     string.find(ObjectName,"bl$") ~= nil then
-		ConnectionPoints = {{-1,ConduitSize - 1},{ConduitSize - 1,-1}};
-		EdgePoints = {{-0.5,ConduitSize - 1},{ConduitSize - 1,-0.5}};
-		CenterPoint = {-1,-1};
-	elseif string.find(ObjectName,"br$") ~= nil then
-		ConnectionPoints = {{ConduitSize,ConduitSize - 1},{0,-1}};
-		EdgePoints = {{ConduitSize - 0.5,ConduitSize - 1},{0,-0.5}};
-		CenterPoint = {ConduitSize,-1};
-	elseif string.find(ObjectName,"tl$") ~= nil then
-		ConnectionPoints = {{-1,0},{ConduitSize - 1,ConduitSize}};
-		EdgePoints = {{-0.5,0},{ConduitSize - 1,ConduitSize - 0.5}};
-		CenterPoint = {-1,ConduitSize};
-	elseif string.find(ObjectName,"tr$") ~= nil then
-		ConnectionPoints = {{ConduitSize,0},{0,ConduitSize}};
-		EdgePoints = {{ConduitSize - 0.5,0},{0,ConduitSize - 0.5}};
-		CenterPoint = {ConduitSize,ConduitSize};
-	end
-	ConduitCore.SetConnectionPoints(ConnectionPoints);
-	ConduitCore.SetSpriteFunction(SpriteUpdate);
-	ConduitCore.SetTraversalFunction(TraversalFunction);
-end
-
-TraversalFunction = function(SourceTraversalID,StartPosition,NextID,Speed)
-	local NextConduit = world.callScriptedEntity(SourceTraversalID,"Traversal.GetAtPathIndex",2);
 	if world.entityExists(NextConduit) == true then
 		if world.getObjectParameter(NextConduit,"conduitType") == "curved" then
 			--SetTraversalFromCurve(true,1);
 			return GetCurveFunction(world.entityPosition(SourceTraversalID),nil,Speed,true);
 		else
 			--SetTraversalFromCurve(false,2);
-			world.callScriptedEntity(SourceTraversalID,"Traversal.AdvancePathIndex");
+			world.callScriptedEntity(SourceTraversalID,"GoToNextConduit");
 			return GetCurveFunction(world.entityPosition(SourceTraversalID),nil,Speed,false);
 		end
 	else
@@ -150,18 +126,55 @@ TraversalFunction = function(SourceTraversalID,StartPosition,NextID,Speed)
 	end
 end
 
---Called when the sprite needs updating
-SpriteUpdate = function()
-	local Connections = ConduitCore.GetGlobalConnections();
-	--sb.logInfo("CONNECTIONS = " .. sb.print(Connections));
-	--sb.logInfo("Sprite Change");
-	if Connections[1] ~= 0 and Connections[2] ~= 0 then
-		animator.setAnimationState("curveState","3");
-	elseif Connections[1] ~= 0 and Connections[2] == 0 then
-		animator.setAnimationState("curveState","2");
-	elseif Connections[1] == 0 and Connections[2] ~= 0 then
-		animator.setAnimationState("curveState","1");
-	elseif Connections[1] == 0 and Connections[2] == 0 then
-		animator.setAnimationState("curveState","0");
+function init()
+	Cables = CableCore;
+	--[[OldFunc = GetConduits;
+	GetConduits = function()
+		return OldFunc();
+	end--]]
+	--[[Cables.SetConduitsFunction(function()
+		return 
+	end);--]]
+	local ObjectName = object.name();
+	ConduitSize = tonumber(string.match(ObjectName,"%d+"));
+	CableConnections = {};
+	if     string.find(ObjectName,"bl$") ~= nil then
+		CableConnections = {{-1,ConduitSize - 1},{ConduitSize - 1,-1}};
+		EdgePoints = {{-0.5,ConduitSize - 1},{ConduitSize - 1,-0.5}};
+		CenterPoint = {-1,-1};
+	elseif string.find(ObjectName,"br$") ~= nil then
+		CableConnections = {{ConduitSize,ConduitSize - 1},{0,-1}};
+		EdgePoints = {{ConduitSize - 0.5,ConduitSize - 1},{0,-0.5}};
+		CenterPoint = {ConduitSize,-1};
+	elseif string.find(ObjectName,"tl$") ~= nil then
+		CableConnections = {{-1,0},{ConduitSize - 1,ConduitSize}};
+		EdgePoints = {{-0.5,0},{ConduitSize - 1,ConduitSize - 0.5}};
+		CenterPoint = {-1,ConduitSize};
+	elseif string.find(ObjectName,"tr$") ~= nil then
+		CableConnections = {{ConduitSize,0},{0,ConduitSize}};
+		EdgePoints = {{ConduitSize - 0.5,0},{0,ConduitSize - 0.5}};
+		CenterPoint = {ConduitSize,ConduitSize};
 	end
+	Cables.SetCableConnections(CableConnections);
+	Cables.AddCondition("Conduits","conduitType",function(value) return value ~= nil end);
+	Cables.SetAfterFunction(AfterFunction);
+	Cables.SetTraversalPathFunction(TraversalPathFunction);
+end
+
+local First = false;
+
+function update(dt)
+	DT = dt;
+	if First == false then
+		First = true;
+		Cables.Initialize();
+	end
+end
+
+function uninit()
+	Cables.UpdateOthers();
+end
+
+function die()
+	Cables.Uninitialize();
 end

@@ -247,6 +247,28 @@ function Traversal.Respawn(NewPosition,AmountToMoveForward)
 	return NewTraversal;
 end
 
+--Moves to Path Index forward by some amount
+function Traversal.AdvancePathIndex(amount)
+	amount = amount or 1;
+	PathIndex = PathIndex + amount;
+end
+
+--Retrieves the conduit at the path index plus some amount
+function Traversal.GetAtPathIndex(amount)
+	amount = amount or 0;
+	return Path[PathIndex + amount];
+end
+
+--Returns the size of the Path
+function Traversal.PathSize()
+	return #Path;
+end
+
+--Returns the current path index number
+function Traversal.PathIndex()
+	return PathIndex;
+end
+
 --Initializes the Conduit from a respawn
 function __Traversal__.InitializeAfterRespawn(OldTraversal,insertion,connectionType,predictions,predictionsForTossing,path,NewIndex)
 	__Traversal__.Initialize(insertion,OldTraversal.GetDestination(),connectionType,OldTraversal.GetSpeed(),false);
