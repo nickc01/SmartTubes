@@ -36,6 +36,13 @@ function Server.Initialize()
 	end
 end
 
+--Sets whether the group values should be saved on exit or not (true is the default)
+function Server.SaveValuesOnExit(GroupName,bool)
+	if SyncedValues[GroupName] ~= nil then
+		SyncedValues[GroupName].SaveOnUninit = bool == true;
+	end
+end
+
 --Sets up the values to be synced under the groupName
 function Server.DefineSyncedValues(GroupName,...)
 	if Initialized == false then
@@ -45,7 +52,7 @@ function Server.DefineSyncedValues(GroupName,...)
 		Values = config.getParameter("__" .. GroupName .. "Save"),
 		ValueNames = {},
 		UUID = config.getParameter("__" .. GroupName .. "SaveUUID") or sb.makeUuid(),
-		SaveOnUninit = false
+		SaveOnUninit = true
 	};
 	local RetrievedValues = false;
 	if NewSyncedValues.Values ~= nil then
@@ -152,17 +159,17 @@ function Server.ParameterIter(pairAmount,...)
 end
 
 --Sets whether the group should save it's settings upon uninitialization or not
-function SaveOnUninit(groupName,bool)
+--[[function SaveOnUninit(groupName,bool)
 	if SyncedValues[groupName] ~= nil then
 		SyncedValues[groupName].SaveOnUninit = bool == true;
 	end
-end
+end--]]
 
 --Called when the object uninitializes
 Uninit = function()
 	if Dying == false then
 		for Group,GroupValues in pairs(SyncedValues) do
-			if object ~= nil then
+			if object ~= nil and GroupValues.SaveOnUninit == true then
 				object.setConfigParameter("__" .. Group .. "Save",GroupValues.Values);
 				object.setConfigParameter("__" .. Group .. "SaveUUID",GroupValues.UUID);
 			end

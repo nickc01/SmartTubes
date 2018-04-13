@@ -43,6 +43,33 @@ local Die;
 local DroppingItems = true;
 local DroppingPosition;
 local LocalRegionRect;
+local DefaultAnimated = true;
+local UsingNetworkForType = {};
+local IndexToStringMeta = {
+	__index = function(tbl,k)
+		if type(k) == "number" then
+			return rawget(tbl,tostring(k));
+		else
+			return rawget(tbl,k);
+		end
+	end,
+	__newindex = function(tbl,k,value)
+		if type(k) == "number" then
+			return rawset(tbl,tostring(k),value);
+		else
+			return rawset(tbl,k,value);
+		end
+	end,
+	__ipairs = function(tbl)
+		local k,i = nil,nil;
+		return function()
+			k,i = next(tbl,k);
+			if k == nil then
+				return nil;
+			end
+			return tonumber(k),i;
+		end
+	end}
 --[[local SaveParameters = false;
 local SavingItem;
 local SavingParameters = {};
@@ -86,6 +113,7 @@ local ConnectionPointIter;
 --Initializes the Conduit
 function ConduitCore.Initialize()
 	if Initialized == true then return nil else Initialized = true end;
+	sb.logInfo("INIT of conduit = " .. sb.print(entity.id()));
 	if entity == nil then
 		local OldInit = init;
 		init = function()
@@ -99,6 +127,7 @@ function ConduitCore.Initialize()
 	SourceID = entity.id();
 	SourcePosition = entity.position();
 	LocalRegionRect = {SourcePosition[1] - 2,SourcePosition[2] - 2,SourcePosition[1] + 2,SourcePosition[2] + 2};
+	DefaultAnimated = config.getParameter("animation") == "/Animations/Cable.animation";
 	if config.getParameter("__HasSavedParameters") == true then
 		object.setConfigParameter("__HasSavedParameters",nil);
 		InitWithSavedParams(config.getParameter("__SavedValueNames"));
@@ -150,7 +179,6 @@ end
 
 --Called when the conduit has some saved Parameters
 InitWithSavedParams = function(SavedParameters)
-	
 	for _,func in ipairs(OnSaveRetrieveFunctions) do
 		func(SavedParameters);
 	end
@@ -158,7 +186,60 @@ end
 
 --Sets the Current Entity's Messages
 SetMessages = function()
-	
+	message.setHandler("ConduitCore.GetSpriteState",ConduitCore.GetSpriteState);
+	message.setHandler("ConduitCore.GetTerminalImageParameters",function()
+		--sb.logInfo("CALLING CONDUIT");
+		local FlipX = false;
+		local FlipY = false;
+		local AnimationName;
+		local AnimationState;
+		--sb.logInfo("Default Animated = " .. sb.print(DefaultAnimated));
+		if DefaultAnimated then
+			AnimationName = "cable";
+			if Connections[3] ~= 0 and Connections[4] ~= 0 and Connections[1] == 0 and Connections[2] == 0 then
+				AnimationState = "horizontal";
+			elseif Connections[3] == 0 and Connections[4] == 0 and Connections[1] ~= 0 and Connections[2] ~= 0 then
+				AnimationState = "vertical";
+			elseif Connections[3] ~= 0 and Connections[4] == 0 and Connections[1] == 0 and Connections[2] ~= 0 then
+				AnimationState = "corner";
+			elseif Connections[3] ~= 0 and Connections[4] == 0 and Connections[1] ~= 0 and Connections[2] == 0 then
+				AnimationState = "corner";
+				FlipY = true;
+			elseif Connections[3] == 0 and Connections[4] ~= 0 and Connections[1] ~= 0 and Connections[2] == 0 then
+				AnimationState = "corner";
+				FlipX,FlipY = true,true;
+			elseif Connections[3] == 0 and Connections[4] ~= 0 and Connections[1] == 0 and Connections[2] ~= 0 then
+				AnimationState = "corner";
+				FlipX = true;
+			elseif Connections[3] ~= 0 and Connections[4] ~= 0 and Connections[1] == 0 and Connections[2] ~= 0 then
+				AnimationState = "triplehorizontal";
+			elseif Connections[3] ~= 0 and Connections[4] == 0 and Connections[1] ~= 0 and Connections[2] ~= 0 then
+				AnimationState = "triplevertical";
+				FlipX = true;
+			elseif Connections[3] ~= 0 and Connections[4] ~= 0 and Connections[1] ~= 0 and Connections[2] == 0 then
+				AnimationState = "triplehorizontal";
+				FlipY = true;
+			elseif Connections[3] == 0 and Connections[4] ~= 0 and Connections[1] ~= 0 and Connections[2] ~= 0 then
+				AnimationState = "triplevertical";
+			elseif Connections[3] ~= 0 and Connections[4] ~= 0 and Connections[1] ~= 0 and Connections[2] ~= 0 then
+				AnimationState = "full";
+			elseif Connections[3] == 0 and Connections[4] == 0 and Connections[1] == 0 and Connections[2] == 0 then
+				AnimationState = "none";
+			elseif Connections[3] ~= 0 and Connections[4] == 0 and Connections[1] == 0 and Connections[2] == 0 then
+				AnimationState = "right";
+			elseif Connections[3] == 0 and Connections[4] ~= 0 and Connections[1] == 0 and Connections[2] == 0 then
+				AnimationState = "right";
+				FlipX = true;
+			elseif Connections[3] == 0 and Connections[4] == 0 and Connections[1] ~= 0 and Connections[2] == 0 then
+				AnimationState = "up";
+				FlipY = true;
+			elseif Connections[3] == 0 and Connections[4] == 0 and Connections[1] == 0 and Connections[2] ~= 0 then
+				AnimationState = "up";
+			end
+		end
+		--sb.logInfo("RETURN VALUE = " .. sb.print({FlipX = FlipX,FlipY = FlipY,AnimationName = AnimationName,AnimationState = AnimationState}));
+		return {FlipX = FlipX,FlipY = FlipY,AnimationName = AnimationName,AnimationState = AnimationState};
+	end);
 end
 
 --Initialization After the First Update Loop
@@ -179,21 +260,15 @@ end
 
 --Returns true if the position fits inside any of the connection Points
 function ConduitCore.FitsInConnectionPoints(position)
-	
-	
 	if type(position[1]) == "table" then
-		
 		--has multiple positions
 		for _,pos in ipairs(position) do
 			for point in ConnectionPointIter() do
-				
-				
 				if point[1] + SourcePosition[1] == pos[1] and point[2] + SourcePosition[2] == pos[2] then
 					return true;
 				end
 			end
 		end
-		
 	else
 		--It's a single position
 		for point in ConnectionPointIter() do
@@ -204,15 +279,6 @@ function ConduitCore.FitsInConnectionPoints(position)
 	end
 	return false;
 end
-
---[[function ConduitCore.FitsInConnectionPoints(position)
-	for point in ConnectionPointIter() do
-		if point[1] == position[1] and point[2] == position[2] then
-			return true;
-		end
-	end
-	return false;
-end--]]
 
 --Returns true if this is a conduit
 function ConduitCore.IsConduit()
@@ -254,7 +320,9 @@ function ConduitCore.UpdateSelf()
 				if ConnectionData.Connections[i] ~= 0 then
 					if ConnectionTypesAreChanged[ConnectionType] == nil then
 						ConnectionTypesAreChanged[ConnectionType] = true;
-						PostFuncs[#PostFuncs + 1] = function() NetworkChange(ConnectionType) end;
+						if UsingNetworkForType[ConnectionType] == true then
+							PostFuncs[#PostFuncs + 1] = function() NetworkChange(ConnectionType) end;
+						end
 						PostFuncs[#PostFuncs + 1] = function() __ConduitCore__.CallNetworkChangeFunctions(ConnectionType) end;
 					end
 					ConnectionData.Connections[i] = 0;
@@ -275,7 +343,9 @@ function ConduitCore.UpdateSelf()
 					if ConnectionData.Connections[i] ~= Object then
 						if ConnectionTypesAreChanged[ConnectionType] == nil then
 							ConnectionTypesAreChanged[ConnectionType] = true;
-							PostFuncs[#PostFuncs + 1] = function() NetworkChange(ConnectionType) end;
+							if UsingNetworkForType[ConnectionType] == true then
+								PostFuncs[#PostFuncs + 1] = function() NetworkChange(ConnectionType) end;
+							end
 							PostFuncs[#PostFuncs + 1] = function() __ConduitCore__.CallNetworkChangeFunctions(ConnectionType) end;
 						end
 						ConnectionData.Connections[i] = Object;
@@ -285,7 +355,9 @@ function ConduitCore.UpdateSelf()
 					if ConnectionData.Connections[i] ~= 0 then
 						if ConnectionTypesAreChanged[ConnectionType] == nil then
 							ConnectionTypesAreChanged[ConnectionType] = true;
-							PostFuncs[#PostFuncs + 1] = function() NetworkChange(ConnectionType) end;
+							if UsingNetworkForType[ConnectionType] == true then
+								PostFuncs[#PostFuncs + 1] = function() NetworkChange(ConnectionType) end;
+							end
 							PostFuncs[#PostFuncs + 1] = function() __ConduitCore__.CallNetworkChangeFunctions(ConnectionType) end;
 						end
 						ConnectionData.Connections[i] = 0;
@@ -301,6 +373,8 @@ function ConduitCore.UpdateSelf()
 		end
 	end
 	if #PostFuncs > 0 then
+		sb.logInfo("CALLING POST FUNCS From = " .. sb.print(SourceID));
+		sb.logInfo("Post Func Amount = " .. sb.print(#PostFuncs));
 		for k,i in ipairs(PostFuncs) do
 			i();
 		end
@@ -313,7 +387,9 @@ end
 
 --Forcefully triggers a Network change
 function ConduitCore.TriggerNetworkUpdate(connectionType)
-	NetworkChange(connectionType);
+	if UsingNetworkForType[connectionType] == true then
+		NetworkChange(connectionType);
+	end
 	__ConduitCore__.CallNetworkChangeFunctions(connectionType);
 end
 
@@ -324,17 +400,20 @@ end
 
 --Called whenever the network changes
 NetworkChange = function(ConnectionType)
+	sb.logInfo("NETWORK CHANGE = ".. sb.print(SourceID));
+	sb.logInfo("ConnectionType = " .. sb.print(ConnectionType));
 	if NetworkCache[ConnectionType] ~= nil then
 		NetworkCache[ConnectionType].NeedsUpdating = true;
 	end
+	sb.logInfo("Network Cache = " .. sb.print(NetworkCache[ConnectionType]));
 	for i=1,#LocalNetworkUpdateFunctions do
 		LocalNetworkUpdateFunctions[i](ConnectionType);
 	end
 end
 
 --Add a function that is called when the Network is changed for a certain connection type
-function __ConduitCore__.AddOnNetworkChangeFunc(func,ConnectionType)
-	if NetworkUpdateFunctions[ConnectionType] == nil then
+function __ConduitCore__.AddOnNetworkChangeFunc(id,func,ConnectionType)
+	--[[if NetworkUpdateFunctions[ConnectionType] == nil then
 		NetworkUpdateFunctions[ConnectionType] = {func};
 	else
 		local ConnectionFunctions = NetworkUpdateFunctions[ConnectionType];
@@ -344,6 +423,20 @@ function __ConduitCore__.AddOnNetworkChangeFunc(func,ConnectionType)
 			end
 		end
 		NetworkUpdateFunctions[ConnectionType][#NetworkUpdateFunctions[ConnectionType] + 1] = func;
+		
+	end--]]
+	sb.logInfo("ADDING " .. sb.print(id) .. " to " .. sb.print(SourceID));
+	if NetworkUpdateFunctions[ConnectionType] == nil then
+		NetworkUpdateFunctions[ConnectionType] = setmetatable({},IndexToStringMeta);
+	end
+	local NetworkGroup = NetworkUpdateFunctions[ConnectionType];
+	NetworkGroup[id] = func;
+end
+
+--Removes a function that is called when the Network is changed for a certain connection type
+function __ConduitCore__.RemoveOnNetworkChangeFunc(id,ConnectionType)
+	if NetworkUpdateFunctions[ConnectionType] ~= nil then
+		NetworkUpdateFunctions[ConnectionType][id] = nil;
 	end
 end
 
@@ -351,15 +444,31 @@ end
 function __ConduitCore__.CallNetworkChangeFunctions(ConnectionType)
 	
 	--NetworkChange(ConnectionType);
-	
+	sb.logInfo("CALLING OTHER NETWORK CHANGE FUNCTIONS = " .. sb.print(SourceID));
 	if NetworkUpdateFunctions[ConnectionType] ~= nil then
-		for i=#NetworkUpdateFunctions[ConnectionType],1,-1 do
+		--[[for i=#NetworkUpdateFunctions[ConnectionType],1,-1 do
 			local func = NetworkUpdateFunctions[ConnectionType][i];
 			table.remove(NetworkUpdateFunctions[ConnectionType],i);
 			func(ConnectionType);
+		end--]]
+		sb.logInfo("NETWORK FUNCTIONS = " .. sb.print(NetworkUpdateFunctions[ConnectionType]));
+		for ID,Func in pairs(NetworkUpdateFunctions[ConnectionType]) do
+			sb.logInfo("CALLING FUNC OF = " .. sb.print(ID));
+			if ID ~= nil and Func ~= nil then
+				NetworkUpdateFunctions[ConnectionType][ID] = nil;
+				if world.entityExists(tonumber(ID)) then
+					Func(ConnectionType);
+				end
+			end
 		end
+		--[[for ID in pairs(NetworkUpdateFunctions[ConnectionType]) do
+			if ID ~= nil then
+				NetworkUpdateFunctions[ConnectionType][ID] = nil;
+			end
+		end--]]
 	end
 end
+
 
 --Checks if the value is in the numerical table
 IsInTable = function(table,value)
@@ -451,7 +560,10 @@ function ConduitCore.GetNetwork(ConnectionType)
 	if ConnectionTypes[ConnectionType] == nil then
 		return nil;
 	end
+	UsingNetworkForType[ConnectionType] = true;
+	sb.logInfo("CACHE = " .. sb.print(NetworkCache[ConnectionType]));
 	if NetworkCache[ConnectionType] ~= nil and NetworkCache[ConnectionType].NeedsUpdating == false then
+		sb.logInfo("RETURNING CACHE");
 		return NetworkCache[ConnectionType].Normal;
 	end
 	local Findings = {};
@@ -460,7 +572,12 @@ function ConduitCore.GetNetwork(ConnectionType)
 	repeat
 		local NewNext = {};
 		for i=1,#Next do
-			local Connections = world.callScriptedEntity(Next[i].ID,"ConduitCore.GetConnectionsWithExtra",ConnectionType);
+			local Connections;
+			if world.entityExists(Next[i].ID) then
+				Connections = world.callScriptedEntity(Next[i].ID,"ConduitCore.GetConnectionsWithExtra",ConnectionType);
+			else
+				goto Continue;
+			end
 			if Connections == nil then goto Continue end;
 			for _,connection in ipairs(Connections) do
 				if connection ~= 0 then
@@ -472,14 +589,22 @@ function ConduitCore.GetNetwork(ConnectionType)
 							goto NextConnection;
 						end
 					end
+					for k=1,#NewNext do
+						if NewNext[k].ID == connection then
+							goto NextConnection;
+						end
+					end
+					--sb.logInfo("Adding New Connection " .. sb.print(connection));
 					NewNext[#NewNext + 1] = {ID = connection,Previous = Next[i]};
 				end
 				::NextConnection::
 			end
 			::Continue::
+			--sb.logInfo("New Finding = " .. sb.print(Next[i].ID));
 			Findings[#Findings + 1] = Next[i].ID;
 			FindingsWithPath[#FindingsWithPath + 1] = Next[i];
 		end
+		--sb.logInfo("New Next = " .. sb.print(NewNext));
 		Next = NewNext;
 	until #Next == 0;
 	if NetworkCache[ConnectionType] == nil then
@@ -491,12 +616,14 @@ function ConduitCore.GetNetwork(ConnectionType)
 	else
 		NetworkCache[ConnectionType].Normal = Findings;
 		NetworkCache[ConnectionType].WithPath = FindingsWithPath;
+		NetworkCache[ConnectionType].NeedsUpdating = false;
 	end
 	for i=1,#Findings do
-		if Findings[i] ~= SourceID then
-			world.callScriptedEntity(Findings[i],"__ConduitCore__.AddOnNetworkChangeFunc",NetworkChange,ConnectionType);
+		if Findings[i] ~= SourceID and world.entityExists(Findings[i]) then
+			world.callScriptedEntity(Findings[i],"__ConduitCore__.AddOnNetworkChangeFunc",SourceID,NetworkChange,ConnectionType);
 		end
 	end
+	sb.logInfo("NEW FINDINGS = " .. sb.print(Findings));
 	return Findings;
 end
 --Gets the Current Connections for the "Conduit" Connection Type
@@ -506,7 +633,7 @@ end
 
 --Gets the Current Connections for the Passed In Connection Type
 function ConduitCore.GetConnections(ConnectionType)
-	if ConnectionTypes[ConnectionType] ~= nil then
+	if FirstUpdateComplete and ConnectionTypes[ConnectionType] ~= nil then
 		return ConnectionTypes[ConnectionType].Connections;
 	end
 end
@@ -527,8 +654,7 @@ function ConduitCore.AddNetworkUpdateFunction(func)
 end
 
 UpdateSprite = function()
-	if not IsOccluded then
-		
+	if not IsOccluded and DefaultAnimated then
 		object.setProcessingDirectives("");
 		if Connections[3] ~= 0 and Connections[4] ~= 0 and Connections[1] == 0 and Connections[2] == 0 then
 			animator.setAnimationState("cable","horizontal");
@@ -570,6 +696,13 @@ UpdateSprite = function()
 		elseif Connections[3] == 0 and Connections[4] == 0 and Connections[1] == 0 and Connections[2] ~= 0 then
 			animator.setAnimationState("cable","up");
 		end
+	end
+end
+
+--Gets the current sprite state of the conduit, returns nil if this is occluded or isn't animating
+function ConduitCore.GetSpriteState()
+	if not IsOccluded and DefaultAnimated then
+		return animator.animationState("cable");
 	end
 end
 
@@ -728,6 +861,15 @@ end
 function ConduitCore.Uninitialize()
 	if Uninitialized == true then return nil else Uninitialized = true end;
 	if Dying == true then
+		for connectionType,_ in ipairs(ConnectionTypes) do
+			if UsingNetworkForType[connectionType] == true then
+				for _,finding in ipairs(ConduitCore.GetNetwork(connectionType)) do
+					if world.entityExists(finding) then
+						world.callScriptedEntity(finding,"__ConduitCore__.RemoveOnNetworkChangeFunc",SourceID,connectionType);
+					end
+				end
+			end
+		end
 		UpdateOtherConnections();
 	end
 end

@@ -15,18 +15,22 @@ local PromiseLoopCalls = {};
 local ResetPromiseLoopCalls = {};
 local SyncedValues = {};
 local DefinitionTable = UICore;
+local Initialized = false;
 
 --Functions
 
 --Initializes the UICore
 function UICore.Initialize()
-	local OldUpdate = update;
-	update = function(dt)
-		if OldUpdate ~= nil then
-			OldUpdate(dt);
-		end
-		for _,func in pairs(PromiseLoopCalls) do
-			func();
+	if Initialized == false then
+		Initialized = true;
+		local OldUpdate = update;
+		update = function(dt)
+			if OldUpdate ~= nil then
+				OldUpdate(dt);
+			end
+			for _,func in pairs(PromiseLoopCalls) do
+				func();
+			end
 		end
 	end
 end
@@ -190,6 +194,34 @@ function UICore.ParameterIter(pairAmount,...)
 	end
 end
 
+--Returns a function that will return a default value if not finished, and the recieved result when it is finished
+function UICore.AsyncFunctionCall(Object,Message,DefaultValue,...)
+	local CallID = sb.makeUuid();
+	local Promise = world.sendEntityMessage(Object,Message,...);
+	local Result = nil;
+	local Done = false;
+	if type(DefaultValue) ~= "function" then
+		local Value = DefaultValue;
+		DefaultValue = function() return Value end;
+	end
+	PromiseLoopCalls[CallID] = function()
+		if not Done then
+			if Promise:finished() then
+				Done = true;
+				Result = Promise:result();
+				PromiseLoopCalls[CallID] = nil;
+			end
+		end
+	end
+	return function()
+		if Done then
+			return Result,Done;
+		else
+			return DefaultValue();
+		end
+	end
+end
+
 --Sets value names to synced over the server under the group name
 --All the extra values should go under the following
 --ValueName
@@ -197,6 +229,9 @@ end
 
 --The ID can be a number or a function that returns a number
 function UICore.SetAsSyncedValues(GroupName,ID,...)
+	if Initialized == false then
+		UICore.Initialize();
+	end
 	if type(ID) ~= "function" then
 		local IDValue = ID;
 		ID = function() return IDValue end;

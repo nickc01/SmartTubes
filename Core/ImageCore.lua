@@ -1,24 +1,30 @@
 if ImageCore ~= nil then return nil end;
-ImageCore = {};
 
+--Declaration
+
+--Public Table
+ImageCore = {};
 local ImageCore = ImageCore;
 
-local function GoUpDirectory(directory)
-	
-end
+--Variables
+local CanvasImagesCache = {};
+local ObjectImageCache = {};
+local ObjectAnimationCache = {};
 
-function ImageCore.SplitFrames(FrameFile)
-	local Frames = root.assetJson(FrameFile);
-	
-end
 
-local function GetJson(File)
+--Functions
+local GetJson;
+local TranslateImage;
+
+--Returns the json value, or nil if the file doesn't exist or isn't a json file
+GetJson = function(File)
 	local Result = nil;
 	pcall(function() Result = root.assetJson(File) end);
 	return Result;
 end
 
-function ImageCore.GetFrameOfImage(Image,Object)
+--Attempts to get the frame file corresponding to an image
+function ImageCore.GetFrameOfImage(Image)
 	Image = string.gsub(Image,":.+$","");
 	local CachedValue = world.getProperty(Image);
 	if CachedValue ~= nil then
@@ -63,6 +69,7 @@ function ImageCore.GetFrameOfImage(Image,Object)
 	end
 end
 
+--Takes in a path and moves it up a directory level
 function ImageCore.MoveUpDirectory(Path)
 	if string.find(Path,".+/.+%..+") ~= nil then
 		Path = string.match(Path,"(.+)/.+%..+");
@@ -73,11 +80,9 @@ function ImageCore.MoveUpDirectory(Path)
 	end
 end
 
+--Sets the file name for a path
 function ImageCore.SetFileName(Path,FileName,Extension)
 	if string.find(Path,".+%..+") ~= nil then
-		
-		
-		
 		if Extension == nil then
 			return string.match(Path,"(.+/)") .. FileName;
 		else
@@ -95,12 +100,14 @@ function ImageCore.SetFileName(Path,FileName,Extension)
 	end
 end
 
+--Returns the file name of the path
 function ImageCore.GetFileName(Path)
 	if string.find(Path,"[^/]+.%.+") ~= nil then
 		return string.match(Path,"([^/]+.%..+)");
 	end
 end
 
+--Turns a local path into an absolue path based off of an object source
 function ImageCore.MakePathAbsolute(Path,ObjectSource)
 	ObjectSource = ObjectSource or entity.id();
 	if string.find(Path,"^/") ~= nil then
@@ -121,7 +128,8 @@ function ImageCore.MakePathAbsolute(Path,ObjectSource)
 	end
 end
 
-local function TranslateImage(AnimationImage,PartImage,GlobalTags)
+--Takes in an image and fills in the directives of the image
+TranslateImage = function(AnimationImage,PartImage,GlobalTags)
 	local Final = AnimationImage;
 	if PartImage ~= nil then
 		Final = string.gsub(Final,"<partImage>",PartImage);
@@ -144,8 +152,12 @@ local function TranslateImage(AnimationImage,PartImage,GlobalTags)
 	return Final,Frame;
 end
 
-local CanvasImagesCache = {};
-
+--Converts an image into something that can be used in canvas rendering
+--Format : 
+--Width
+--Height
+--Image
+--TextureRect
 function ImageCore.MakeImageCanvasRenderable(img)
 	if CanvasImagesCache[img] ~= nil then
 		return CanvasImagesCache[img];
@@ -201,7 +213,7 @@ function ImageCore.MakeImageCanvasRenderable(img)
 				Width = Size[1],
 				Height = Size[2]
 			};
-			
+			sb.logInfo("New 1");
 			CanvasImagesCache[img] = CanvasTable;
 			return CanvasTable;
 		end
@@ -209,16 +221,25 @@ function ImageCore.MakeImageCanvasRenderable(img)
 	end
 end
 
+--Retrieves an image from the object that can be rendered in a canvas
+--Format :
+--Images (All the images used to render the object), which consists of {
+----Width
+----Height
+----Image
+----TextureRect
+--}
+--Offset (A 2D vector representing the image offset)
+--Flip (whether the images should be flipped horizontally or not)
 function ImageCore.ObjectToImage(object)
-	local ID;
 	if type(object) == "number" then
-		ID = object;
 		object = world.entityName(object);
 	end
-	
 	if object == nil then
-		
 		return nil;
+	end
+	if ObjectImageCache[object] ~= nil then
+		return ObjectImageCache[object];
 	end
 	local Config = root.itemConfig({name = object,count = 1}).config;
 	local Orientation = Config.orientations[1];
@@ -244,30 +265,48 @@ function ImageCore.ObjectToImage(object)
 		return nil;
 	end
 	Offset = Orientation.imagePosition or {0,0};
-	Offset[1] = Offset[1] / 8;
-	Offset[2] = Offset[2] / 8;
 	Flip = Orientation.flipImages or false;
 	local FinalImages = {};
 	for k,i in ipairs(Images) do
 		FinalImages[#FinalImages + 1] = ImageCore.MakeImageCanvasRenderable(ImageCore.MakePathAbsolute(i,object));
 	end
-	
-	return {Images = FinalImages,Offset = Offset,Flip = Flip};
+	ObjectImageCache[object] = {Images = FinalImages,Offset = Offset,Flip = Flip};
+	sb.logInfo("New 3");
+	return ObjectImageCache[object];
 end
 
+--Gets the animation data of the object and organizes it
+--Format : 
+--[[
+	Animation : {
+		Layers : [ (a table of all the layers needed to fully render this object)
+			DefaultState, (the state that this layer is defaulted to)
+			States : [ (a list of all the possible states the layer can be in)
+				Image, (the image that is rendered when this state is used)
+				Frame, (the frame file that goes along with the image)
+			]
+		]
+	}
+]]
 function ImageCore.ParseObjectAnimation(Object)
 	if Object == nil then
 		Object = entity.id();
 	end
-	local Config = nil;
-	local Directory = nil;
 	if type(Object) == "number" then
+		Object = world.entityName(Object);
+	end
+	if ObjectAnimationCache[Object] ~= nil then
+		return ObjectAnimationCache[Object];
+	end
+	local Config = root.itemConfig({name = Object,count = 1});
+	local Directory = nil;
+	--[[if type(Object) == "number" then
 		Config = root.itemConfig({name = world.entityName(Object),count = 1});
 	elseif type(Object) == "string" then
 		Config = root.itemConfig({name = Object,count = 1});
 	else
 		error("Can't find an object to work on");
-	end
+	end--]]
 	Directory = Config.directory;
 	Config = Config.config;
 	local AnimationFile = Config.animation;
@@ -299,5 +338,7 @@ function ImageCore.ParseObjectAnimation(Object)
 			end
 		end
 	end
+	ObjectAnimationCache[Object] = Animation;
+	sb.logInfo("New 2");
 	return Animation;
 end
