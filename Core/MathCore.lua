@@ -46,6 +46,11 @@ function RectCore.VectorAdd(rect,vector)
 	return {rect[1] + vector[1],rect[2] + vector[2],rect[3] + vector[1],rect[4] + vector[2]};
 end
 
+--Returns whether the rects are equal
+function RectCore.Equal(a,b)
+	return a[1] == b[1] and a[2] == b[2] and a[3] == b[3] and a[4] == b[4];
+end
+
 --Multiplies the base position by some amount without changing the width and height
 function RectCore.BaseMultiply(rect,amount)
 	local Difference = {rect[3] - rect[1],rect[4] - rect[2]};

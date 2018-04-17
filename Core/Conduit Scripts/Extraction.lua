@@ -88,6 +88,7 @@ function Extraction.Initialize()
 	ConduitCore.AddConnectionUpdateFunction(function()
 		SetCachedConfigValue("TakeFromSidesWithIDs",nil);
 		SetCachedConfigValue("InsertionConduits",nil);
+		ConduitCore.TriggerNetworkUpdate("Conduits");
 	end);
 	ConduitCore.AddNetworkUpdateFunction(function()
 		SetCachedConfigValue("NetworkInsertConduits",nil);
@@ -152,6 +153,11 @@ SetMessages = function()
 		__Extraction__.SaveParameters();
 		ConduitCore.DropAndSaveParameters(nil,dropPosition);
 	end);
+end
+
+--Is an extraction conduit
+function Extraction.IsExtraction()
+	return true;
 end
 
 --Returns the Extraction Conduit's ID

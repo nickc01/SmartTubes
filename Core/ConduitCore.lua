@@ -555,6 +555,15 @@ function ConduitCore.PathIsOccluded(path)
 	return true;
 end
 
+--Returns true if the network has changed
+function ConduitCore.NetworkHasChanged(ConnectionType)
+	--sb.logInfo("THE CACHE is = " .. sb.print(NetworkCache[ConnectionType]));
+	--if NetworkCache[ConnectionType] == nil or NetworkCache[ConnectionType].NeedsUpdating == true then
+		--sb.logInfo("NETWORK HAS CHANGED_____________");
+	--end
+	return NetworkCache[ConnectionType] == nil or NetworkCache[ConnectionType].NeedsUpdating == true;
+end
+
 --Returns the Entire Connection Tree for the Passed In Connection Type
 function ConduitCore.GetNetwork(ConnectionType)
 	if ConnectionTypes[ConnectionType] == nil then

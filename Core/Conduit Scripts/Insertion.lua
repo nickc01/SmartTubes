@@ -122,6 +122,11 @@ function Insertion.GetInsertID()
 	return InsertID;
 end
 
+--Is an insertion conduit
+function Insertion.IsInsertion()
+	return true;
+end
+
 --Called when the ConduitCore is fully initialized
 PostInit = function()
 	--TODO -- TODO -- TODO -- TODO -- TODO
