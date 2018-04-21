@@ -74,7 +74,7 @@ Update = function(dt)
 		end
 		sb.logInfo("ALL NETWORK CONTAINERS = " .. sb.printJson(Containers,1));
 		Data.SetNetworkContainers(Containers);
-		Data.SetNetwork(ConduitCore.GetConduitNetwork());
+		Data.SetNetwork(Network);
 	end
 end
 

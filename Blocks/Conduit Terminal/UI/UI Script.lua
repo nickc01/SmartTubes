@@ -13,8 +13,8 @@ local PreviousMousePosition;
 --The init function for the Terminal UI Script
 function init()
 	TerminalUI.Initialize();
-	ViewWindow.AddBackgroundClickEvent(BackgroundClick);
-	ViewWindow.AddMouseReleaseFunction(ClickRelease);
+	--ViewWindow.AddBackgroundClickEvent(BackgroundClick);
+	--ViewWindow.AddMouseReleaseFunction(ClickRelease);
 end
 
 --The update function for the Terminal UI Script
@@ -22,25 +22,25 @@ function update()
 	--ViewWindow.RenderImage("/Blocks/Conduit Terminal/Terminal.png",{0,0});
 	--ViewWindow.RenderObject(pane.sourceEntity(),{0,0});
 	--ViewWindow.RenderConduit(pane.sourceEntity());
-	if ClickingBackground then
-		local NewMousePosition = ViewWindow.MousePosition();
+	--if ClickingBackground then
+	--	local NewMousePosition = ViewWindow.MousePosition();
 		--ViewWindow.SetPosition(NewMousePosition);
-		ViewWindow.SetPosition({Offset[1] + NewMousePosition[1],Offset[2] + NewMousePosition[2]});
-	end
+	--	ViewWindow.SetPosition({Offset[1] + NewMousePosition[1],Offset[2] + NewMousePosition[2]});
+	--end
 end
 
 
 --Called when the background is clicked on
-BackgroundClick = function()
+--[[BackgroundClick = function()
 	--OriginalPosition = ViewWindow.Position();
 	--PreviousMousePosition = ViewWindow.MousePosition();
 	local Position = ViewWindow.Position();
 	local MousePosition = ViewWindow.MousePosition();
 	Offset = {Position[1] - MousePosition[1],Position[2] - MousePosition[2]};
 	ClickingBackground = true;
-end
+end--]]
 
 --Called when the mouse is released
-ClickRelease = function()
+--[[ClickRelease = function()
 	ClickingBackground = false;
-end
+end--]]

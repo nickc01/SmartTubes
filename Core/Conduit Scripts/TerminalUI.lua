@@ -8,37 +8,18 @@ require("/Core/MathCore.lua");
 TerminalUI = {};
 local TerminalUI = TerminalUI;
 
---Canvas Tables
+--View Window
 ViewWindow = {};
+local ViewWindow = ViewWindow;
 
 --Private Table
-__ViewWindow__ = {};
+local VWPrivate = {};
 
 --Variables
+local Data = {};
 local PlayerID;
 local SourceID;
 local SourcePosition;
-local Data = {};
-local TestTimer = 0;
-local GlideToPositions = true;
-local GlideSpeed = 7;
-local GlidingPosition;
-
---Directories
-local ViewWindowCanvasBackground = "/Blocks/Conduit Terminal/UI/Window/TileImage.png";
-
---Canvases
-local ViewWindowCanvas;
-local ViewWindowOffset;
-local ViewWindowScale = 1;
-
---Functions
-local Update;
-local NetworkChange;
-local RenderMainBackground;
-local InitCanvases;
-local ConduitRenderCache = {};
-local ConduitRenderFunctions = {};
 local IndexToStringMeta = {
 	__index = function(tbl,k)
 		if type(k) == "number" then
@@ -64,28 +45,22 @@ local IndexToStringMeta = {
 			return tonumber(k),i;
 		end
 	end}
-local PreviousConduitRenderData = setmetatable({},IndexToStringMeta);
-local ConduitRenderData = {
-	Cache = {},
-	QuickFunctions = {},
-	PreviousData = setmetatable({},IndexToStringMeta);}
-local ObjectRenderData = {
-	Cache = {},
-	QuickFunctions = {},
-	PreviousData = setmetatable({},IndexToStringMeta);}
-local MouseClickEvents = {};
-local DefaultMouseClickEvent;
-local MouseReleaseFunctions = {};
-local MouseHoverEvents = {};
-local Network = {};
-local NetworkContainers = {};
-local CheckHover;
+local ConduitPreviousData = setmetatable({},IndexToStringMeta);
+local AddedConduits = {};
+local AddedTextures = {};
+local AddedObjects = {};
+local SelectedConduit;
+
+--Functions
+local Update;
+local BuildObjectData;
+local NetworkChange;
+local BuildController;
 
 --Initializes the Terminal UI
 function TerminalUI.Initialize()
 	PlayerID = player.id();
 	SourceID = pane.sourceEntity();
-	sb.logInfo("SourceID UI = " .. sb.print(SourceID));
 	SourcePosition = world.entityPosition(SourceID);
 	UICore.SetDefinitionTable(Data);
 	UICore.SetAsSyncedValues("ConduitNetwork",SourceID,"Network",{},"NetworkContainers",{});
@@ -98,353 +73,451 @@ function TerminalUI.Initialize()
 			OldUpdate(dt);
 		end
 	end
-	InitCanvases();
-end
-
---Initializes the Canvases
-InitCanvases = function()
-	ViewWindowCanvas = widget.bindCanvas("mainCanvas");
-	local ViewWindowSize = ViewWindowCanvas:size();
-	ViewWindowOffset = {ViewWindowSize[1] / 2,ViewWindowSize[2] / 2};
+	VWPrivate.Canvas = widget.bindCanvas("mainCanvas");
+	VWPrivate.Size = VWPrivate.Canvas:size();
+	VWPrivate.Position = {VWPrivate.Size[1] / 2,VWPrivate.Size[2] / 2};
+	VWPrivate.Scale = 1;
 end
 
 --The Update Loop for the Terminal UI
 Update = function(dt)
-	ViewWindowCanvas:clear();
-	RenderMainBackground();
-	--local Network = Data.GetNetwork();
-	local PostRender = {};
-	if GlideToPositions and GlidingPosition ~= nil then
-		ViewWindowOffset[1],ViewWindowOffset[2] = (GlidingPosition[1] - ViewWindowOffset[1]) * (GlideSpeed * dt) + ViewWindowOffset[1],(GlidingPosition[2] - ViewWindowOffset[2]) * (GlideSpeed * dt) + ViewWindowOffset[2];
+	VWPrivate.Canvas:clear();
+	--Display Background
+	--VWPrivate.Position[1] = VWPrivate.Position[1] + dt;
+	--VWPrivate.Scale = VWPrivate.Scale + dt;
+	VWPrivate.Canvas:drawTiledImage("/Blocks/Conduit Terminal/UI/Window/TileImage.png",{VWPrivate.Position[1] * 0.7,VWPrivate.Position[2] * 0.7},{0,0,2000,2000},0.1);
+	local Position = VWPrivate.Canvas:mousePosition();
+	--Render Textures
+	for _,textureData in pairs(AddedTextures) do
+		sb.logInfo("Rendering Texture");
+		sb.logInfo("ScreenRect of Texture = " .. sb.print(textureData.ScreenRect));
+		VWPrivate.Render(textureData.Texture,textureData.TextureRect,textureData.ScreenRect,textureData.Color);
 	end
-	--ViewWindow.SetToMousePosition();
-	--[[for i=#Network,1,-1 do
-		if ViewWindow.RenderConduit(Network[i]) == 3 then
-			if world.entityName(Network[i]) == "conduitterminal" then
-				--ViewWindow.RenderObject(Network[i]);
-				PostRender[#PostRender + 1] = Network[i];
+	for _,data in pairs(AddedConduits) do
+		VWPrivate.RenderConduit(data);
+		--Check for mouse hover
+		if data.OnHover ~= nil and data.CollisionRect ~= nil then
+			local Rect = data.CollisionRect;
+			if data.Hovering == true then
+				if (Position[1] < Rect[1] * VWPrivate.Scale + VWPrivate.Position[1] or Position[2] < Rect[2] * VWPrivate.Scale + VWPrivate.Position[2] or Position[1] > Rect[3] * VWPrivate.Scale + VWPrivate.Position[1] or Position[2] > Rect[4] * VWPrivate.Scale + VWPrivate.Position[2]) then
+					data.Hovering = false;
+					data.OnHover(false);
+				end
+			else
+				if not (Position[1] < Rect[1] * VWPrivate.Scale + VWPrivate.Position[1] or Position[2] < Rect[2] * VWPrivate.Scale + VWPrivate.Position[2] or Position[1] > Rect[3] * VWPrivate.Scale + VWPrivate.Position[1] or Position[2] > Rect[4] * VWPrivate.Scale + VWPrivate.Position[2]) then
+					data.Hovering = true;
+					data.OnHover(true);
+				end
 			end
 		end
-	end--]]
-	for i=#Network,1,-1 do
-		if ViewWindow.RenderConduit(Network[i].ID,nil,Network[i].Color) == 3 then
-			if world.entityName(Network[i].ID) == "conduitterminal" then
-				--ViewWindow.RenderObject(Network[i]);
-				PostRender[#PostRender + 1] = Network[i];
-			end
-		end
 	end
-	local Containers = Data.GetNetworkContainers();
-	if Containers ~= nil then
-		for _,conduits in pairs(Containers) do
-			for _,conduit in ipairs(conduits) do
-				ViewWindow.RenderObject(conduit);
-			end
+	for _,data in pairs(AddedObjects) do
+		for index,texture in ipairs(data.Textures) do
+			VWPrivate.Render(texture.Image,texture.TextureRect,data.ScreenRects[index],data.Color);
 		end
-	end
-	for i=#PostRender,1,-1 do
-		ViewWindow.RenderObject(PostRender[i].ID,nil,PostRender[i].Color);
 	end
 end
 
---Called when the conduit network changes
-NetworkChange = function()
-	__ViewWindow__.ClearAllMouseEvents();
-	__ViewWindow__.ClearAllMouseHoverEvents();
-	ConduitRenderData.Cache = {};
-	ConduitRenderData.QuickFunctions = {};
-	local ConduitNetwork = Data.GetNetwork();
-	Network = {};
-	for _,conduit in ipairs(ConduitNetwork) do
-		local 
-		Network[#Network + 1] = {ID = conduit,Color = {255,255,255}};
-		__ViewWindow__.AddMouseHoverEvent()
-	end
-end
-
---Renders the main background to the main viewing canvas
-RenderMainBackground = function()
-	ViewWindowCanvas:drawTiledImage("/Blocks/Conduit Terminal/UI/Window/TileImage.png",{ViewWindowOffset[1] * 0.7,ViewWindowOffset[2] * 0.7},{0,0,2000,2000},0.1);
-end
-
-
---Renders an image to the View Window
-function ViewWindow.RenderImage(Image,Position,Scale,Color)
-	Scale = Scale or 1;
-	ViewWindowCanvas:drawImage(Image,{(Position[1] / 8) + ViewWindowOffset[1],(Position[2] / 8) + ViewWindowOffset[2]},ViewWindowScale * Scale,Color);
-end
-
---Converts World Positions to Screen Positions 
---function TerminalUI.WorldToScreenPosition()
-	
---end
-
---Renders an image rect to the View Window
-function ViewWindow.RenderImageRect(Texture,TextureRect,ScreenRect,Color,FlipHorizontal,FlipVertical)
-	TextureRect = RectCore.Flip(TextureRect,FlipHorizontal,FlipVertical,true);
-	ScreenRect = RectCore.BaseMultiply(ScreenRect,8);
-	ScreenRect = RectCore.VectorAdd(ScreenRect,ViewWindowOffset);
-	--sb.logInfo("Draw 2");
-	ViewWindowCanvas:drawImageRect(Texture,TextureRect,ScreenRect,Color);
-end
-
---Generates a function that will draw the image (calling the function returned from this is faster than just calling ViewWindow.RenderImageRect)
-function ViewWindow.RenderRectFunction(Texture,TextureRect,ScreenRect,Color,FlipHorizontal,FlipVertical)
-	local OriginalTextureRect = TextureRect;
-	local OriginalScreenRect = ScreenRect;
-	TextureRect = RectCore.Flip(TextureRect,FlipHorizontal,FlipVertical,true);
-	ScreenRect = RectCore.BaseMultiply(ScreenRect,8);
-	--ScreenRect = RectCore.VectorAdd(ScreenRect,ViewWindowOffset);
-	local Enabled = true;
-	return function(newColor,newTexture,newTextureRect,enable)
-		--sb.logInfo("Draw 1");
-		if enable ~= Enabled then
-			Enabled = enable;
-		end
-		if newColor ~= Color then
-			Color = newColor;
-		end
-		if newTexture ~= Texture then
-			Texture = newTexture;
-		end
-		if newTextureRect ~= nil and not RectCore.Equal(newTextureRect,OriginalTextureRect) then
-			OriginalTextureRect = newTextureRect;
-			TextureRect = RectCore.Flip(OriginalTextureRect,FlipHorizontal,FlipVertical,true);
-		end
-		if Enabled then
-			ViewWindowCanvas:drawImageRect(Texture,TextureRect,{(ScreenRect[1] * ViewWindowScale) + ViewWindowOffset[1],(ScreenRect[2] * ViewWindowScale) + ViewWindowOffset[2],(ScreenRect[3] * ViewWindowScale) + ViewWindowOffset[1],(ScreenRect[4] * ViewWindowScale) + ViewWindowOffset[2]},Color);
-		end
-		return 0;
-	end
-end
-
---Renders an object to the View Window
-function ViewWindow.RenderObject(Object,ScreenPosition,Color)
-	--If there's a quick function to use, then use it
-	if ObjectRenderData.QuickFunctions[Object] ~= nil then
-		return ObjectRenderData.QuickFunctions[Object](Color);
-	end
-	local RenderParams = ImageCore.ObjectToImage(Object);
-	if RenderParams == nil then return 1 end;
-	local Position = ScreenPosition or VectorCore.Subtract(world.entityPosition(Object),SourcePosition);
-	local Funcs = {};
-	for _,image in ipairs(RenderParams.Images) do
-		local ScreenRect = {Position[1] + (RenderParams.Offset[1] / 8),Position[2] + (RenderParams.Offset[2] / 8),Position[1] + (RenderParams.Offset[1] / 8) + image.Width,Position[2] + (RenderParams.Offset[2] / 8) + image.Height};
-		ViewWindow.RenderImageRect(image.Image,image.TextureRect,ScreenRect,Color,RenderParams.Flip);
-		Funcs[#Funcs + 1] = ViewWindow.RenderRectFunction(image.Image,image.TextureRect,ScreenRect,Color,RenderParams.Flip);
-	end
-	ObjectRenderData.QuickFunctions[Object] = function(color)
-		for i=1,#Funcs do
-			local Result = Funcs[i](color);
-			if Result ~= 0 then return Result end;
-		end
-		return 0;
-	end
-	return 0;
-end
-
---Renders an animated object to the View Window
-function ViewWindow.RenderConduit(object,ScreenPosition,Color)
-	--If there is a quicker render function defined, then use it
-	if ConduitRenderData.QuickFunctions[object] ~= nil then
-		return ConduitRenderData.QuickFunctions[object](ScreenPosition,Color);
-	end
-	if object == nil or not world.entityExists(object) then
-		return 5;
-	end
-	local ObjectData;
-	local Done;
-	if ConduitRenderData.Cache[object] ~= nil then
-		ObjectData,Done = ConduitRenderData.Cache[object]();
+--Adds an object to be rendered
+function ViewWindow.AddObject(object,position,color,OnClick,OnHover,Enabled,Scale)
+	if Scale ~= nil then
+		Scale = Scale - 1;
 	else
-		ConduitRenderData.Cache[object] = UICore.AsyncFunctionCall(object,"ConduitCore.GetTerminalImageParameters",ConduitRenderData.PreviousData[object] or {FlipX = false,FlipY = false,AnimationName = nil,AnimationState = nil});
-		ObjectData,Done = ConduitRenderData.Cache[object]();
+		Scale = 1;
 	end
-	--If there's object data, then the conduit can be rendered
-	if ObjectData ~= nil then
-		--If theres animation data that can be used, then utilize it, otherwise, just return a code 3
-		if ObjectData.AnimationName ~= nil then
+	if Enabled == nil then
+		Enabled = true;
+	end
+	local ObjectToImageData = ImageCore.ObjectToImage(object);
+	local ObjectTable = {};
+	ObjectTable.Textures = ObjectToImageData.Images;
+	ObjectTable.Scale = Scale;
+	ObjectTable.Position = position or world.entityPosition(object);
+	ObjectTable.Position = VectorCore.Subtract(ObjectTable.Position,SourcePosition);
+	local CollisionRegion = {};
+	local Size = {};
+	for _,image in ipairs(ObjectToImageData.Images) do
+		local Rect = root.nonEmptyRegion(image.Image);
+		if CollisionRegion[1] == nil or Rect[1] < CollisionRegion[1] then
+			CollisionRegion[1] = Rect[1];
+		end
+		if CollisionRegion[2] == nil or Rect[2] < CollisionRegion[2] then
+			CollisionRegion[2] = Rect[2];
+		end
+		if CollisionRegion[3] == nil or Rect[3] > CollisionRegion[3] then
+			CollisionRegion[3] = Rect[3];
+		end
+		if CollisionRegion[4] == nil or Rect[4] > CollisionRegion[4] then
+			CollisionRegion[4] = Rect[4];
+		end
+		if Size[1] == nil or image.Width > Size[1] then
+			Size[1] = image.Width;
+		end
+		if Size[2] == nil or image.height > Size[2] then
+			Size[2] = image.Height;
+		end
+	end
+	ObjectTable.PositionalOffset = ObjectToImageData.Offset;
+	ObjectTable.Color = color;
+	local ScreenRects = {};
+	for _,image in ipairs(ObjectToImageData.Images) do
+		ScreenRects[#ScreenRects + 1] = {(ObjectTable.Position[1] + ObjectTable.PositionalOffset[1] / 8) * 8 - ((ObjectTable.Scale) / 2) * (image.Width / 8),(ObjectTable.Position[2] + ObjectTable.PositionalOffset[2] / 8) * 8 - ((ObjectTable.Scale) / 2) * (image.Height / 8),(ObjectTable.Position[1] + image.Width / 8 + ObjectTable.PositionalOffset[1] / 8) * 8 + ((ObjectTable.Scale) / 2) * (image.Width / 8),(ObjectTable.Position[2] + image.Height / 8 + ObjectTable.PositionalOffset[2] / 8) * 8 + ((ObjectTable.Scale) / 2) * (image.Height / 8)};
+	end
+	sb.logInfo("ScreenRects = " .. sb.print(ScreenRects));
+	ObjectTable.ScreenRects = ScreenRects;
+	ObjectTable.OnClick = OnClick;
+	ObjectTable.OnHover = OnHover;
+	ObjectTable.CollisionRect = {(ObjectTable.Position[1] + CollisionRegion[1] / 8 + ObjectTable.PositionalOffset[1] / 8) * 8 - ((ObjectTable.Scale) / 2) * (Size[1] / 8),(ObjectTable.Position[2] + CollisionRegion[2] / 8 + ObjectTable.PositionalOffset[2] / 8) * 8 - ((ObjectTable.Scale) / 2) * (Size[2] / 8),(ObjectTable.Position[1] + CollisionRegion[3] / 8 + ObjectTable.PositionalOffset[1] / 8) * 8 + ((ObjectTable.Scale) / 2) * (Size[1] / 8),(ObjectTable.Position[2] + CollisionRegion[4] / 8 + ObjectTable.PositionalOffset[2] / 8) * 8 + ((ObjectTable.Scale) / 2) * (Size[2] / 8)};
+	local ObjectUUID = sb.makeUuid();
+	AddedObjects[ObjectUUID] = ObjectTable;
+	local Controller = {};
+	Controller.GetObjectUUID = function()
+		return ObjectUUID;
+	end
+	return Controller;
+	--[[local ObjectToImageData = ImageCore.ObjectToImage(object);
+	local ObjectTable = {};
+	ObjectTable.OriginalTexture = object.Image;
+	ObjectTable.Texture = ImageParams.Image;
+	ObjectTable.OriginalTextureRect = ImageParams.TextureRect;
+	ObjectTable.TextureRect = RectCore.Flip(ImageParams.TextureRect,TerminalData.FlipX,TerminalData.FlipY,true);
+	ObjectTable.PositionalOffset = ObjectToImageData.Offset;
+	ObjectTable.TextureWidth = ImageParams.Width;
+	ObjectTable.TextureHeight = ImageParams.Height;
+	ObjectTable.ScreenRect = {(position[1] + ObjectToImageData.Offset[1] / 8) * 8,(position[2] + ObjectToImageData.Offset[2] / 8) * 8,(position[1] + ImageParams.Width + ObjectToImageData.Offset[1] / 8) * 8,(position[2] + ImageParams.Height + ObjectToImageData.Offset[2] / 8) * 8};
+	local CollisionRegion = root.nonEmptyRegion(ObjectTable.OriginalTexture);
+	ObjectTable.CollisionRect = {(ObjectTable.Position[1] + CollisionRegion[1] / 8 + ObjectToImageData.Offset[1] / 8) * 8,(ObjectTable.Position[2] + CollisionRegion[2] / 8 + ObjectToImageData.Offset[2] / 8) * 8,(ObjectTable.Position[1] + CollisionRegion[3] / 8 + ObjectToImageData.Offset[1] / 8) * 8,(ObjectTable.Position[2] + CollisionRegion[4] / 8 + ObjectToImageData.Offset[2] / 8) * 8};--]]
+end
+
+--Called when the network has changed
+NetworkChange = function()
+	ViewWindow.ClearAllObjects();
+	local Network = Data.GetNetwork();
+	sb.logInfo("NETWORK UI HAS UPDATED");
+	for _,conduit in ipairs(Network) do
+		local Controller;
+		local StoredTexture; 
+		local OnHover = function(hovering)
+			if hovering == true then
+				local Texture = Controller.GetTexture();
+				--sb.logInfo("Old Texture = " .. sb.print(Texture));
+				if string.find(Texture,":") ~= nil then
+					Texture = string.gsub(Texture,":","?setcolor=19db00:");
+				else
+					Texture = Texture .. "?setcolor=19db00";
+				end
+				--sb.logInfo("New Texture = " .. sb.print(Texture));
+				local Position = Controller.GetPosition();
+				local PositionalOffset = Controller.GetPositionalOffset();
+				--sb.logInfo("Conduit Position = " .. sb.print(Position));
+				StoredTexture = ViewWindow.AddTexture(Texture,{Position[1] + SourcePosition[1] + PositionalOffset[1] / 8,Position[2] + SourcePosition[2] + PositionalOffset[2] / 8},Controller.GetFlipX(),Controller.GetFlipY(),3);
+				--sb.logInfo("Adding Texture");
+			else
+				--Controller.SetTexture(StoredTexture);
+				--Controller.SetScale(1);
+				--StoredTexture = nil;
+				ViewWindow.RemoveTexture(StoredTexture.GetTextureID());
+				StoredTexture = nil;
+			end
+		end
+		Controller = ViewWindow.AddConduit(conduit,nil,nil,nil,OnHover);
+	end
+end
+
+--Adds a conduit to be rendered
+--[[
+ObjectData = {
+	ID,
+	Position,
+	PositionalOffset,
+	Texture,
+	TextureRect,
+	OriginalTextureRect,
+	TextureWidth,
+	TextureHeight,
+	ScreenRect,
+	FlipX,
+	FlipY,
+	Color,
+	Enabled
+	--If not done then the below exists
+	TerminalParameters
+}
+]]
+function ViewWindow.AddConduit(object,position,color,OnClick,OnHover,Enabled)
+	if Enabled == nil then
+		Enabled = true;
+	end
+	local ObjectTable = {};
+	ObjectTable.Position = position or world.entityPosition(object);
+	ObjectTable.Position = VectorCore.Subtract(ObjectTable.Position,SourcePosition);
+	ObjectTable.TerminalParameters = UICore.AsyncFunctionCall(object,"ConduitCore.GetTerminalImageParameters",ConduitPreviousData[object] or {FlipX = false,FlipY = false,AnimationName = nil,AnimationState = nil});
+	local TerminalData,Done = ObjectTable.TerminalParameters();
+	if TerminalData ~= nil then
+		if TerminalData.AnimationName ~= nil then
+			--sb.logInfo("Terminal Data = " .. sb.print(TerminalData));
 			local Animation = ImageCore.ParseObjectAnimation(object);
-			local CurrentLayer = Animation.Layers[ObjectData.AnimationName];
-			local CurrentState = CurrentLayer.States[ObjectData.AnimationState];
+			local CurrentLayer = Animation.Layers[TerminalData.AnimationName];
+			local CurrentState = CurrentLayer.States[TerminalData.AnimationState];
 			if CurrentState == nil then CurrentState = CurrentLayer.States[CurrentLayer.DefaultState] end;
 			local ImageParams = ImageCore.MakeImageCanvasRenderable(CurrentState.Image);
-			local ObjectImageData = ImageCore.ObjectToImage(object);
-			local Position = ScreenPosition or VectorCore.Subtract(world.entityPosition(object),SourcePosition);
-			local ScreenRect = {Position[1] + (ObjectImageData.Offset[1] / 8),Position[2] + (ObjectImageData.Offset[2] / 8),Position[1] + ImageParams.Width + (ObjectImageData.Offset[1] / 8),Position[2] + ImageParams.Height +(ObjectImageData.Offset[2] / 8)};
-			ViewWindow.RenderImageRect(ImageParams.Image,ImageParams.TextureRect,ScreenRect,Color,ObjectData.FlipX,ObjectData.FlipY);
-			--If we got all the render data we need from the object, then create a render function that can be used to render much faster
-			if Done == true then
-				ConduitRenderData.PreviousData[object] = ObjectData;
-				local RenderFunction = ViewWindow.RenderRectFunction(ImageParams.Image,ImageParams.TextureRect,ScreenRect,Color,ObjectData.FlipX,ObjectData.FlipY);
-				local StoredPosition = Position;
-				ConduitRenderData.QuickFunctions[object] = function(newPosition,newColor)
-					--Update the position if it is changed
-					if newColor ~= Color then
-						Color = newColor;
-					end
-					if newPosition ~= nil and (newPosition[1] ~= StoredPosition[1] or newPosition[2] ~= StoredPosition[2]) then
-						StoredPosition = newPosition;
-						ScreenRect = {StoredPosition[1] + (ObjectImageData.Offset[1] / 8),StoredPosition[2] + (ObjectImageData.Offset[2] / 8),StoredPosition[1] + ImageParams.Width + (ObjectImageData.Offset[1] / 8),StoredPosition[2] + ImageParams.Height +(ObjectImageData.Offset[2] / 8)};
-						RenderFunction = ViewWindow.RenderRectFunction(ImageParams.Image,ImageParams.TextureRect,ScreenRect,Color,ObjectData.FlipX,ObjectData.FlipY);
-					end
-					RenderFunction(Color);
-					return 0;
-				end
-			end
-			return 0;
+			local ObjectToImageData = ImageCore.ObjectToImage(object);
+			--ObjectData.ObjectToImageData = ObjectToImageData;
+			ObjectTable.OriginalTexture = CurrentState.Image;
+			ObjectTable.Texture = ImageParams.Image;
+			ObjectTable.OriginalTextureRect = ImageParams.TextureRect;
+			ObjectTable.TextureRect = RectCore.Flip(ImageParams.TextureRect,TerminalData.FlipX,TerminalData.FlipY,true);
+			ObjectTable.PositionalOffset = ObjectToImageData.Offset;
+			ObjectTable.TextureWidth = ImageParams.Width;
+			ObjectTable.TextureHeight = ImageParams.Height;
+			ObjectTable.ScreenRect = {(ObjectTable.Position[1] + ObjectToImageData.Offset[1] / 8) * 8,(ObjectTable.Position[2] + ObjectToImageData.Offset[2] / 8) * 8,(ObjectTable.Position[1] + ImageParams.Width / 8 + ObjectToImageData.Offset[1] / 8) * 8,(ObjectTable.Position[2] + ImageParams.Height / 8 + ObjectToImageData.Offset[2] / 8) * 8};
+			local CollisionRegion = root.nonEmptyRegion(ObjectTable.OriginalTexture);
+			ObjectTable.CollisionRect = {(ObjectTable.Position[1] + CollisionRegion[1] / 8 + ObjectToImageData.Offset[1] / 8) * 8,(ObjectTable.Position[2] + CollisionRegion[2] / 8 + ObjectToImageData.Offset[2] / 8) * 8,(ObjectTable.Position[1] + CollisionRegion[3] / 8 + ObjectToImageData.Offset[1] / 8) * 8,(ObjectTable.Position[2] + CollisionRegion[4] / 8 + ObjectToImageData.Offset[2] / 8) * 8};
 		else
-			return 3;
+			ObjectTable.TempObject = ViewWindow.AddObject(object,position,color,OnClick,OnHover,Enabled,1);
+			--return ViewWindow.AddObject(object,position,color,OnClick,OnHover,Enabled,1);
+			--return 3;
 		end
-	end
-	return 2;
-end
+		ObjectTable.FlipX = TerminalData.FlipX;
+		ObjectTable.FlipY = TerminalData.FlipY;
+		sb.logInfo("FlipX 1 = " .. sb.print(TerminalData.FlipX));
+		sb.logInfo("FlipY 1 = " .. sb.print(TerminalData.FlipY));
+		ObjectTable.Color = color;
+		ObjectTable.Enabled = Enabled;
+		ObjectTable.OnClick = OnClick;
+		ObjectTable.OnHover = OnHover;
+		ObjectTable.ID = object;
+		ObjectTable.Scale = 0;
 
---Returns where the object will be positioned when rendered
-function ViewWindow.ObjectRenderPosition(object)
-	return VectorCore.Subtract(world.entityPosition(object),SourcePosition);
-end
-
---Returns the rect that will render the object
-function ViewWindow.ObjectRenderRect(object)
-	--[[local ImageParams = ImageCore.MakeImageCanvasRenderable(CurrentState.Image);
-	local ObjectImageData = ImageCore.ObjectToImage(object);
-	local StoredPosition = ViewWindow.ObjectRenderPosition(object);
-	ScreenRect = {StoredPosition[1] + (ObjectImageData.Offset[1] / 8),StoredPosition[2] + (ObjectImageData.Offset[2] / 8),StoredPosition[1] + ImageParams.Width + (ObjectImageData.Offset[1] / 8),StoredPosition[2] + ImageParams.Height +(ObjectImageData.Offset[2] / 8)};--]]
-end
-
---Sets the View Window Position to the position passed
-function ViewWindow.SetPosition(pos)
-	if GlideToPositions then
-		GlidingPosition = pos;
+		local ObjectID = sb.makeUuid();
+		AddedConduits[ObjectID] = ObjectTable;
+		ObjectTable.UUID = ObjectID;
+		return BuildController(ObjectTable,ObjectID);
 	else
-		ViewWindowOffset = pos;
+		return ViewWindow.AddObject(object,position,color,OnClick,OnHover,Enabled,1);
 	end
+	--local Animation = ImageCore.ParseObjectAnimation(object);
+	--local CurrentLayer = Animation.Layers[TerminalData.AnimationName];
+	--local CurrentState = CurrentLayer.States[TerminalData.AnimationState] or CurrentLayer.States[CurrentLayer.DefaultState];
+	--if CurrentState == nil then CurrentState = CurrentLayer.States[CurrentLayer.DefaultState] end;
+	--local ImageParams = ImageCore.MakeImageCanvasRenderable(CurrentState.Image);
+
+
+	--local Texture;
+	--local TextureRect;
+	--local 
 end
 
---Sets the View Window Position to the Mouse Position
-function ViewWindow.SetToMousePosition()
-	ViewWindow.SetPosition(ViewWindowCanvas:mousePosition());
+--Clears the View Window of all objects
+function ViewWindow.ClearAllObjects()
+	AddedConduits = {};
+	AddedObjects = {};
+	AddedTextures = {};
+	SelectedConduit = nil;
 end
 
---Sets whether it should glide over to the new position, or just snap to it
-function ViewWindow.GlideToNewPositions(bool)
-	if bool == true and GlideToPositions == false then
-		ViewWindowOffset = GlidingPosition;
-		GlidingPosition = nil;
+--Adds a raw texture to the render queue
+function ViewWindow.AddTexture(texture,Position,FlipX,FlipY,Scale)
+	local Data = {};
+	if Scale == nil then
+		Scale = 0;
+	else
+		Scale = Scale - 1;
 	end
-	GlideToPositions = bool == true;
+	local Position = VectorCore.Subtract(Position,SourcePosition);
+	sb.logInfo("Texture Position = " .. sb.print(Position));
+	local ImageData = ImageCore.MakeImageCanvasRenderable(texture);
+	Data.OriginalTexture = texture;
+	Data.Texture = ImageData.Image;
+	Data.OriginalTextureRect = ImageData.TextureRect;
+	Data.FlipX = FlipX;
+	Data.FlipY = FlipY;
+	Data.TextureRect = RectCore.Flip(ImageData.TextureRect,FlipX,FlipY,true);
+	Data.ScreenRect = {Position[1] * 8 - (Scale / 2) * (ImageData.Width / 8),Position[2] * 8 - (Scale / 2) * (ImageData.Height / 8),(Position[1] + ImageData.Width / 8) * 8 + (Scale / 2) * (ImageData.Width / 8),(Position[2] + ImageData.Height / 8) * 8 + (Scale / 2) * (ImageData.Height / 8)};
+	--Data.ScreenRect = {Position[1] * 8,Position[2] * 8,(Position[1] + ImageData.Width / 8) * 8,(Position[2] + ImageData.Height / 8) * 8};
+	local TextureID = sb.makeUuid();
+	AddedTextures[TextureID] = Data;
+	local Controller = {};
+	--Returns the texture id of the texture
+	Controller.GetTextureID = function()
+		return TextureID;
+	end
+	return Controller;
 end
 
---Sets the Glide Speed
-function ViewWindow.SetGlideSpeed(speed)
-	GlideSpeed = speed;
+--Removes a raw texture from the render queue
+function ViewWindow.RemoveTexture(textureID)
+	AddedTextures[textureID] = nil;
 end
 
---Adds an area that, when clicked on, calls the function
-function __ViewWindow__.AddMouseClickEvent(rect,func)
-	local MouseID = sb.makeUuid();
-	MouseClickEvents[MouseID] = {Rect = rect,Function = func};
-	return MouseID;
+--Removes a conduit from the render queue
+function ViewWindow.RemoveConduit(ObjectID)
+	AddedConduits[ObjectID] = nil;
 end
 
---Adds an area that when hovered over, will call the first function, and will call the second function when it's no longer being hovered over
-function __ViewWindow__.AddMouseHoverEvent(rect,OnHoverFunc,NoHoverFunc)
-	local HoverID = sb.makeUuid();
-	MouseHoverEvents[HoverID] = {Rect = rect,OnHoverFunc = OnHoverFunc,NoHoverFunc = NoHoverFunc,Hovering = false};
-	return HoverID;
+--Removes an object from the render queue
+function ViewWindow.RemoveObject(ObjectUUID)
+	AddedObjects[ObjectUUID] = nil;
 end
 
---Removes a Mouse Hover event
-function __ViewWindow__.RemoveMouseHoverEvent(hoverID)
-	MouseHoverEvents[hoverID] = nil;
-end
+--[[BuildObjectData = function(ImageParams,ObjectToImageData)
+	
+end--]]
 
---Removes all Mouse Hover events
-function __ViewWindow__.ClearAllMouseHoverEvents()
-	MouseHoverEvents = {};
-end
-
---Called to check for Hovering
-CheckHover = function()
-	local Position = ViewWindowCanvas:mousePosition();
-	for _,event in pairs(MouseHoverEvents) do
-		local Rect = event.rect;
-		if event.Hovering then
-			if (Position[1] < Rect[1] * ViewWindowScale + ViewWindowOffset[1] or Position[2] < Rect[2] * ViewWindowScale + ViewWindowOffset[2] or Position[1] > Rect[3] * ViewWindowScale + ViewWindowOffset[1] or Position[2] > Rect[4] * ViewWindowScale + ViewWindowOffset[2]) then
-				event.Hovering = false;
-				event.NoHoverFunc();
-			end
-		else
-			if not (Position[1] < Rect[1] * ViewWindowScale + ViewWindowOffset[1] or Position[2] < Rect[2] * ViewWindowScale + ViewWindowOffset[2] or Position[1] > Rect[3] * ViewWindowScale + ViewWindowOffset[1] or Position[2] > Rect[4] * ViewWindowScale + ViewWindowOffset[2]) then
-				event.Hovering = true;
-				event.OnHoverFunc();
-			end
+--Makes a controller that allows you to modify the data safely
+BuildController = function(data,objectID)
+	local Controller = {};
+	--Changes the position of the object
+	Controller.SetPosition = function(position)
+		if position ~= nil and (data.Position[1] ~= position[1] or data.Position[2] ~= position[2]) then
+			data.Position = position;
+			data.ScreenRect = {(data.Position[1] + data.PositionalOffset[1] / 8) * 8,(data.Position[2] + data.PositionalOffset[2] / 8) * 8,(data.Position[1] + data.TextureWidth / 8 + data.PositionalOffset[1] / 8) * 8,(data.Position[2] + data.TextureHeight / 8 + data.PositionalOffset[2] / 8) * 8};
+			local CollisionRegion = root.nonEmptyRegion(data.OriginalTexture);
+			data.CollisionRect = {(data.Position[1] + CollisionRegion[1] / 8 + data.PositionalOffset[1] / 8) * 8,(data.Position[2] + CollisionRegion[2] / 8 + data.PositionalOffset[2] / 8) * 8,(data.Position[1] + CollisionRegion[3] / 8 + data.PositionalOffset[1] / 8) * 8,(data.Position[2] + CollisionRegion[4] / 8 + data.PositionalOffset[2] / 8) * 8};
 		end
 	end
+	--Returns the position
+	Controller.GetPosition = function()
+		return data.Position;
+	end
+	--Sets the objects Texture
+	Controller.SetTexture = function(texture,flipx,flipy)
+		sb.logInfo("_flipx = " .. sb.print(flipx));
+		sb.logInfo("_flipy = " .. sb.print(flipy));
+		if texture ~= nil then
+			local ImageData = ImageCore.MakeImageCanvasRenderable(texture);
+			if flipx ~= nil then
+				data.FlipX = flipx;
+			end
+			if flipy ~= nil then
+				data.FlipY = flipy;
+			end
+			sb.logInfo("Image Data = " .. sb.print(ImageData));
+			sb.logInfo("FlipX 3 = " .. sb.print(data.FlipX));
+			sb.logInfo("FlipY 3 = " .. sb.print(data.FlipY));
+			data.OriginalTexture = texture;
+			data.Texture = ImageData.Image;
+			data.OriginalTextureRect = ImageData.TextureRect;
+			data.TextureRect = RectCore.Flip(data.OriginalTextureRect,data.FlipX,data.FlipY,true);
+			data.TextureWidth = ImageData.Width;
+			data.TextureHeight = ImageData.Height;
+			data.Scale = 0;
+			data.ScreenRect = {(data.Position[1] + data.PositionalOffset[1] / 8) * 8,(data.Position[2] + data.PositionalOffset[2] / 8) * 8,(data.Position[1] + data.TextureWidth / 8 + data.PositionalOffset[1] / 8) * 8,(data.Position[2] + data.TextureHeight / 8 + data.PositionalOffset[2] / 8) * 8};
+			local CollisionRegion = root.nonEmptyRegion(data.OriginalTexture);
+			data.CollisionRect = {(data.Position[1] + CollisionRegion[1] / 8 + data.PositionalOffset[1] / 8) * 8,(data.Position[2] + CollisionRegion[2] / 8 + data.PositionalOffset[2] / 8) * 8,(data.Position[1] + CollisionRegion[3] / 8 + data.PositionalOffset[1] / 8) * 8,(data.Position[2] + CollisionRegion[4] / 8 + data.PositionalOffset[2] / 8) * 8};
+		end
+	end
+	--returns the objects texture
+	Controller.GetTexture = function()
+		return data.OriginalTexture;
+	end
+	--returns the texture that is used in rendering
+	Controller.GetRenderTexture = function()
+		return data.Texture;
+	end
+	--Returns the texture Width
+	Controller.GetTextureWidth = function()
+		return data.TextureWidth;
+	end
+	--Returns the texture Height
+	Controller.GetTextureHeight = function()
+		return data.TextureHeight;
+	end
+	--Returns the Collision Rect
+	Controller.GetCollisionRect = function()
+		return data.CollisionRect;
+	end
+	--Gets the objects Scale
+	Controller.GetScale = function()
+		return data.Scale + 1;
+	end
+	--Returns the FlipX
+	Controller.GetFlipX = function()
+		return data.FlipX;
+	end
+	--Returns the FlipY
+	Controller.GetFlipY = function()
+		return data.FlipY;
+	end
+	--Returns the Object ID
+	Controller.GetObjectID = function()
+		return ObjectID;
+	end
+	--Returns the positional offset
+	Controller.GetPositionalOffset = function()
+		return data.PositionalOffset;
+	end
+	--Sets the objects Scale
+	Controller.SetScale = function(scale)
+		if scale - 1 ~= data.Scale then
+			data.Scale = scale - 1;
+			data.ScreenRect = {(data.Position[1] + data.PositionalOffset[1] / 8) * 8 - ((data.Scale) / 2) * (data.TextureWidth / 8),(data.Position[2] + data.PositionalOffset[2] / 8) * 8 - ((data.Scale) / 2) * (data.TextureHeight / 8),(data.Position[1] + data.TextureWidth / 8 + data.PositionalOffset[1] / 8) * 8 + ((data.Scale) / 2) * (data.TextureWidth / 8),(data.Position[2] + data.TextureHeight / 8 + data.PositionalOffset[2] / 8) * 8 + ((data.Scale) / 2) * (data.TextureHeight / 8)};
+			local CollisionRegion = root.nonEmptyRegion(data.OriginalTexture);
+			data.CollisionRect = {(data.Position[1] + CollisionRegion[1] / 8 + data.PositionalOffset[1] / 8) * 8 - ((data.Scale) / 2) * (data.TextureWidth / 8),(data.Position[2] + CollisionRegion[2] / 8 + data.PositionalOffset[2] / 8) * 8 - ((data.Scale) / 2) * (data.TextureHeight / 8),(data.Position[1] + CollisionRegion[3] / 8 + data.PositionalOffset[1] / 8) * 8 + ((data.Scale) / 2) * (data.TextureWidth / 8),(data.Position[2] + CollisionRegion[4] / 8 + data.PositionalOffset[2] / 8) * 8 + ((data.Scale) / 2) * (data.TextureHeight / 8)};
+		end
+		--TODO -- TODO -- TODO
+	end
+	return Controller;
 end
 
---Sets the click function that is called when you click on the background
-function ViewWindow.AddBackgroundClickEvent(func)
-	DefaultMouseClickEvent = func;
-end
+--Renders the conduit
+function VWPrivate.RenderConduit(ObjectTable)
+	--sb.logInfo("Object Table = " .. sb.print(ObjectTable));
+	if ObjectTable.TerminalParameters ~= nil then
+		local TerminalData,Done = ObjectTable.TerminalParameters();
+		if Done == true then
+			if TerminalData.AnimationName ~= nil then
+				local Animation = ImageCore.ParseObjectAnimation(ObjectTable.ID);
+				local CurrentLayer = Animation.Layers[TerminalData.AnimationName];
+				local CurrentState = CurrentLayer.States[TerminalData.AnimationState];
+				if CurrentState == nil then CurrentState = CurrentLayer.States[CurrentLayer.DefaultState] end;
+				local ImageParams = ImageCore.MakeImageCanvasRenderable(CurrentState.Image);
+				local ObjectToImageData = ImageCore.ObjectToImage(ObjectTable.ID);
 
---Removes a mouse event
-function __ViewWindow__.RemoveMouseClickEvent(MouseID)
-	MouseClickEvents[MouseID] = nil;
-end
-
---Clears all of the mouse events
-function __ViewWindow__.ClearAllMouseEvents()
-	MouseClickEvents = {};
-end
-
---Adds a function that is called when the mouse is released
-function ViewWindow.AddMouseReleaseFunction(func)
-	local ReleaseID = sb.makeUuid();
-	MouseReleaseFunctions[ReleaseID] = func;
-	return ReleaseID;
-end
-
---Returns the Mouse Position Inside the View Window
-function ViewWindow.MousePosition()
-	return ViewWindowCanvas:mousePosition();
-end
-
---Returns the View Window Position
-function ViewWindow.Position()
-	return ViewWindowOffset;
-end
-
---Removes a function that is called when the mouse is released
-function __ViewWindow__.RemoveMouseReleaseFunction(ReleaseID)
-	MouseReleaseFunctions[ReleaseID] = nil;
-end
-
---Adds a function that is called when the mouse hovers over a rect
---function
-
---Called when the mouse is clicked
-function __ViewWindow__.OnMouseClick(Position,ButtonType,IsDown)
-	if ButtonType == 0 then
-		if IsDown == true then
-			local Position = ViewWindowCanvas:mousePosition();
-			local ClickedObject = false;
-			for _,event in pairs(MouseClickEvents) do
-				local Rect = event.Rect;
-				--If the Position is inside the rect bounds
-				if not (Position[1] < Rect[1] * ViewWindowScale + ViewWindowOffset[1] or Position[2] < Rect[2] * ViewWindowScale + ViewWindowOffset[2] or Position[1] > Rect[3] * ViewWindowScale + ViewWindowOffset[1] or Position[2] > Rect[4] * ViewWindowScale + ViewWindowOffset[2]) then
-					event.Function();
-					ClickedObject = true;
+				ObjectTable.OriginalTexture = CurrentState.Image;
+				ObjectTable.FlipX = TerminalData.FlipX;
+				ObjectTable.FlipY = TerminalData.FlipY;
+				sb.logInfo("FlipX 2 = " .. sb.print(TerminalData.FlipX));
+				sb.logInfo("FlipY 2 = " .. sb.print(TerminalData.FlipY));
+				ObjectTable.Texture = ImageParams.Image;
+				ObjectTable.OriginalTextureRect = ImageParams.TextureRect;
+				ObjectTable.TextureRect = RectCore.Flip(ImageParams.TextureRect,TerminalData.FlipX,TerminalData.FlipY,true);
+				ObjectTable.PositionalOffset = ObjectToImageData.Offset;
+				ObjectTable.TextureWidth = ImageParams.Width;
+				ObjectTable.TextureHeight = ImageParams.Height;
+				ObjectTable.ScreenRect = {(ObjectTable.Position[1] + ObjectToImageData.Offset[1] / 8) * 8,(ObjectTable.Position[2] + ObjectToImageData.Offset[2] / 8) * 8,(ObjectTable.Position[1] + ImageParams.Width / 8 + ObjectToImageData.Offset[1] / 8) * 8,(ObjectTable.Position[2] + ImageParams.Height / 8 + ObjectToImageData.Offset[2] / 8) * 8};
+				local CollisionRegion = root.nonEmptyRegion(CurrentState.Image);
+				ObjectTable.CollisionRect = {(ObjectTable.Position[1] + CollisionRegion[1] / 8 + ObjectToImageData.Offset[1] / 8) * 8,(ObjectTable.Position[2] + CollisionRegion[2] / 8 + ObjectToImageData.Offset[2] / 8) * 8,(ObjectTable.Position[1] + CollisionRegion[3] / 8 + ObjectToImageData.Offset[1] / 8) * 8,(ObjectTable.Position[2] + CollisionRegion[4] / 8 + ObjectToImageData.Offset[2] / 8) * 8};
+				ConduitPreviousData[ObjectTable.ID] = TerminalData;
+				ObjectTable.TerminalParameters = nil;
+				ObjectTable.Scale = 0;
+				if ObjectTable.TempObject ~= nil then
+					ViewWindow.RemoveObject(ObjectTable.TempObject.GetObjectUUID());
+					ObjectTable.TempObject = nil;
+				end
+			else
+				ViewWindow.RemoveConduit(ObjectTable.UUID);
+				if ObjectTable.TempObject == nil then
+					return ViewWindow.AddObject(ObjectTable.ID);
 				end
 			end
-			if not ClickedObject and DefaultMouseClickEvent ~= nil then
-				DefaultMouseClickEvent();
-			end
-		else
-			for _,func in pairs(MouseReleaseFunctions) do
-				func();
-			end
+		--else
+			--return 3;
 		end
 	end
+	if ObjectTable.Enabled == true and ObjectTable.Texture ~= nil then
+		sb.logInfo("ScreenRect of conduit = " .. sb.print(ObjectTable.ScreenRect));
+		VWPrivate.Render(ObjectTable.Texture,ObjectTable.TextureRect,ObjectTable.ScreenRect,ObjectTable.Color);
+	end
+end
+
+--Renders to the View Window
+function VWPrivate.Render(Texture,TextureRect,ScreenRect,Color)
+	--sb.logInfo("COLOR = " .. sb.print(Color));
+	VWPrivate.Canvas:drawImageRect(Texture,TextureRect,{(ScreenRect[1] * VWPrivate.Scale) + VWPrivate.Position[1],(ScreenRect[2] * VWPrivate.Scale) + VWPrivate.Position[2],(ScreenRect[3] * VWPrivate.Scale) + VWPrivate.Position[1],(ScreenRect[4] * VWPrivate.Scale) + VWPrivate.Position[2]},Color);
+end
+
+--Generates a Collision Rect around something
+function VWPrivate.GenerateCollisionRect(Position,TextureCollisionRect,ObjectPositionOffset,ImageSizeX,ImageSizeY,Scale)
+	-- TODO -- TODO -- TODO -- TODO -- TODO -- TODO -- TODO -- TODO -- TODO -- TODO -- TODO -- TODO -- TODO -- TODO -- TODO -- TODO -- TODO -- TODO -- TODO -- TODO 
 end

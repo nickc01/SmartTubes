@@ -25,14 +25,15 @@ end
 
 --Attempts to get the frame file corresponding to an image
 function ImageCore.GetFrameOfImage(Image)
+	sb.logInfo("FRAME IMAGE BEFORE = " .. sb.print(Image));
 	Image = string.gsub(Image,":.+$","");
+	Image = string.gsub(Image,"%?.+$","");
+	sb.logInfo("FRAME IMAGE AFTER = " .. sb.print(Image));
 	local CachedValue = world.getProperty(Image);
 	if CachedValue ~= nil then
 		local Json = GetJson(CachedValue);
 		if Json ~= nil then
 			return CachedValue;
-		else
-			
 		end
 	end
 	if string.find(Image,"^/") == nil then
@@ -162,20 +163,35 @@ function ImageCore.MakeImageCanvasRenderable(img)
 	if CanvasImagesCache[img] ~= nil then
 		return CanvasImagesCache[img];
 	end
+	sb.logInfo("Input = " .. sb.print(img));
 	local Image,Frame = TranslateImage(img);
+	sb.logInfo("Output = " .. sb.print(Image));
+	sb.logInfo("Output Frame = " .. sb.print(Frame));
 	if string.find(Image,":") == nil then
-		return Image;
+		local Size = root.imageSize(Image);
+		local Data = {
+			Image = Image,
+			Width = Size[1],
+			Height = Size[2],
+			TextureRect = {0,0,Size[1],Size[2]};
+		}
+		CanvasImagesCache[img] = Data;
+		sb.logInfo("RETURN 1");
+		return Data;
 	else
 		
 		if Frame == nil then
-			
+			sb.logInfo("Return 2");
 			return nil;
 		end
 		
 		--TODO TODO TODO -------------------------------------------------------------
 		local FrameData = root.assetJson(Frame);
-		
-		local FrameLink = string.match(Image,":(.*)");
+		--string.match(Image,":(.*)%?") or string.match(Image,":(.*)");
+		local NonDirective = string.gsub(Image,"%?.*:",":");
+		sb.logInfo("Non Directive = " .. sb.print(NonDirective));
+		local Directives = string.match(Image,"%?.*") or "";
+		local FrameLink = string.match(NonDirective,":(.*)");
 		
 		if FrameData.aliases ~= nil then
 			
@@ -194,7 +210,8 @@ function ImageCore.MakeImageCanvasRenderable(img)
 		end
 		local Pos;
 		
-		
+		sb.logInfo("Frame Data = " .. sb.print(FrameData));
+		sb.logInfo("FrameLink = " .. sb.print(FrameLink));
 		for k,i in ipairs(FrameData.frameGrid.names) do
 			for m,n in ipairs(i) do
 				if FrameLink == n then
@@ -213,11 +230,11 @@ function ImageCore.MakeImageCanvasRenderable(img)
 				Width = Size[1],
 				Height = Size[2]
 			};
-			sb.logInfo("New 1");
 			CanvasImagesCache[img] = CanvasTable;
+			sb.logInfo("Return 4");
 			return CanvasTable;
 		end
-		
+		sb.logInfo("Return 3");
 	end
 end
 
