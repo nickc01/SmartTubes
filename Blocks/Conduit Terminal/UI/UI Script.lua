@@ -1,4 +1,4 @@
-require("/Core/Conduit Scripts/TerminalUI.lua");
+require("/Core/Conduit Scripts/Terminal/TerminalUI.lua");
 
 --Variables
 local Clicking

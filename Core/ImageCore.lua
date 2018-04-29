@@ -10,6 +10,7 @@ local ImageCore = ImageCore;
 local CanvasImagesCache = {};
 local ObjectImageCache = {};
 local ObjectAnimationCache = {};
+local AnimationCache = {};
 
 
 --Functions
@@ -25,10 +26,10 @@ end
 
 --Attempts to get the frame file corresponding to an image
 function ImageCore.GetFrameOfImage(Image)
-	sb.logInfo("FRAME IMAGE BEFORE = " .. sb.print(Image));
+	--sb.logInfo("FRAME IMAGE BEFORE = " .. sb.print(Image));
 	Image = string.gsub(Image,":.+$","");
 	Image = string.gsub(Image,"%?.+$","");
-	sb.logInfo("FRAME IMAGE AFTER = " .. sb.print(Image));
+	--sb.logInfo("FRAME IMAGE AFTER = " .. sb.print(Image));
 	local CachedValue = world.getProperty(Image);
 	if CachedValue ~= nil then
 		local Json = GetJson(CachedValue);
@@ -153,6 +154,15 @@ TranslateImage = function(AnimationImage,PartImage,GlobalTags)
 	return Final,Frame;
 end
 
+--Adds a image directive to the image
+function ImageCore.AddImageDirective(image,directive)
+	if string.find(image,":") ~= nil then
+		return string.gsub(image,":",directive .. ":");
+	else
+		return image .. directive;
+	end
+end
+
 --Converts an image into something that can be used in canvas rendering
 --Format : 
 --Width
@@ -163,25 +173,26 @@ function ImageCore.MakeImageCanvasRenderable(img)
 	if CanvasImagesCache[img] ~= nil then
 		return CanvasImagesCache[img];
 	end
-	sb.logInfo("Input = " .. sb.print(img));
+	--sb.logInfo("Input = " .. sb.print(img));
 	local Image,Frame = TranslateImage(img);
-	sb.logInfo("Output = " .. sb.print(Image));
-	sb.logInfo("Output Frame = " .. sb.print(Frame));
+	--sb.logInfo("Output = " .. sb.print(Image));
+	--sb.logInfo("Output Frame = " .. sb.print(Frame));
 	if string.find(Image,":") == nil then
 		local Size = root.imageSize(Image);
 		local Data = {
 			Image = Image,
 			Width = Size[1],
 			Height = Size[2],
-			TextureRect = {0,0,Size[1],Size[2]};
+			TextureRect = {0,0,Size[1],Size[2]},
+			Original = Image
 		}
 		CanvasImagesCache[img] = Data;
-		sb.logInfo("RETURN 1");
+		--sb.logInfo("RETURN 1");
 		return Data;
 	else
 		
 		if Frame == nil then
-			sb.logInfo("Return 2");
+			--sb.logInfo("Return 2");
 			return nil;
 		end
 		
@@ -189,7 +200,7 @@ function ImageCore.MakeImageCanvasRenderable(img)
 		local FrameData = root.assetJson(Frame);
 		--string.match(Image,":(.*)%?") or string.match(Image,":(.*)");
 		local NonDirective = string.gsub(Image,"%?.*:",":");
-		sb.logInfo("Non Directive = " .. sb.print(NonDirective));
+		--sb.logInfo("Non Directive = " .. sb.print(NonDirective));
 		local Directives = string.match(Image,"%?.*") or "";
 		local FrameLink = string.match(NonDirective,":(.*)");
 		
@@ -210,8 +221,8 @@ function ImageCore.MakeImageCanvasRenderable(img)
 		end
 		local Pos;
 		
-		sb.logInfo("Frame Data = " .. sb.print(FrameData));
-		sb.logInfo("FrameLink = " .. sb.print(FrameLink));
+		--sb.logInfo("Frame Data = " .. sb.print(FrameData));
+		--sb.logInfo("FrameLink = " .. sb.print(FrameLink));
 		for k,i in ipairs(FrameData.frameGrid.names) do
 			for m,n in ipairs(i) do
 				if FrameLink == n then
@@ -228,13 +239,14 @@ function ImageCore.MakeImageCanvasRenderable(img)
 				Image = string.match(Image,"(.*):.*"),
 				TextureRect = {Size[1] * (Pos[1] - 1),Height - (Size[2] * Pos[2]),Size[1] * Pos[1],Height - (Size[1] * (Pos[2] - 1))},
 				Width = Size[1],
-				Height = Size[2]
+				Height = Size[2],
+				Original = Image,
 			};
 			CanvasImagesCache[img] = CanvasTable;
-			sb.logInfo("Return 4");
+			--sb.logInfo("Return 4");
 			return CanvasTable;
 		end
-		sb.logInfo("Return 3");
+		--sb.logInfo("Return 3");
 	end
 end
 
@@ -288,7 +300,6 @@ function ImageCore.ObjectToImage(object)
 		FinalImages[#FinalImages + 1] = ImageCore.MakeImageCanvasRenderable(ImageCore.MakePathAbsolute(i,object));
 	end
 	ObjectImageCache[object] = {Images = FinalImages,Offset = Offset,Flip = Flip};
-	sb.logInfo("New 3");
 	return ObjectImageCache[object];
 end
 
@@ -317,13 +328,6 @@ function ImageCore.ParseObjectAnimation(Object)
 	end
 	local Config = root.itemConfig({name = Object,count = 1});
 	local Directory = nil;
-	--[[if type(Object) == "number" then
-		Config = root.itemConfig({name = world.entityName(Object),count = 1});
-	elseif type(Object) == "string" then
-		Config = root.itemConfig({name = Object,count = 1});
-	else
-		error("Can't find an object to work on");
-	end--]]
 	Directory = Config.directory;
 	Config = Config.config;
 	local AnimationFile = Config.animation;
@@ -331,7 +335,20 @@ function ImageCore.ParseObjectAnimation(Object)
 		error("This Object has no Animations");
 	end
 	AnimationFile = ImageCore.MakePathAbsolute(AnimationFile,Object);
-	local AnimationData = root.assetJson(AnimationFile);
+	local Animation = ImageCore.TranslateAnimationFile(AnimationFile,Config.animationParts,Object);
+	ObjectAnimationCache[Object] = Animation;
+	--sb.logInfo("New 2");
+	return Animation;
+end
+
+--Takes in an animation file and translates it into something readable
+function ImageCore.TranslateAnimationFile(file,AnimationParts,Object)
+	if AnimationCache[file] ~= nil then
+		if AnimationCache[file][Object] ~= nil then
+			return AnimationCache[file][Object];
+		end
+	end
+	local AnimationData = root.assetJson(file);
 	local Animation = {
 		Layers = {};
 	};
@@ -345,7 +362,7 @@ function ImageCore.ParseObjectAnimation(Object)
 		end
 	end
 	local GlobalTags = AnimationData.globalTagDefaults or {};
-	local SpriteImages = Config.animationParts;
+	local SpriteImages = AnimationParts;
 	for CurrentSprite,CurrentSpriteData in pairs(AnimationData.animatedParts.parts) do
 		local Image = SpriteImages[CurrentSprite];
 		for CurrentLayer,CurrentLayerData in pairs(CurrentSpriteData.partStates) do
@@ -355,7 +372,10 @@ function ImageCore.ParseObjectAnimation(Object)
 			end
 		end
 	end
-	ObjectAnimationCache[Object] = Animation;
-	sb.logInfo("New 2");
+	--AnimationCache[file] = Animation;
+	if AnimationCache[file] == nil then
+		AnimationCache[file] = {}; 
+	end
+	AnimationCache[file][Object] = Animation;
 	return Animation;
 end

@@ -30,6 +30,6 @@
   },
   "conduitType": "crafting",
   "scriptDelta": 2,
-  "scripts": [ "/Core/ContainerCore.lua", "Script.lua", "/Core/CableCore.lua" ]
+  "scripts": [ "Script.lua" ]
 
 }

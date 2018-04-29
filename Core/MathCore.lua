@@ -1,3 +1,4 @@
+if RectCore ~= nil then return nil end;
 --Declaration
 
 --Public Table
@@ -61,4 +62,9 @@ end
 --Subtracts two vectors
 function VectorCore.Subtract(A,B)
 	return {A[1] - B[1],A[2] - B[2]};
+end
+
+--Returns true if the rects intersect
+function RectCore.Intersect(A,B)
+	return not (A[1] > B[3] or A[2] > B[4] or A[3] < B[1] or A[4] < B[2]);
 end

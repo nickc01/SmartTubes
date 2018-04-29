@@ -22,7 +22,7 @@ function update(dt)
 	if OldUpdate ~= nil then OldUpdate(dt) end;
 	
 	Extraction.RefreshConfig();
-	if Extraction.IsConfigAvailable() then
+	if Extraction.IsConfigAvailable() and ConduitCore.FirstUpdateCompleted() then
 				
 		Extract();
 	end

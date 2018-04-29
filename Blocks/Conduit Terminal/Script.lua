@@ -1,4 +1,4 @@
-require("/Core/Conduit Scripts/Terminal.lua");
+require("/Core/Conduit Scripts/Terminal/Terminal.lua");
 
 --Variables
 

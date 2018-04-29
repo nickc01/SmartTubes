@@ -157,6 +157,19 @@ function UICore.SetDefinitionTable(tbl)
 	DefinitionTable = tbl;
 end
 
+--Ipairs but does the iteration in reverse
+function UICore.ReverseIpairs(tbl)
+	local Index = #tbl + 1;
+	return function()
+		Index = Index - 1;
+		if Index <= 0 then
+			return nil;
+		else
+			return Index,tbl[Index];
+		end
+	end
+end
+
 --Loops over the parameters and groups them by the pairs amount
 function UICore.ParameterIter(pairAmount,...)
 	pairAmount = pairAmount or 1;
@@ -252,6 +265,7 @@ function UICore.SetAsSyncedValues(GroupName,ID,...)
 
 	--local CallIndex = #PromiseLoopCalls + 1;
 	local CallID = sb.makeUuid();
+	local AllChangeFunctions = {};
 
 	for ValueName,DefaultValue in UICore.ParameterIter(2,...) do
 		NewSyncedValues.ValueNames[#NewSyncedValues.ValueNames + 1] = ValueName;
@@ -261,10 +275,10 @@ function UICore.SetAsSyncedValues(GroupName,ID,...)
 
 		local ChangeFunctions;
 		
-		local SetFunction = function(newValue)
+		local SetFunction = function(newValue,dontCallChangeFunctions)
 			if NewSyncedValues.Values[ValueName] ~= newValue then
 				NewSyncedValues.Values[ValueName] = newValue;
-				if ChangeFunctions ~= nil then
+				if dontCallChangeFunctions ~= true and ChangeFunctions ~= nil then
 					for _,func in ipairs(ChangeFunctions) do
 						func();
 					end
@@ -285,6 +299,7 @@ function UICore.SetAsSyncedValues(GroupName,ID,...)
 		local AddChangeFunction = function(func)
 			if ChangeFunctions == nil then
 				ChangeFunctions = {func};
+				AllChangeFunctions[ValueName] = ChangeFunctions;
 			else
 				ChangeFunctions[#ChangeFunctions + 1] = func;
 			end
@@ -300,8 +315,22 @@ function UICore.SetAsSyncedValues(GroupName,ID,...)
 			local Result = Promise:result();
 			if Result ~= nil and Result ~= false then
 				SettingValues = true;
+				local PostFunctions = {};
 				for _,valueName in ipairs(NewSyncedValues.ValueNames) do
-					DefinitionTable["Set" .. valueName](Result[valueName]);
+					local PreviousValue = DefinitionTable["Get" .. valueName]();
+					DefinitionTable["Set" .. valueName](Result[valueName],true);
+					if PreviousValue ~= Result[valueName] then
+						if AllChangeFunctions[valueName] ~= nil then
+							PostFunctions[#PostFunctions + 1] = function()
+								for _,func in ipairs(AllChangeFunctions[valueName]) do
+									func();
+								end
+							end
+						end
+					end
+				end
+				for _,func in ipairs(PostFunctions) do
+					func();
 				end
 				SettingValues = false;
 			end

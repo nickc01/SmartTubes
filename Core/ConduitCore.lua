@@ -1,4 +1,3 @@
-
 --Declaration
 if ConduitCore ~= nil then return nil end;
 --Public Table
@@ -113,7 +112,7 @@ local ConnectionPointIter;
 --Initializes the Conduit
 function ConduitCore.Initialize()
 	if Initialized == true then return nil else Initialized = true end;
-	sb.logInfo("INIT of conduit = " .. sb.print(entity.id()));
+	--sb.logInfo("INIT of conduit = " .. sb.print(entity.id()));
 	if entity == nil then
 		local OldInit = init;
 		init = function()
@@ -193,8 +192,13 @@ SetMessages = function()
 		local FlipY = false;
 		local AnimationName;
 		local AnimationState;
+		local AnimationFile;
+		local AnimationParts;
+		local AnimationSource;
 		--sb.logInfo("Default Animated = " .. sb.print(DefaultAnimated));
-		if DefaultAnimated then
+		--sb.logInfo("Facade = " .. sb.print(Facade));
+		--sb.logInfo("Default Animated = " .. sb.print(DefaultAnimated));
+		if DefaultAnimated or Facade then
 			AnimationName = "cable";
 			if Connections[3] ~= 0 and Connections[4] ~= 0 and Connections[1] == 0 and Connections[2] == 0 then
 				AnimationState = "horizontal";
@@ -236,9 +240,19 @@ SetMessages = function()
 			elseif Connections[3] == 0 and Connections[4] == 0 and Connections[1] == 0 and Connections[2] ~= 0 then
 				AnimationState = "up";
 			end
+			if Facade then 
+				--sb.logInfo("IS FACADED");
+				if FacadeInfo == nil then
+					require("/Core/FacadeInfo.lua");
+				end
+				 local Config = FacadeInfo.FacadeToObjectConfig(object.name());
+				 AnimationFile = Config.config.animation;
+				 AnimationParts = Config.config.animationParts;
+				 AnimationSource = FacadeInfo.FacadeToObject(object.name());
+			end
 		end
 		--sb.logInfo("RETURN VALUE = " .. sb.print({FlipX = FlipX,FlipY = FlipY,AnimationName = AnimationName,AnimationState = AnimationState}));
-		return {FlipX = FlipX,FlipY = FlipY,AnimationName = AnimationName,AnimationState = AnimationState};
+		return {FlipX = FlipX,FlipY = FlipY,AnimationName = AnimationName,AnimationState = AnimationState,AnimationFile = AnimationFile,AnimationParts = AnimationParts,AnimationSource = AnimationSource};
 	end);
 end
 
@@ -247,7 +261,6 @@ PostInit = function()
 	ForceUpdate = true;
 	ConduitCore.Update();
 	ForceUpdate = false;
-	FirstUpdateComplete = true;
 	for _,func in ipairs(PostInitFunctions) do
 		func();
 	end
@@ -372,13 +385,17 @@ function ConduitCore.UpdateSelf()
 			end
 		end
 	end
+	if FirstUpdateComplete == false then
+		FirstUpdateComplete = true;
+	end
 	if #PostFuncs > 0 then
-		sb.logInfo("CALLING POST FUNCS From = " .. sb.print(SourceID));
-		sb.logInfo("Post Func Amount = " .. sb.print(#PostFuncs));
+		--sb.logInfo("CALLING POST FUNCS From = " .. sb.print(SourceID));
+		--sb.logInfo("Post Func Amount = " .. sb.print(#PostFuncs));
 		for k,i in ipairs(PostFuncs) do
 			i();
 		end
 	end
+	--sb.logInfo("ALL CONNECTION TYPES = " .. sb.print(ConnectionTypes));
 	if ConnectionsAreChanged == true then
 		ConnectionUpdate();
 	end
@@ -400,12 +417,12 @@ end
 
 --Called whenever the network changes
 NetworkChange = function(ConnectionType)
-	sb.logInfo("NETWORK CHANGE = ".. sb.print(SourceID));
-	sb.logInfo("ConnectionType = " .. sb.print(ConnectionType));
+	--sb.logInfo("NETWORK CHANGE = ".. sb.print(SourceID));
+	--sb.logInfo("ConnectionType = " .. sb.print(ConnectionType));
 	if NetworkCache[ConnectionType] ~= nil then
 		NetworkCache[ConnectionType].NeedsUpdating = true;
 	end
-	sb.logInfo("Network Cache = " .. sb.print(NetworkCache[ConnectionType]));
+	--sb.logInfo("Network Cache = " .. sb.print(NetworkCache[ConnectionType]));
 	for i=1,#LocalNetworkUpdateFunctions do
 		LocalNetworkUpdateFunctions[i](ConnectionType);
 	end
@@ -425,7 +442,7 @@ function __ConduitCore__.AddOnNetworkChangeFunc(id,func,ConnectionType)
 		NetworkUpdateFunctions[ConnectionType][#NetworkUpdateFunctions[ConnectionType] + 1] = func;
 		
 	end--]]
-	sb.logInfo("ADDING " .. sb.print(id) .. " to " .. sb.print(SourceID));
+	--sb.logInfo("ADDING " .. sb.print(id) .. " to " .. sb.print(SourceID));
 	if NetworkUpdateFunctions[ConnectionType] == nil then
 		NetworkUpdateFunctions[ConnectionType] = setmetatable({},IndexToStringMeta);
 	end
@@ -444,16 +461,16 @@ end
 function __ConduitCore__.CallNetworkChangeFunctions(ConnectionType)
 	
 	--NetworkChange(ConnectionType);
-	sb.logInfo("CALLING OTHER NETWORK CHANGE FUNCTIONS = " .. sb.print(SourceID));
+	--sb.logInfo("CALLING OTHER NETWORK CHANGE FUNCTIONS = " .. sb.print(SourceID));
 	if NetworkUpdateFunctions[ConnectionType] ~= nil then
 		--[[for i=#NetworkUpdateFunctions[ConnectionType],1,-1 do
 			local func = NetworkUpdateFunctions[ConnectionType][i];
 			table.remove(NetworkUpdateFunctions[ConnectionType],i);
 			func(ConnectionType);
 		end--]]
-		sb.logInfo("NETWORK FUNCTIONS = " .. sb.print(NetworkUpdateFunctions[ConnectionType]));
+		--sb.logInfo("NETWORK FUNCTIONS = " .. sb.print(NetworkUpdateFunctions[ConnectionType]));
 		for ID,Func in pairs(NetworkUpdateFunctions[ConnectionType]) do
-			sb.logInfo("CALLING FUNC OF = " .. sb.print(ID));
+			--sb.logInfo("CALLING FUNC OF = " .. sb.print(ID));
 			if ID ~= nil and Func ~= nil then
 				NetworkUpdateFunctions[ConnectionType][ID] = nil;
 				if world.entityExists(tonumber(ID)) then
@@ -570,9 +587,9 @@ function ConduitCore.GetNetwork(ConnectionType)
 		return nil;
 	end
 	UsingNetworkForType[ConnectionType] = true;
-	sb.logInfo("CACHE = " .. sb.print(NetworkCache[ConnectionType]));
+	--sb.logInfo("CACHE = " .. sb.print(NetworkCache[ConnectionType]));
 	if NetworkCache[ConnectionType] ~= nil and NetworkCache[ConnectionType].NeedsUpdating == false then
-		sb.logInfo("RETURNING CACHE");
+		--sb.logInfo("RETURNING CACHE");
 		return NetworkCache[ConnectionType].Normal;
 	end
 	local Findings = {};
@@ -632,7 +649,7 @@ function ConduitCore.GetNetwork(ConnectionType)
 			world.callScriptedEntity(Findings[i],"__ConduitCore__.AddOnNetworkChangeFunc",SourceID,NetworkChange,ConnectionType);
 		end
 	end
-	sb.logInfo("NEW FINDINGS = " .. sb.print(Findings));
+	--sb.logInfo("NEW FINDINGS = " .. sb.print(Findings));
 	return Findings;
 end
 --Gets the Current Connections for the "Conduit" Connection Type
@@ -642,6 +659,7 @@ end
 
 --Gets the Current Connections for the Passed In Connection Type
 function ConduitCore.GetConnections(ConnectionType)
+	--sb.logInfo("FIRST UPDATE = " .. sb.print(FirstUpdateComplete));
 	if FirstUpdateComplete and ConnectionTypes[ConnectionType] ~= nil then
 		return ConnectionTypes[ConnectionType].Connections;
 	end
@@ -1054,6 +1072,31 @@ ConnectionPointIter = function()
 			goto Continue;
 		end
 	end
+end
+
+--Returns the UI of this Conduit, or nil if there isn't one
+--Returns the Interaction Type and the Json Data
+function ConduitCore.GetUI()
+	local Type,Interaction;
+	if onInteraction ~= nil then
+		local Data = onInteraction();
+		Type,Interaction = Data[1],Data[2];
+	end
+	if Type == nil or Interaction == nil then
+		Type = config.getParameter("interactAction");
+		if Type ~= nil then
+			local Link = config.getParameter("interactData");
+			if Link ~= nil then
+				--Interaction = root.assetJson(Link);
+				--sb.logInfo("INTERACTION == " .. sb.print(Link));
+				return {Type = Type,Link = Link};
+			end
+		end
+	else
+		--sb.logInfo("INTERACTION == " .. sb.print(Interaction));
+		return {Type = Type,Interaction = Interaction};
+	end
+	return nil;
 end
 
 

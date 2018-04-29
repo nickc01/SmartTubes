@@ -72,8 +72,24 @@ Update = function(dt)
 				end
 			end
 		end
-		sb.logInfo("ALL NETWORK CONTAINERS = " .. sb.printJson(Containers,1));
+		local ConduitInfo = {};
+		for _,conduit in ipairs(Network) do
+			local Info = {};
+			ConduitInfo[tostring(conduit)] = Info;
+			--Conduit Info Here
+			Info.HasMenuData = false;
+			local Data = world.callScriptedEntity(conduit,"ConduitCore.GetUI");
+			--sb.logInfo("DATA RECIEVED = " .. sb.print(Data));
+			--local UIType,UIData = Data.Type,Data.Interaction;
+			if Data ~= nil then
+				Info.UI = {Type = Data.Type,Data = Data.Interaction,Link = Data.Link};
+				--sb.logInfo("INFO.UI = " .. sb.printJson(Info.UI,1));
+				Info.HasMenuData = true;
+			end
+		end
+		--sb.logInfo("ALL NETWORK CONTAINERS = " .. sb.printJson(Containers,1));
 		Data.SetNetworkContainers(Containers);
+		Data.SetConduitInfo(ConduitInfo);
 		Data.SetNetwork(Network);
 	end
 end
@@ -91,7 +107,7 @@ end
 --The Post Init Function, called after the first update in ConduitCore
 PostInit = function()
 	sb.logInfo("POST INIT");
-	Server.DefineSyncedValues("ConduitNetwork","Network",nil,"NetworkContainers",nil);
+	Server.DefineSyncedValues("ConduitNetwork","Network",nil,"NetworkContainers",nil,"ConduitInfo",nil);
 	sb.logInfo("DATA = " .. sb.print(Data));
 	ConduitCore.AddNetworkUpdateFunction(ConduitNetworkUpdate);
 	Server.SaveValuesOnExit("ConduitNetwork",false);
