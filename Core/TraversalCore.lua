@@ -243,6 +243,9 @@ function Traversal.Respawn(NewPosition,AmountToMoveForward)
 	local NewTraversal = world.spawnProjectile(projectile.getParameter("projectileName"),NewPosition);
 	
 	world.callScriptedEntity(NewTraversal,"__Traversal__.InitializeAfterRespawn",Traversal,Insertion,ConnectionType,Predictions,PredictionsForTossing,Path,PathIndex + AmountToMoveForward);
+	if Insertion ~= nil then
+		world.callScriptedEntity(Insertion.GetID(),"__Insertion__.TraversalRespawn",SourceID,NewTraversal);
+	end
 	projectile.die();
 	return NewTraversal;
 end

@@ -37,12 +37,17 @@ end
 
 --Continously calls a function and if it returns true then call the passed in function
 function UICore.LoopCallContinuously(ID,func,Message,ParamFunc)
+	if Initialized == false then
+		UICore.Initialize();
+	end
 	if not world.entityExists(ID) then error(sb.print(ID) .. " doesn't exist") end;
 	local Promise = world.sendEntityMessage(ID,Message,ParamFunc());
 	--local Parameters = {...};
 	local CallID = sb.makeUuid();
 	PromiseLoopCalls[CallID] = function()
+		--sb.logInfo("FINISHED = " .. sb.print(Promise:finished()));
 		if Promise:finished() then
+			--sb.logInfo("FINISHED");
 			local Result = Promise:result();
 			if Result ~= nil then
 				local CallFunc = false;
@@ -58,9 +63,12 @@ function UICore.LoopCallContinuously(ID,func,Message,ParamFunc)
 						end
 					end
 				else
+					--CallFuncParameters = {Result};
+					--CallFunc = true;
 					CallFunc = Result;
 				end
 				if CallFunc == true then
+					sb.logInfo("CallFuncParameters = " .. sb.print(CallFuncParameters));
 					func(table.unpack(CallFuncParameters));
 				end
 			end
@@ -70,11 +78,15 @@ function UICore.LoopCallContinuously(ID,func,Message,ParamFunc)
 	ResetPromiseLoopCalls[CallID] = function()
 		Promise = world.sendEntityMessage(ID,Message,ParamFunc());
 	end
+	--sb.logInfo("PROMISE LOOP CALLS = " .. sb.print(PromiseLoopCalls));
 	return CallID;
 end
 
 --Calls the message continously but only allows one return value and no parameters
 function UICore.SimpleLoopCall(ID,Message,func)
+	if Initialized == false then
+		UICore.Initialize();
+	end
 	if not world.entityExists(ID) then error(sb.print(ID) .. " doesn't exist") end;
 	local Promise = world.sendEntityMessage(ID,Message);
 	local CallID = sb.makeUuid();
@@ -92,6 +104,9 @@ end
 
 --Calls the message once and passes any results into the passed function
 function UICore.CallMessageOnce(ID,Message,func,...)
+	if Initialized == false then
+		UICore.Initialize();
+	end
 	local Promise = world.sendEntityMessage(ID,Message,...);
 	local CallID = sb.makeUuid();
 	PromiseLoopCalls[CallID] = function()
@@ -209,6 +224,9 @@ end
 
 --Returns a function that will return a default value if not finished, and the recieved result when it is finished
 function UICore.AsyncFunctionCall(Object,Message,DefaultValue,...)
+	if Initialized == false then
+		UICore.Initialize();
+	end
 	local CallID = sb.makeUuid();
 	local Promise = world.sendEntityMessage(Object,Message,...);
 	local Result = nil;

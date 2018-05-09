@@ -224,8 +224,9 @@ SetMessages = function()
 		end
 	end);
 	message.setHandler("__UIGetInsertID__",function(_,_,insertUUID)
-		if InsertUUID == insertUUID then
-			return {true,InsertID};
+		--sb.logInfo("GETTING INSERT ID");
+		if InsertUUID ~= insertUUID then
+			return {true,InsertID,InsertUUID};
 		else
 			return false;
 		end
@@ -360,6 +361,8 @@ function Insertion.SendItem(Item,DestinationContainer,Slot,ExtractionID,Possible
 	elseif TraversalSpeed == 0 then
 		TraversalSpeed = 1;
 	end
+	--sb.logInfo("2 Insertion = " .. sb.print(SourceID));
+	--sb.logInfo("2 IS Connected to " .. sb.print(DestinationContainer) .. " = " .. sb.print(Insertion.IsConnectedTo(DestinationContainer)));
 	if not Insertion.IsConnectedTo(DestinationContainer) then
 		error("This insertion Conduit is not connected to the Object : " .. sb.print(DestinationContainer));
 	end
@@ -380,6 +383,7 @@ function Insertion.SendItem(Item,DestinationContainer,Slot,ExtractionID,Possible
 		});
 	end
 	--Create the prediction for the item
+	--sb.logInfo("INSERTION SENT SLOT = " .. sb.print(Slot));
 	local Prediction = {Item = Item,Slot = Slot,MaxStack = Insertion.GetItemConfig(Item).config.maxstack or 1000,Traversal = Traversal,PossibleSlots = PossibleSlots};
 	AddPrediction(DestinationContainer,Prediction);
 	world.callScriptedEntity(Traversal,"__Traversal__.Initialize",Insertion,DestinationContainer,"Conduits",TraversalSpeed);
@@ -402,6 +406,7 @@ function __Insertion__.InsertTraversalItems(Traversal)
 	--If Destination even exists
 	if world.entityExists(Object) then
 		for k,i in ipairs(Predictions) do
+			sb.logInfo("PREDICTION = " .. sb.print(i));
 			--Add Item into the Container
 			ContainerHelper.PutItemsAt(Object,i.Item,i.Slot - 1);
 		end
@@ -453,7 +458,12 @@ function Insertion.ItemCanFit(Object,Item,Slots,Exact)
 	local Inventory = GetInventoryWithPredictions(Object);
 	local MaxStack = Insertion.GetItemConfig(Item).config.maxStack or 1000;
 	Exact = Exact or false;
-	Slots = Slots or "any";
+	if Slots == nil then
+		Slots = "any";
+	elseif type(Slots) == "number" then
+		Slots = {Slots};
+	end
+	--Slots = Slots or "any";
 	for slot in SlotIter(Slots,ContainerHelper.Size(Object)) do
 		if Inventory[slot] == nil then
 			--If the slot doesn't have anything in it then the item can go there

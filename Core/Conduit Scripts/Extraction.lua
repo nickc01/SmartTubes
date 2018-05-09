@@ -26,6 +26,7 @@ local NewConfigUUID;
 local SettingsUUID;
 local ConfigIndex = 1;
 local ConfigCache = {};
+local HasContainersConnected = false;
 local AnyNumberTable = setmetatable({},{__index = function(_,k) return k end});
 local ZeroIfNilMetatable = {__index = function(tbl,k)
 	
@@ -50,6 +51,7 @@ local MakeNumberTable;
 local SpeedUpdate;
 local StackUpdate;
 local ColorUpdate;
+local SetDelta;
 
 --Initializes the Extraction Conduit
 function Extraction.Initialize()
@@ -76,7 +78,8 @@ function Extraction.Initialize()
 		SettingsUUID = sb.makeUuid();
 		 object.setConfigParameter("SettingsUUID",SettingsUUID);
 	end
-	script.setUpdateDelta(60 / (Speed + 1));
+	--script.setUpdateDelta(60 / (Speed + 1));
+	SetDelta(Speed);
 	Config = config.getParameter("Configs",{});
 	ConfigUUID = config.getParameter("ConfigsUUID");
 	if ConfigUUID == nil then
@@ -88,7 +91,14 @@ function Extraction.Initialize()
 	ConduitCore.AddConnectionUpdateFunction(function()
 		SetCachedConfigValue("TakeFromSidesWithIDs",nil);
 		SetCachedConfigValue("InsertionConduits",nil);
-		ConduitCore.TriggerNetworkUpdate("Conduits");
+		ConduitCore.TriggerNetworkUpdate("TerminalFindings");
+		for _,container in ipairs(ConduitCore.GetConnections("Containers")) do
+			if container ~= 0 then
+				HasContainersConnected = true;
+				return nil;
+			end
+		end
+		HasContainersConnected = false;
 	end);
 	ConduitCore.AddNetworkUpdateFunction(function()
 		SetCachedConfigValue("NetworkInsertConduits",nil);
@@ -153,6 +163,11 @@ SetMessages = function()
 		__Extraction__.SaveParameters();
 		ConduitCore.DropAndSaveParameters(nil,dropPosition);
 	end);
+end
+
+--Returns true if the Extraction Conduit has containers connected to it
+function Extraction.HasContainers()
+	return HasContainersConnected;
 end
 
 --Is an extraction conduit
@@ -270,6 +285,11 @@ function Extraction.GetContainerIterator()
 			return i;
 		end
 	end--]]
+end
+
+--Sends an item to an insertion conduit
+function Extraction.SendItem(Item,Container,Slot,InsertionConduitID)
+	return world.callScriptedEntity(InsertionConduitID,"PostExtract",Extraction,Item,Slot,Container);
 end
 
 --Returns a neighboring container based off of the config data
@@ -605,9 +625,19 @@ function Extraction.SetStack(stack)
 	end
 end
 
+--Sets the Update Rate
+SetDelta = function(Speed)
+	local Value = math.ceil(80 / (((Speed + 1) / 2) + 0.5));
+	if Value < 10 then
+		Value = 10;
+	end
+	script.setUpdateDelta(Value);
+end
+
 --Called when the speed changes
 SpeedUpdate = function()
-	script.setUpdateDelta(60 / (Speed + 1));
+	--script.setUpdateDelta(60 / (Speed + 1));
+	SetDelta(Speed);
 	object.setConfigParameter("Speed",Speed);
 end
 

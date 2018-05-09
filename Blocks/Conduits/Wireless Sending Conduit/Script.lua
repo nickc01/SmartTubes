@@ -12,6 +12,7 @@ local OnNodeChangeFunction;
 function init()
 	ConduitCore.Initialize();
 	ConduitCore.AddExtraPathFunction("Conduits",ExtraPathFunction);
+	ConduitCore.AddExtraPathFunction("TerminalFindings",ExtraPathFunction);
 	Wireless.AddNodeChangeFunction(OnNodeChangeFunction);
 	
 end

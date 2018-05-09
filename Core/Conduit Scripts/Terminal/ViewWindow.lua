@@ -16,6 +16,7 @@ local __ViewWindow__ = __ViewWindow__;
 
 --Variables
 local Initialized = false;
+local ViewChanged = false;
 local Canvas;
 local Position;
 local Scale;
@@ -61,6 +62,7 @@ local SmoothDestination;
 local SelectedObject;
 local SelectedObjectControllers;
 local JsonCache = {};
+local UpdateFunctions = {};
 
 --Images
 local BackgroundImage = "/Blocks/Conduit Terminal/UI/Window/TileImage.png";
@@ -95,6 +97,8 @@ local SetRendererRenderingState;
 local GetRendererCollisionState;
 local GetRendererRenderingState;
 local IsInTable;
+local AddUpdateFunction;
+local RemoveUpdateFunction;
 
 --Initializes the ViewWindow
 function ViewWindow.Initialize(canvasName)
@@ -136,16 +140,19 @@ end
 Update = function(dt)
 	local MousePos = Canvas:mousePosition();
 	if MovingTheBackground == true then
+		ViewChanged = true;
 		SetPositionRaw({MousePos[1] - MouseDifference[1],MousePos[2] - MouseDifference[2]});
-		--ViewWindow.SetPosition({MousePos[1] - MouseDifference[1] + SourcePosition[1] - Size[1] / 2,MousePos[2] - MouseDifference[2] + SourcePosition[2] - Size[2] / 2});
-		--Position = {MousePos[1] - MouseDifference[1],MousePos[2] - MouseDifference[2]};
 	end
 	if SmoothSetPosition then
+		if math.abs(SmoothDestination[1] - Position[1]) > 0.01 or math.abs(SmoothDestination[2] - Position[2]) > 0.01 then
+			ViewChanged = true;
+		end
 		Position = {(SmoothDestination[1] - Position[1]) * dt * SmoothSteps + Position[1],(SmoothDestination[2] - Position[2]) * dt * SmoothSteps + Position[2]};
 	end
+	for _,func in pairs(UpdateFunctions) do
+		func(dt);
+	end
 	for _,renderer in pairs(AddedRenderers) do
-	--for i=1,#AddedRenderers do
-		--local renderer = AddedRenderers[i];
 		--Check for hovering
 		if renderer.OnHover ~= nil then
 			local Rect = renderer.CollisionRectFunction();
@@ -164,13 +171,18 @@ Update = function(dt)
 			end
 		end
 	end
-	Canvas:clear();
-	DrawBackground();
-	--[[for _,renderer in pairs(AddedRenderers) do
-		renderer.Function();
-	end--]]
-	for i=1,#AddedRenderers do
-		AddedRenderers[i].Function();
+	if ViewChanged == true then
+		ViewChanged = false;
+		Canvas:clear();
+		DrawBackground();
+		--[[for _,renderer in pairs(AddedRenderers) do
+			renderer.Function();
+		end--]]
+		for i=1,#AddedRenderers do
+			AddedRenderers[i].Function();
+		end
+	--else
+		--sb.logInfo("BATCH");
 	end
 end
 
@@ -181,11 +193,13 @@ end
 
 --Removes all the objects that are being rendered
 function ViewWindow.Clear()
+	ViewChanged = true;
 	ClearAllRenderers();
 end
 
 --Sets the Position of the ViewWindow
 function ViewWindow.SetPosition(position)
+	ViewChanged = true;
 	if SmoothSetPosition then
 		SmoothDestination = {-(position[1] - SourcePosition[1]) * 8 * Scale + Size[1] / 2,-(position[2] - SourcePosition[2]) * 8 * Scale + Size[2] / 2};
 	else
@@ -196,6 +210,7 @@ end
 --Sets whether it should smoothly transition to the new Position
 function ViewWindow.SetPositionSmooth(bool)
 	if bool == true then
+		ViewChanged = true;
 		SmoothDestination = Position;
 	end
 	SmoothSetPosition = bool == true;
@@ -207,6 +222,7 @@ function ViewWindow.GetPosition()
 end
 
 SetPositionRaw = function(position)
+	ViewChanged = true;
 	if SmoothSetPosition then
 		SmoothDestination = position;
 	else
@@ -235,6 +251,13 @@ function ViewWindow.AddConduit(object,position,color,onClick,onHover,scale)
 			Render,CollisionRect,Offset,Textures,FlipX,FlipY = SetupObjectRenderer(object,RelativePosition,color,scale);
 		end
 		local RenderFunction = function()
+			Render();
+		end
+		local CollisionRectFunction = function()
+			return CollisionRect();
+		end
+		local UpdateID;
+		UpdateID = AddUpdateFunction(function(dt)
 			if TerminalParameters ~= nil then
 				TerminalData,Done = TerminalParameters();
 				if Done == true then
@@ -243,15 +266,14 @@ function ViewWindow.AddConduit(object,position,color,onClick,onHover,scale)
 					else
 						Render,CollisionRect,Offset,Textures,FlipX,FlipY = SetupObjectRenderer(object,RelativePosition,color,scale);
 					end
+					ViewChanged = true;
 					ConduitPreviousData[object] = TerminalData;
 					TerminalParameters = nil;
+					RemoveUpdateFunction(UpdateID);
 				end
 			end
-			Render();
-		end
-		local CollisionRectFunction = function()
-			return CollisionRect();
-		end
+		end);
+		ViewChanged = true;
 		local RenderID,Controller = AddRendererWithController(RenderFunction,CollisionRectFunction,onClick,onHover);
 		--Returns the Position of the Object
 		Controller.GetPosition = function(includesOffset)
@@ -271,6 +293,7 @@ function ViewWindow.AddConduit(object,position,color,onClick,onHover,scale)
 			else
 				RelativePosition = {newPosition[1] - SourcePosition[1],newPosition[2] - SourcePosition[2]};
 			end
+			ViewChanged = true;
 			if TerminalData.AnimationName ~= nil then
 				Render,CollisionRect,Offset,Textures,FlipX,FlipY = SetupConduitRenderer(object,RelativePosition,color,TerminalData,scale);
 			else
@@ -283,6 +306,7 @@ function ViewWindow.AddConduit(object,position,color,onClick,onHover,scale)
 		Controller.SetScale = function(newScale)
 			if newScale ~= scale then
 				scale = newScale;
+				ViewChanged = true;
 				if TerminalData.AnimationName ~= nil then
 					Render,CollisionRect,Offset,Textures,FlipX,FlipY = SetupConduitRenderer(object,RelativePosition,color,TerminalData,scale);
 				else
@@ -296,6 +320,7 @@ function ViewWindow.AddConduit(object,position,color,onClick,onHover,scale)
 		Controller.SetColor = function(newColor)
 			if color == nil then
 				color = newColor;
+				ViewChanged = true;
 				if TerminalData.AnimationName ~= nil then
 					Render,CollisionRect,Offset,Textures,FlipX,FlipY = SetupConduitRenderer(object,RelativePosition,color,TerminalData,scale);
 				else
@@ -335,6 +360,7 @@ function ViewWindow.AddObject(object,position,color,onClick,onHover,scale)
 	local CollisionRectFunction = function()
 		return CollisionRect();
 	end
+	ViewChanged = true;
 	local RenderID,Controller = AddRendererWithController(RenderFunction,CollisionRectFunction,onClick,onHover);
 	Controller.GetPosition = function(includesOffset)
 		-- TODO -- TODO -- TODO -- TODO -- TODO -- TODO
@@ -353,6 +379,7 @@ function ViewWindow.AddObject(object,position,color,onClick,onHover,scale)
 		else
 			RelativePosition = {newPosition[1] - SourcePosition[1],newPosition[2] - SourcePosition[2]};
 		end
+		ViewChanged = true;
 		Render,CollisionRect,Offset,Textures,FlipX,FlipY = SetupObjectRenderer(object,RelativePosition,color,scale);
 	end
 	Controller.GetScale = function()
@@ -361,6 +388,7 @@ function ViewWindow.AddObject(object,position,color,onClick,onHover,scale)
 	Controller.SetScale = function(newScale)
 		if newScale ~= scale then
 			scale = newScale;
+			ViewChanged = true;
 			Render,CollisionRect,Offset,Textures,FlipX,FlipY = SetupObjectRenderer(object,RelativePosition,color,scale);
 		end
 	end
@@ -368,6 +396,7 @@ function ViewWindow.AddObject(object,position,color,onClick,onHover,scale)
 		return color;
 	end
 	Controller.SetColor = function(newColor)
+		ViewChanged = true;
 		color[1],color[2],color[3],color[4] = newColor[1],newColor[2],newColor[3],newColor[4];
 	end
 	Controller.GetTextures = function()
@@ -434,6 +463,7 @@ function ViewWindow.AddText(text,startPosition,textMap,textImage,color)
 		end
 	end
 	--sb.logInfo("Adding");
+	ViewChanged = true;
 	local RenderID,Controller = AddRendererWithController(RenderFunction);
 	Controller.GetText = function()
 		return text;
@@ -441,6 +471,7 @@ function ViewWindow.AddText(text,startPosition,textMap,textImage,color)
 	Controller.SetText = function(newText)
 		if newText ~= text then
 			text = newText;
+			ViewChanged = true;
 			GenerateText();
 		end
 	end
@@ -449,6 +480,7 @@ function ViewWindow.AddText(text,startPosition,textMap,textImage,color)
 	end
 	Controller.SetPosition = function(newPosition)
 		startPosition = newPosition;
+		ViewChanged = true;
 		GenerateText();
 	end
 	Controller.GetFullWidth = function()
@@ -493,6 +525,7 @@ function ViewWindow.AddTexture(texture,position,color,onClick,onHover,scale,Flip
 	local TextureRect = RectCore.Flip(RenderTexture.TextureRect,FlipX,FlipY,true);
 	local Texture = RenderTexture.Image;
 	--Texture,RelativePosition,Offset,Scale,ImageSizeX,ImageSizeY
+	ViewChanged = true;
 	local ScreenRect,CollisionRect = GenerateRenderRects(Texture,RelativePosition,{0,0},scale,RenderTexture.Width,RenderTexture.Height);
 	--TODO -- TODO -- TODO -- TODO, add call the add renderer and make a controller
 	local RenderFunction = function()
@@ -509,6 +542,7 @@ function ViewWindow.AddTexture(texture,position,color,onClick,onHover,scale,Flip
 		return {0,0};
 	end
 	Controller.SetPosition = function(newPosition)
+		ViewChanged = true;
 		RelativePosition = {newPosition[1] - SourcePosition[1],newPosition[2] - SourcePosition[2]};
 		ScreenRect,CollisionRect = GenerateRenderRects(RenderTexture.Image,RelativePosition,{0,0},scale,RenderTexture.Width,RenderTexture.Height);
 	end
@@ -518,6 +552,7 @@ function ViewWindow.AddTexture(texture,position,color,onClick,onHover,scale,Flip
 	Controller.SetScale = function(newScale)
 		if newScale ~= scale then
 			scale = newScale;
+			ViewChanged = true;
 			ScreenRect,CollisionRect = GenerateRenderRects(RenderTexture.Image,RelativePosition,{0,0},scale,RenderTexture.Width,RenderTexture.Height);
 		end
 	end
@@ -529,6 +564,7 @@ function ViewWindow.AddTexture(texture,position,color,onClick,onHover,scale,Flip
 	end
 	Controller.SetColor = function(newColor)
 		color = newColor;
+		ViewChanged = true;
 		--if 
 	--	color[1],color[2],color[3],color[4] = newColor[1],newColor[2],newColor[3],newColor[4];
 	end
@@ -547,11 +583,13 @@ function ViewWindow.AddRect(Rect,color,OnClick,OnHover)
 	local CollisionRectFunction = function()
 		return ScreenRect;
 	end
+	ViewChanged = true;
 	local RenderID,Controller = AddRendererWithController(RenderFunction,CollisionRectFunction,OnClick,OnHover);
 	Controller.GetColor = function()
 		return color;
 	end
 	Controller.SetColor = function(newColor)
+		ViewChanged = true;
 		color = newColor;
 	end
 	Controller.GetRect = function()
@@ -562,6 +600,7 @@ function ViewWindow.AddRect(Rect,color,OnClick,OnHover)
 	end
 	Controller.SetRect = function(newRect)
 		Rect = newRect;
+		ViewChanged = true;
 		ScreenRect = {(Rect[1] - SourcePosition[1]) * 8,(Rect[2] - SourcePosition[2]) * 8,(Rect[3] - SourcePosition[1]) * 8,(Rect[4] - SourcePosition[2]) * 8};
 	end
 	return Controller;
@@ -574,17 +613,20 @@ function ViewWindow.AddLine(StartPos,EndPos,color,LineWidth)
 	local RenderFunction = function()
 		RenderLineToWindow(FinalStartPos,FinalEndPos,color,LineWidth);
 	end
+	ViewChanged = true;
 	local RenderID,Controller = AddRendererWithController(RenderFunction);
 	Controller.GetColor = function()
 		return color;
 	end
 	Controller.SetColor = function(newColor)
+		ViewChanged = true;
 		color = newColor;
 	end
 	Controller.GetStartPos = function()
 		return StartPos;
 	end
 	Controller.SetStartPos = function(newStartPos)
+		ViewChanged = true;
 		StartPos = newStartPos;
 		FinalStartPos = {(StartPos[1] - SourcePosition[1]) * 8,(StartPos[2] - SourcePosition[2]) * 8};
 	end
@@ -592,6 +634,7 @@ function ViewWindow.AddLine(StartPos,EndPos,color,LineWidth)
 		return StartPos;
 	end
 	Controller.SetEndPos = function(newEndPos)
+		ViewChanged = true;
 		EndPos = newEndPos;
 		FinalEndPos = {(EndPos[1] - SourcePosition[1]) * 8,(EndPos[2] - SourcePosition[2]) * 8};
 	end
@@ -711,21 +754,25 @@ AddRendererWithController = function(renderFunction,CollisionRectFunction,OnClic
 	
 	--Removes this object
 	Controller.Remove = function()
+		ViewChanged = true;
 		RemoveRenderer(RenderID);
 	end
 
 	--Moves this object up a set amount of Layers
 	Controller.MoveLayers = function(amount)
+		ViewChanged = true;
 		MoveRenderer(RenderID,amount);
 	end
 
 	--Moves the object to the top layer
 	Controller.MoveToTop = function()
+		ViewChanged = true;
 		MoveRendererToTop(RenderID);
 	end
 
 	--Moves the object to the bottom layer
 	Controller.MoveToBottom = function()
+		ViewChanged = true;
 		MoveRendererToBottom(RenderID);
 	end
 
@@ -894,7 +941,10 @@ end
 --Renders to the View Window
 RenderToWindow = function(Texture,TextureRect,ScreenRect,Color)
 	--sb.logInfo("ScreenRect = " .. sb.print(ScreenRect));
-	Canvas:drawImageRect(Texture,TextureRect,{(ScreenRect[1] * Scale) + Position[1],(ScreenRect[2] * Scale) + Position[2],(ScreenRect[3] * Scale) + Position[1],(ScreenRect[4] * Scale) + Position[2]},Color);
+	local Final = {(ScreenRect[1] * Scale) + Position[1],(ScreenRect[2] * Scale) + Position[2],(ScreenRect[3] * Scale) + Position[1],(ScreenRect[4] * Scale) + Position[2]};
+	if not (Final[1] > Size[1] or Final[2] > Size[2] or Final[3] < 0 or Final[4] < 0) then
+		Canvas:drawImageRect(Texture,TextureRect,Final,Color);
+	end
 end
 
 --Renders a rect to the View Window
@@ -1056,4 +1106,16 @@ IsInTable = function(tbl,value)
 		end
 	end
 	return false;
+end
+
+--Adds an update function
+AddUpdateFunction = function(func)
+	local ID = sb.makeUuid();
+	UpdateFunctions[ID] = func;
+	return ID;
+end
+
+--Removes an update function
+RemoveUpdateFunction = function(ID)
+	UpdateFunctions[ID] = nil;
 end

@@ -14,12 +14,16 @@ local FirstUpdateComplete = false;
 local ForceUpdate = false;
 local Uninitialized = false;
 local ConnectionPoints = {{0,1},{0,-1},{-1,0},{1,0}};
-local Connections;
+local Connections = {};
 local ConnectionTypes = {
 	Conduits = {
 		Condition = function(ID) return world.getObjectParameter(ID,"conduitType") ~= nil end,
 		Connections = {};
-	};
+	},
+	TerminalFindings = {
+		Condition = function(ID) return world.getObjectParameter(ID,"conduitType") ~= nil end,
+		Connections = {}
+	}
 };
 local NumOfConnections = 4;
 local SourceID;
@@ -604,7 +608,7 @@ function ConduitCore.GetNetwork(ConnectionType)
 			else
 				goto Continue;
 			end
-			if Connections == nil then goto Continue end;
+			if Connections == nil or Connections == false then goto Continue end;
 			for _,connection in ipairs(Connections) do
 				if connection ~= 0 then
 					if IsInTable(Findings,connection) then
@@ -657,11 +661,14 @@ function ConduitCore.GetConduitConnections()
 	return ConduitCore.GetConnections("Conduits");
 end
 
---Gets the Current Connections for the Passed In Connection Type
+--Gets the Current Connections for the Passed In Connection Type, returns false if the First Update Hasn't been completed
 function ConduitCore.GetConnections(ConnectionType)
 	--sb.logInfo("FIRST UPDATE = " .. sb.print(FirstUpdateComplete));
 	if FirstUpdateComplete and ConnectionTypes[ConnectionType] ~= nil then
 		return ConnectionTypes[ConnectionType].Connections;
+	end
+	if FirstUpdateComplete == false then
+		return false;
 	end
 end
 

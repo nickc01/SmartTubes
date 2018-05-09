@@ -11,6 +11,15 @@ local CanvasImagesCache = {};
 local ObjectImageCache = {};
 local ObjectAnimationCache = {};
 local AnimationCache = {};
+local ObjectIconCache = {};
+local RarityCache = {};
+local Rarities = {
+	common = "/interface/inventory/itembordercommon.png",
+	uncommon = "/interface/inventory/itemborderuncommon.png",
+	rare = "/interface/inventory/itemborderrare.png",
+	legendary = "/interface/inventory/itemborderlegendary.png",
+	essential = "/interface/inventory/itemborderessential.png"
+}
 
 
 --Functions
@@ -69,6 +78,33 @@ function ImageCore.GetFrameOfImage(Image)
 			return Frame;
 		end
 	end
+end
+
+--Gets the inventory icon of the Object
+function ImageCore.GetObjectIcon(object)
+	if type(object) == "number" then
+		object = world.entityName(object);
+	end
+	if ObjectIconCache[object] ~= nil then
+		return ObjectIconCache[object];
+	end
+	local Config = root.itemConfig({name = object,count = 1});
+	local LocalIcon = Config.config.inventoryIcon;
+	local GlobalIcon = ImageCore.MakePathAbsolute(LocalIcon,object);
+	local Final = ImageCore.MakeImageCanvasRenderable(GlobalIcon);
+	ObjectIconCache[object] = Final;
+	return Final;
+end
+
+--Gets the rarity slot image of the item
+function ImageCore.RaritySlotImage(object)
+	if type(object) == "number" then
+		object = world.entityName(object);
+	end
+	if RarityCache[object] == nil then
+		RarityCache[object] = Rarities[string.lower(root.itemConfig({name = object,count = 1}).config.rarity or "Common")];
+	end
+	return RarityCache[object];
 end
 
 --Takes in a path and moves it up a directory level

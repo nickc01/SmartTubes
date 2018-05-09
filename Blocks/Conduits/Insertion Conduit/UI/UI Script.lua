@@ -23,6 +23,8 @@ function init()
 	if OldInit ~= nil then
 		OldInit();
 	end
+	--UniqueID = sb.makeUuid();
+	--sb.logInfo("Spawned = " .. sb.print(UniqueID));
 	InsertID = world.getObjectParameter(SourceID,"insertID","");
 	InsertUUID = world.getObjectParameter(SourceID,"InsertUUID");
 	widget.setText("insertionIDBox",InsertID);
@@ -31,6 +33,8 @@ end
 
 --Called when the insert ID is updated
 InsertIDUpdated = function(newInsertID,newInsertUUID)
+	--sb.logInfo()
+	--sb.logInfo("InsertID Updated for = " .. sb.print(UniqueID));
 	InsertID = newInsertID;
 	InsertUUID = newInsertUUID;
 	widget.setText("insertionIDBox",InsertID);
