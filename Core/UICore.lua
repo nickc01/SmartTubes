@@ -13,6 +13,7 @@ local __UICore__ = __UICore__;
 --Variables
 local PromiseLoopCalls = {};
 local ResetPromiseLoopCalls = {};
+local CoroutineCalls = {};
 local SyncedValues = {};
 local DefinitionTable = UICore;
 local Initialized = false;
@@ -31,7 +32,41 @@ function UICore.Initialize()
 			for _,func in pairs(PromiseLoopCalls) do
 				func();
 			end
+			for id,Data = pairs(CoroutineCalls) do
+				local Value,Error = coroutine.resume(Data.Coroutine);
+				if Value == false then
+					error(Error or "");
+				end
+				if coroutine.status(Data.Coroutine) == "dead" then
+					CoroutineCalls[id] = nil;
+				end
+			end
 		end
+	end
+end
+
+--Adds a coroutine function to be called asycronously each frame
+--The Coroutine is passed as the first parameter
+function UICore.AddAsyncCoroutine(coroutine,onCancel)
+	local ID = sb.makeUuid();
+	local Coroutine = coroutine.create(coroutine);
+	local Table = {
+		Coroutine = Coroutine,
+		OnCancel = onCancel
+	}
+	CoroutineCalls[ID] = Table;
+	coroutine.resume(Coroutine,Coroutine);
+	return ID;
+end
+
+--Cancels a coroutine
+function UICore.CancelCoroutine(ID)
+	local Data = CoroutineCalls[ID];
+	if Data ~= nil then
+		if Data.OnCancel ~= nil then
+			Data.OnCancel();
+		end
+		CoroutineCalls[ID] = nil;
 	end
 end
 

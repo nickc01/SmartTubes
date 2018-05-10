@@ -141,7 +141,7 @@ AddItem = function(item)
 	end
 	local OnClick = function(clicking)
 		--TODO
-		sb.logInfo("Clicking Item = " .. sb.print(clicking));
+		--sb.logInfo("Clicking Item = " .. sb.print(clicking));
 	end
 	LeftBound = LeftBound - 20;
 	Renderer.OnClick = OnClick;

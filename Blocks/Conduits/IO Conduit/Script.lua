@@ -1,4 +1,3 @@
-require("/Core/Debug.lua");
 local oldinit = init;
 
 function init()

@@ -38,9 +38,9 @@ function init()
 	end);
 end
 
-function TestFunction()
-	sb.logInfo("Test");
-end
+--function TestFunction()
+--	sb.logInfo("Test");
+--end
 
 function uninit()
 	if oldUninit ~= nil then

@@ -37,10 +37,10 @@ local Uninit;
 --Initializes the Terminal
 function Terminal.Initialize()
 	SourceID = entity.id();
-	sb.logInfo("SOURCEID = " .. sb.print(SourceID));
+	--sb.logInfo("SOURCEID = " .. sb.print(SourceID));
 	SourcePosition = entity.position();
 	local OldUpdate = update;
-	sb.logInfo("Setting UPdate Function");
+	--sb.logInfo("Setting UPdate Function");
 	update = function(dt)
 		if OldUpdate ~= nil then
 			OldUpdate(dt);
@@ -99,7 +99,8 @@ UpdateNetwork = function()
 							if ContainerConnections[StringContainer] == nil then
 								ContainerConnections[StringContainer] = {
 									Extraction = {},
-									Insertion = {}
+									Insertion = {},
+									Position = world.entityPosition(container)
 								}
 							end
 							local LocalContainerC = ContainerConnections[StringContainer];
@@ -141,6 +142,7 @@ UpdateNetwork = function()
 			if Data ~= nil then
 				Info.UI = {Type = Data.Type,Data = Data.Interaction,Link = Data.Link};
 				--sb.logInfo("INFO.UI = " .. sb.printJson(Info.UI,1));
+				Info.Position = world.entityPosition(conduit);
 				Info.HasMenuData = true;
 			end
 		end
@@ -163,17 +165,17 @@ end
 
 --The Post Init Function, called after the first update in ConduitCore
 PostInit = function()
-	sb.logInfo("POST INIT");
+	--sb.logInfo("POST INIT");
 	Server.DefineSyncedValues("ConduitNetwork","Network",nil,"NetworkContainers",nil,"ConduitInfo",nil);
 	Server.DefineSyncedValues("ItemTray","Tray",{});
-	sb.logInfo("DATA = " .. sb.print(Data));
+	--sb.logInfo("DATA = " .. sb.print(Data));
 	ConduitCore.AddNetworkUpdateFunction(ConduitNetworkUpdate);
 	Server.SaveValuesOnExit("ConduitNetwork",false);
 end
 
 --Called when the conduit network is updated
 ConduitNetworkUpdate = function()
-	sb.logInfo("Conduit Network Update");
+	--sb.logInfo("Conduit Network Update");
 	--sb.logInfo("Conduit NETWORK = " .. sb.print(ConduitCore.GetConduitNetwork()));
 	--Data.SetNetwork(ConduitCore.GetConduitNetwork());
 end

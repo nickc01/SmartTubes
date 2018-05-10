@@ -236,6 +236,7 @@ function ViewWindow.AddConduit(object,position,color,onClick,onHover,scale)
 	if scale == nil then
 		scale = 1;
 	end
+	sb.logInfo("Position = " .. sb.print(world.entityPosition(object)));
 	local RelativePosition = VectorCore.Subtract(position or world.entityPosition(object),SourcePosition);
 	local TerminalParameters = UICore.AsyncFunctionCall(object,"ConduitCore.GetTerminalImageParameters",ConduitPreviousData[object] or {FlipX = false,FlipY = false,AnimationName = nil,AnimationState = nil});
 	local TerminalData = TerminalParameters();
@@ -666,9 +667,9 @@ SetupObjectRenderer = function(object,RelativePosition,color,scale)
 	local ImageTable = {};
 	local TextureRects = {};
 	for _,image in ipairs(ImageData.Images) do
-		sb.logInfo("Original Image = " .. sb.print(image.Original));
+		--sb.logInfo("Original Image = " .. sb.print(image.Original));
 		local Region = root.nonEmptyRegion(image.Original);
-		sb.logInfo("REGION = " .. sb.print(Region));
+		--sb.logInfo("REGION = " .. sb.print(Region));
 		ImageTable[#ImageTable + 1] = image.Original;
 		if CollisionRegion[1] == nil or Region[1] < CollisionRegion[1] then
 			CollisionRegion[1] = Region[1];
@@ -691,10 +692,10 @@ SetupObjectRenderer = function(object,RelativePosition,color,scale)
 		ScreenRects[#ScreenRects + 1] = GenerateScreenRect(RelativePosition,ImageData.Offset,image.Width,image.Height,scale);
 		TextureRects[#TextureRects + 1] = RectCore.Flip(image.TextureRect,ImageData.Flip,false,true);
 	end
-	sb.logInfo("IMAGESIZE = " .. sb.print(ImageSize));
-	sb.logInfo("CollisionRegion = " .. sb.print(CollisionRegion));
+	--sb.logInfo("IMAGESIZE = " .. sb.print(ImageSize));
+	--sb.logInfo("CollisionRegion = " .. sb.print(CollisionRegion));
 	local CollisionRect = GenerateCollisionRect(RelativePosition,CollisionRegion,ImageData.Offset,ImageSize[1],ImageSize[2],scale);
-	sb.logInfo("GENERATED COLLISION RECT = " .. sb.print(CollisionRect));
+	--sb.logInfo("GENERATED COLLISION RECT = " .. sb.print(CollisionRect));
 	local Render = function()
 		for i,texture in ipairs(ImageData.Images) do
 			RenderToWindow(texture.Image,TextureRects[i],ScreenRects[i],color);
@@ -1077,7 +1078,7 @@ function ViewWindow.GetControllersInArea(rect)
 		--sb.logInfo("RENDERER = " .. sb.print(renderer));
 		if renderer.CollisionRectFunction ~= nil then
 			local CollisionRect = renderer.CollisionRectFunction();
-			sb.logInfo("COllisionRect = " .. sb.print(CollisionRect));
+			--sb.logInfo("COllisionRect = " .. sb.print(CollisionRect));
 			--sb.logInfo("Rect = " .. sb.print(rect));
 			--sb.logInfo("CollisionRect = " .. sb.print(CollisionRect));
 			--sb.logInfo("Intersecting = " .. sb.print(RectCore.Intersect(rect,CollisionRect)));

@@ -85,7 +85,7 @@ local CheckHover;
 function TerminalUI.Initialize()
 	PlayerID = player.id();
 	SourceID = pane.sourceEntity();
-	sb.logInfo("SourceID UI = " .. sb.print(SourceID));
+	--sb.logInfo("SourceID UI = " .. sb.print(SourceID));
 	SourcePosition = world.entityPosition(SourceID);
 	UICore.SetDefinitionTable(Data);
 	UICore.SetAsSyncedValues("ConduitNetwork",SourceID,"Network",{},"NetworkContainers",{});

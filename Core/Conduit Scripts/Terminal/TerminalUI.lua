@@ -105,10 +105,13 @@ NetworkChange = function()
 	ContainerArea.SetContainer(nil);
 	ViewWindow.SetSelectedObject(nil);
 	local StartTime = TerminalUI.GetTime();
-	sb.logInfo("Start Time = " .. sb.print(StartTime));
+	--sb.logInfo("Start Time = " .. sb.print(StartTime));
 	ViewWindow.Clear();
 	local Network = Data.GetNetwork();
 	local ConduitInfo = Data.GetConduitInfo();
+	if Network == nil then return nil end;
+	sb.logInfo("Network = " .. sb.printJson(Network,1));
+	sb.logInfo("Conduit Info = " .. sb.printJson(ConduitInfo,1));
 	--Render all conduits in the network
 	for i=#Network,1,-1 do
 		local Controllers;
@@ -151,13 +154,13 @@ NetworkChange = function()
 				end
 			end
 		end
-		Conduit = ViewWindow.AddConduit(Network[i],nil,nil,OnClick,OnHover);
+		Conduit = ViewWindow.AddConduit(Network[i],Info.Position,nil,OnClick,OnHover);
 	end
 
 	--Render all the containers in the network
-	sb.logInfo("OBJECTS");
+	--sb.logInfo("OBJECTS");
 	local NetworkContainers = Data.GetNetworkContainers();
-	sb.logInfo("NETWORK CONTAINERS = " .. sb.print(NetworkContainers));
+	--sb.logInfo("NETWORK CONTAINERS = " .. sb.print(NetworkContainers));
 	for StringObject,data in pairs(NetworkContainers) do
 		--for _,object in ipairs(data) do
 		local object = tonumber(StringObject);
@@ -177,13 +180,13 @@ NetworkChange = function()
 		local OnHover = function(hovering)
 			DefaultHover(Controller,hovering);
 		end
-		Controller = ViewWindow.AddObject(object,nil,nil,OnClick,OnHover);
+		Controller = ViewWindow.AddObject(object,data.Position,nil,OnClick,OnHover);
 		Controller.MoveToBottom();
 		--end
 	end
 	local endTime = TerminalUI.GetTime();
-	sb.logInfo("end Time = " .. sb.print(endTime));
-	sb.logInfo("Difference = " .. sb.print(endTime - StartTime));
+	--sb.logInfo("end Time = " .. sb.print(endTime));
+	--sb.logInfo("Difference = " .. sb.print(endTime - StartTime));
 end
 
 --Gets the Current Time Elapsed
@@ -270,7 +273,7 @@ end
 
 --Called when the "Add Speed Upgrade" button is clicked
 function SpeedAdd()
-	sb.logInfo("Add");
+	--sb.logInfo("Add");
 	if Data.GetSpeed() < 20 and player.consumeItem({name = "speedupgrade",count = 1}) ~= nil then
 		Data.SetSpeed(Data.GetSpeed() + 1);
 	end
@@ -278,7 +281,7 @@ end
 
 --Called when the "Remove Speed Upgrade" button is clicked
 function SpeedRemove()
-	sb.logInfo("Remove");
+	--sb.logInfo("Remove");
 	if Data.GetSpeed() > 0 then
 		player.giveItem({name = "speedupgrade",count = 1});
 		Data.SetSpeed(Data.GetSpeed() - 1);

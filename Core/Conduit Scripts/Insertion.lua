@@ -406,7 +406,7 @@ function __Insertion__.InsertTraversalItems(Traversal)
 	--If Destination even exists
 	if world.entityExists(Object) then
 		for k,i in ipairs(Predictions) do
-			sb.logInfo("PREDICTION = " .. sb.print(i));
+			--sb.logInfo("PREDICTION = " .. sb.print(i));
 			--Add Item into the Container
 			ContainerHelper.PutItemsAt(Object,i.Item,i.Slot - 1);
 		end

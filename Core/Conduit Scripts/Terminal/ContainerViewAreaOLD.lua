@@ -124,7 +124,7 @@ function ContainerArea.SetContainer(object,clickFunction,rightClickFunction)
 			--ViewWindow.SetPosition(world.entityPosition(object));
 		--end);
 		OnContainerClick = function()
-			sb.logInfo("CLICKING");
+			--sb.logInfo("CLICKING");
 			ViewWindow.SetPosition(world.entityPosition(object));
 		end
 		widget.setText(ContainerName,world.getObjectParameter(object,"shortdescription") or world.entityName(object));
@@ -135,7 +135,7 @@ function ContainerArea.SetContainer(object,clickFunction,rightClickFunction)
 				CurrentListItem = ContainerItemList .. "." .. widget.addListItem(ContainerItemList);
 				H = 1;
 			end
-			sb.logInfo("i = " .. sb.print(i));
+			--sb.logInfo("i = " .. sb.print(i));
 			local Item = world.containerItemAt(object,i - 1);
 			local SlotName = CurrentListItem .. ".slot" .. H;
 			widget.setItemSlotItem(SlotName,Item);
@@ -160,7 +160,7 @@ function ContainerArea.SetContainer(object,clickFunction,rightClickFunction)
 			H = H + 1;
 		end
 		AddUpdateFunction(function(dt)
-			sb.logInfo("Update");
+			--sb.logInfo("Update");
 			for i=1,Size do
 				--if SlotTable[i] ~= nil then
 					ContainerArea.ItemInSlot(i);

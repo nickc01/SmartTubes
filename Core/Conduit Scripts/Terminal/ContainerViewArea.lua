@@ -352,7 +352,7 @@ function Extract()
 		else
 			AmountText = tonumber(AmountText);
 		end
-		sb.logInfo("Amount Text = " .. sb.print(AmountText));
+		--sb.logInfo("Amount Text = " .. sb.print(AmountText));
 		UICore.CallMessageOnce(SourceID,"ExtractFromContainer",function(success)
 			if success == true then
 				UpdateContainerSlot(SelectedSlot);
