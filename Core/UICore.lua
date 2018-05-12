@@ -32,13 +32,20 @@ function UICore.Initialize()
 			for _,func in pairs(PromiseLoopCalls) do
 				func();
 			end
-			for id,Data = pairs(CoroutineCalls) do
+			for id,Data in pairs(CoroutineCalls) do
+				if coroutine.status(Data.Coroutine) == "dead" then
+					CoroutineCalls[id] = nil;
+					return nil;
+				end
 				local Value,Error = coroutine.resume(Data.Coroutine);
 				if Value == false then
 					error(Error or "");
-				end
-				if coroutine.status(Data.Coroutine) == "dead" then
-					CoroutineCalls[id] = nil;
+				elseif Value ~= nil then
+					local Type = type(Value);
+					if Type == "string" then
+					elseif Type == "function" then
+						Value();
+					end
 				end
 			end
 		end
@@ -47,9 +54,9 @@ end
 
 --Adds a coroutine function to be called asycronously each frame
 --The Coroutine is passed as the first parameter
-function UICore.AddAsyncCoroutine(coroutine,onCancel)
+function UICore.AddAsyncCoroutine(Coroutine,onCancel)
 	local ID = sb.makeUuid();
-	local Coroutine = coroutine.create(coroutine);
+	local Coroutine = coroutine.create(Coroutine);
 	local Table = {
 		Coroutine = Coroutine,
 		OnCancel = onCancel

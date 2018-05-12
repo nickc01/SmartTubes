@@ -115,6 +115,7 @@ local ConnectionPointIter;
 
 --Initializes the Conduit
 function ConduitCore.Initialize()
+	--sb.logInfo("Spawning new Object = " .. sb.print(entity.id()));
 	if Initialized == true then return nil else Initialized = true end;
 	--sb.logInfo("INIT of conduit = " .. sb.print(entity.id()));
 	if entity == nil then
@@ -187,77 +188,80 @@ InitWithSavedParams = function(SavedParameters)
 	end
 end
 
+--Returns the conduit's terminal Data
+function ConduitCore.GetTerminalData()
+	--sb.logInfo("CALLING CONDUIT");
+	local FlipX = false;
+	local FlipY = false;
+	local AnimationName;
+	local AnimationState;
+	local AnimationFile;
+	local AnimationParts;
+	local AnimationSource;
+	--sb.logInfo("Default Animated = " .. sb.print(DefaultAnimated));
+	--sb.logInfo("Facade = " .. sb.print(Facade));
+	--sb.logInfo("Default Animated = " .. sb.print(DefaultAnimated));
+	if DefaultAnimated or Facade then
+		AnimationName = "cable";
+		if Connections[3] ~= 0 and Connections[4] ~= 0 and Connections[1] == 0 and Connections[2] == 0 then
+			AnimationState = "horizontal";
+		elseif Connections[3] == 0 and Connections[4] == 0 and Connections[1] ~= 0 and Connections[2] ~= 0 then
+			AnimationState = "vertical";
+		elseif Connections[3] ~= 0 and Connections[4] == 0 and Connections[1] == 0 and Connections[2] ~= 0 then
+			AnimationState = "corner";
+		elseif Connections[3] ~= 0 and Connections[4] == 0 and Connections[1] ~= 0 and Connections[2] == 0 then
+			AnimationState = "corner";
+			FlipY = true;
+		elseif Connections[3] == 0 and Connections[4] ~= 0 and Connections[1] ~= 0 and Connections[2] == 0 then
+			AnimationState = "corner";
+			FlipX,FlipY = true,true;
+		elseif Connections[3] == 0 and Connections[4] ~= 0 and Connections[1] == 0 and Connections[2] ~= 0 then
+			AnimationState = "corner";
+			FlipX = true;
+		elseif Connections[3] ~= 0 and Connections[4] ~= 0 and Connections[1] == 0 and Connections[2] ~= 0 then
+			AnimationState = "triplehorizontal";
+		elseif Connections[3] ~= 0 and Connections[4] == 0 and Connections[1] ~= 0 and Connections[2] ~= 0 then
+			AnimationState = "triplevertical";
+			FlipX = true;
+		elseif Connections[3] ~= 0 and Connections[4] ~= 0 and Connections[1] ~= 0 and Connections[2] == 0 then
+			AnimationState = "triplehorizontal";
+			FlipY = true;
+		elseif Connections[3] == 0 and Connections[4] ~= 0 and Connections[1] ~= 0 and Connections[2] ~= 0 then
+			AnimationState = "triplevertical";
+		elseif Connections[3] ~= 0 and Connections[4] ~= 0 and Connections[1] ~= 0 and Connections[2] ~= 0 then
+			AnimationState = "full";
+		elseif Connections[3] == 0 and Connections[4] == 0 and Connections[1] == 0 and Connections[2] == 0 then
+			AnimationState = "none";
+		elseif Connections[3] ~= 0 and Connections[4] == 0 and Connections[1] == 0 and Connections[2] == 0 then
+			AnimationState = "right";
+		elseif Connections[3] == 0 and Connections[4] ~= 0 and Connections[1] == 0 and Connections[2] == 0 then
+			AnimationState = "right";
+			FlipX = true;
+		elseif Connections[3] == 0 and Connections[4] == 0 and Connections[1] ~= 0 and Connections[2] == 0 then
+			AnimationState = "up";
+			FlipY = true;
+		elseif Connections[3] == 0 and Connections[4] == 0 and Connections[1] == 0 and Connections[2] ~= 0 then
+			AnimationState = "up";
+		end
+		if Facade then 
+			--sb.logInfo("IS FACADED");
+			if FacadeInfo == nil then
+				require("/Core/FacadeInfo.lua");
+			end
+				local Config = FacadeInfo.FacadeToObjectConfig(object.name());
+				AnimationFile = Config.config.animation;
+				AnimationParts = Config.config.animationParts;
+				AnimationSource = FacadeInfo.FacadeToObject(object.name());
+		end
+	end
+	--sb.logInfo("RETURN VALUE = " .. sb.print({FlipX = FlipX,FlipY = FlipY,AnimationName = AnimationName,AnimationState = AnimationState}));
+	return {FlipX = FlipX,FlipY = FlipY,AnimationName = AnimationName,AnimationState = AnimationState,AnimationFile = AnimationFile,AnimationParts = AnimationParts,AnimationSource = AnimationSource};
+end
+
 --Sets the Current Entity's Messages
 SetMessages = function()
 	message.setHandler("ConduitCore.GetSpriteState",ConduitCore.GetSpriteState);
-	message.setHandler("ConduitCore.GetTerminalImageParameters",function()
-		--sb.logInfo("CALLING CONDUIT");
-		local FlipX = false;
-		local FlipY = false;
-		local AnimationName;
-		local AnimationState;
-		local AnimationFile;
-		local AnimationParts;
-		local AnimationSource;
-		--sb.logInfo("Default Animated = " .. sb.print(DefaultAnimated));
-		--sb.logInfo("Facade = " .. sb.print(Facade));
-		--sb.logInfo("Default Animated = " .. sb.print(DefaultAnimated));
-		if DefaultAnimated or Facade then
-			AnimationName = "cable";
-			if Connections[3] ~= 0 and Connections[4] ~= 0 and Connections[1] == 0 and Connections[2] == 0 then
-				AnimationState = "horizontal";
-			elseif Connections[3] == 0 and Connections[4] == 0 and Connections[1] ~= 0 and Connections[2] ~= 0 then
-				AnimationState = "vertical";
-			elseif Connections[3] ~= 0 and Connections[4] == 0 and Connections[1] == 0 and Connections[2] ~= 0 then
-				AnimationState = "corner";
-			elseif Connections[3] ~= 0 and Connections[4] == 0 and Connections[1] ~= 0 and Connections[2] == 0 then
-				AnimationState = "corner";
-				FlipY = true;
-			elseif Connections[3] == 0 and Connections[4] ~= 0 and Connections[1] ~= 0 and Connections[2] == 0 then
-				AnimationState = "corner";
-				FlipX,FlipY = true,true;
-			elseif Connections[3] == 0 and Connections[4] ~= 0 and Connections[1] == 0 and Connections[2] ~= 0 then
-				AnimationState = "corner";
-				FlipX = true;
-			elseif Connections[3] ~= 0 and Connections[4] ~= 0 and Connections[1] == 0 and Connections[2] ~= 0 then
-				AnimationState = "triplehorizontal";
-			elseif Connections[3] ~= 0 and Connections[4] == 0 and Connections[1] ~= 0 and Connections[2] ~= 0 then
-				AnimationState = "triplevertical";
-				FlipX = true;
-			elseif Connections[3] ~= 0 and Connections[4] ~= 0 and Connections[1] ~= 0 and Connections[2] == 0 then
-				AnimationState = "triplehorizontal";
-				FlipY = true;
-			elseif Connections[3] == 0 and Connections[4] ~= 0 and Connections[1] ~= 0 and Connections[2] ~= 0 then
-				AnimationState = "triplevertical";
-			elseif Connections[3] ~= 0 and Connections[4] ~= 0 and Connections[1] ~= 0 and Connections[2] ~= 0 then
-				AnimationState = "full";
-			elseif Connections[3] == 0 and Connections[4] == 0 and Connections[1] == 0 and Connections[2] == 0 then
-				AnimationState = "none";
-			elseif Connections[3] ~= 0 and Connections[4] == 0 and Connections[1] == 0 and Connections[2] == 0 then
-				AnimationState = "right";
-			elseif Connections[3] == 0 and Connections[4] ~= 0 and Connections[1] == 0 and Connections[2] == 0 then
-				AnimationState = "right";
-				FlipX = true;
-			elseif Connections[3] == 0 and Connections[4] == 0 and Connections[1] ~= 0 and Connections[2] == 0 then
-				AnimationState = "up";
-				FlipY = true;
-			elseif Connections[3] == 0 and Connections[4] == 0 and Connections[1] == 0 and Connections[2] ~= 0 then
-				AnimationState = "up";
-			end
-			if Facade then 
-				--sb.logInfo("IS FACADED");
-				if FacadeInfo == nil then
-					require("/Core/FacadeInfo.lua");
-				end
-				 local Config = FacadeInfo.FacadeToObjectConfig(object.name());
-				 AnimationFile = Config.config.animation;
-				 AnimationParts = Config.config.animationParts;
-				 AnimationSource = FacadeInfo.FacadeToObject(object.name());
-			end
-		end
-		--sb.logInfo("RETURN VALUE = " .. sb.print({FlipX = FlipX,FlipY = FlipY,AnimationName = AnimationName,AnimationState = AnimationState}));
-		return {FlipX = FlipX,FlipY = FlipY,AnimationName = AnimationName,AnimationState = AnimationState,AnimationFile = AnimationFile,AnimationParts = AnimationParts,AnimationSource = AnimationSource};
-	end);
+	message.setHandler("ConduitCore.GetTerminalImageParameters",ConduitCore.GetTerminalData);
 end
 
 --Initialization After the First Update Loop
@@ -606,7 +610,7 @@ function ConduitCore.GetNetwork(ConnectionType)
 			if world.entityExists(Next[i].ID) then
 				Connections = world.callScriptedEntity(Next[i].ID,"ConduitCore.GetConnectionsWithExtra",ConnectionType);
 			else
-				goto Continue;
+				goto ContinueWithoutAddition;
 			end
 			if Connections == nil or Connections == false then goto Continue end;
 			for _,connection in ipairs(Connections) do
@@ -633,6 +637,7 @@ function ConduitCore.GetNetwork(ConnectionType)
 			--sb.logInfo("New Finding = " .. sb.print(Next[i].ID));
 			Findings[#Findings + 1] = Next[i].ID;
 			FindingsWithPath[#FindingsWithPath + 1] = Next[i];
+			::ContinueWithoutAddition::
 		end
 		--sb.logInfo("New Next = " .. sb.print(NewNext));
 		Next = NewNext;

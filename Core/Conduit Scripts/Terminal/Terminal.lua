@@ -75,7 +75,10 @@ end
 --The Update Loop for the Terminal
 Update = function(dt)
 	--sb.logInfo("UPDATE 1");
-	UpdateNetwork();
+	if ConduitCore.FirstUpdateCompleted() then
+		UpdateNetwork();
+	end
+	--UpdateNetwork();
 end
 
 --Updates the Network
@@ -87,6 +90,7 @@ UpdateNetwork = function()
 		ContainerConnections = {};
 		for _,conduit in ipairs(Network) do
 			if world.entityExists(conduit) then
+				local Pos = world.entityPosition(conduit);
 				local ConnectedContainers = world.callScriptedEntity(conduit,"ConduitCore.GetConnections","Containers");
 				if ConnectedContainers == false then
 					ForceUpdate = true;
@@ -99,15 +103,16 @@ UpdateNetwork = function()
 							if ContainerConnections[StringContainer] == nil then
 								ContainerConnections[StringContainer] = {
 									Extraction = {},
-									Insertion = {},
-									Position = world.entityPosition(container)
+									Insertion = {}
 								}
 							end
 							local LocalContainerC = ContainerConnections[StringContainer];
 							if Containers[StringContainer] == nil then
 								Containers[StringContainer] = {
 									Extraction = false,
-									Insertion = false
+									Insertion = false,
+									Position = world.entityPosition(container),
+									Name = world.entityName(container)
 								}
 							end
 							if world.callScriptedEntity(conduit,"Extraction.IsExtraction") == true then
@@ -132,19 +137,25 @@ UpdateNetwork = function()
 		end
 		local ConduitInfo = {};
 		for _,conduit in ipairs(Network) do
-			local Info = {};
-			ConduitInfo[tostring(conduit)] = Info;
-			--Conduit Info Here
-			Info.HasMenuData = false;
-			local Data = world.callScriptedEntity(conduit,"ConduitCore.GetUI");
-			--sb.logInfo("DATA RECIEVED = " .. sb.print(Data));
-			--local UIType,UIData = Data.Type,Data.Interaction;
-			if Data ~= nil then
-				Info.UI = {Type = Data.Type,Data = Data.Interaction,Link = Data.Link};
-				--sb.logInfo("INFO.UI = " .. sb.printJson(Info.UI,1));
+			--if world.entityExists(conduit) then
+				--sb.logInfo("Conduit = " .. sb.print(conduit));
+				--sb.logInfo("Exists = " .. sb.print(world.entityExists(conduit)));
+				local Info = {};
+				ConduitInfo[tostring(conduit)] = Info;
+				--Conduit Info Here
+				Info.HasMenuData = false;
+				local Data = world.callScriptedEntity(conduit,"ConduitCore.GetUI");
+				--sb.logInfo("DATA RECIEVED = " .. sb.print(Data));
+				--local UIType,UIData = Data.Type,Data.Interaction;
+				if Data ~= nil then
+					Info.UI = {Type = Data.Type,Data = Data.Interaction,Link = Data.Link};
+					--sb.logInfo("INFO.UI = " .. sb.printJson(Info.UI,1));
+					Info.HasMenuData = true;
+				end
 				Info.Position = world.entityPosition(conduit);
-				Info.HasMenuData = true;
-			end
+				Info.TerminalData = world.callScriptedEntity(conduit,"ConduitCore.GetTerminalData");
+				Info.ObjectName = world.entityName(conduit);
+			--end
 		end
 		--sb.logInfo("ALL NETWORK CONTAINERS = " .. sb.printJson(Containers,1));
 		Data.SetNetworkContainers(Containers);

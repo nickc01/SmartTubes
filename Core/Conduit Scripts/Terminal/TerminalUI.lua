@@ -28,6 +28,7 @@ local Initialized = false;
 local Colors = {};
 local ColorToHex = {};
 local ColorIndex = 1;
+local NetworkUpdateCoID;
 
 --Functions
 local Update;
@@ -107,83 +108,153 @@ NetworkChange = function()
 	local StartTime = TerminalUI.GetTime();
 	--sb.logInfo("Start Time = " .. sb.print(StartTime));
 	ViewWindow.Clear();
-	local Network = Data.GetNetwork();
-	local ConduitInfo = Data.GetConduitInfo();
-	if Network == nil then return nil end;
-	sb.logInfo("Network = " .. sb.printJson(Network,1));
-	sb.logInfo("Conduit Info = " .. sb.printJson(ConduitInfo,1));
-	--Render all conduits in the network
-	for i=#Network,1,-1 do
-		local Controllers;
-		local Conduit;
-		local ID = Network[i];
-		local Info = ConduitInfo[tostring(ID)];
-		local OnHover;
-		local OnClick;
-		if Info ~= nil and Info.HasMenuData == true and world.entityName(ID) ~= "conduitterminal" then
-			--OnHover = GetDefaultHoverFunction(Conduit);
-			OnHover = function(hovering)
-				DefaultHover(Conduit,hovering);
-			end
-			--local Text;
-			OnClick = function(clicking)
-				if clicking == true then
-					--Conduit.SetColor({255,0,0});
-					local ConduitPos = Conduit.GetPosition();
-					local MenuItems = {};
-					if Info.UI ~= nil then
-						--sb.logInfo("INFO = " .. sb.printJson(Info,1));
-						if Info.UI.Link ~= nil then
-							Info.UI.Data = root.assetJson(Info.UI.Link);
-							Info.UI.Link = nil;
+	if NetworkUpdateCoID ~= nil then
+		UICore.CancelCoroutine(NetworkUpdateCoID);
+		NetworkUpdateCoID = nil;
+	end
+	--UICore.AddAsyncCoroutine(function()
+		local Network = Data.GetNetwork();
+		local ConduitInfo = Data.GetConduitInfo();
+		if Network == nil then return nil end;
+		--sb.logInfo("Network = " .. sb.printJson(Network,1));
+		--sb.logInfo("Conduit Info = " .. sb.printJson(ConduitInfo,1));
+		--Render all conduits in the network
+		for i=1,#Network,1 do
+			local Controllers;
+			local Conduit;
+			local ID = Network[i];
+			local Info = ConduitInfo[tostring(ID)];
+			local OnHover;
+			local OnClick;
+			--[[if world.entityPosition(ID) == nil then
+				coroutine.yield();
+			end--]]
+			--[[sb.logInfo("EXISTS = " .. sb.print(world.entityExists(ID)));
+			while world.entityPosition(ID) == nil do
+				--sb.logInfo("YIELDING");
+				coroutine.yield();
+			end--]]
+			--sb.logInfo("A");
+			--[[while world.entityExists(ID) == false do
+				sb.logInfo("C");
+				sb.logInfo("TEST 2 = " .. sb.print(1));
+				sb.logInfo("D");
+				coroutine.yield(function()
+					sb.logInfo("In Yield Function");
+				end);
+				for key,val in pairs(world) do
+					sb.logInfo(sb.print(key) .. " = " .. sb.print(val));
+				end
+				sb.logInfo("WOrld = " .. sb.print(world));
+				world.loadRegion({Info.Position[1] - 1,Info.Position[2] - 1,Info.Position[1] + 1,Info.Position[2] + 1});
+				--sb.logInfo("Loaded = " .. sb.print(world.loadRegion({Info.Position[1] - 1,Info.Position[2] - 1,Info.Position[1] + 1,Info.Position[2] + 1})));
+				sb.logInfo("TEST");
+				world.regionActive({Info.Position[1] - 1,Info.Position[2] - 1,Info.Position[1] + 1,Info.Position[2] + 1});
+				--sb.logInfo("Region Active = " .. sb.print(world.regionActive({Info.Position[1] - 1,Info.Position[2] - 1,Info.Position[1] + 1,Info.Position[2] + 1})));
+				coroutine.yield();
+				--coroutine.yield();
+			end--]]
+			--sb.logInfo("B");
+			--sb.logInfo("Object Name Test = " .. sb.print(Info.ObjectName));
+			--if world.entityExists(ID) then
+			if Info ~= nil and Info.HasMenuData == true and Info.ObjectName ~= "conduitterminal" then
+				--OnHover = GetDefaultHoverFunction(Conduit);
+				OnHover = function(hovering)
+					DefaultHover(Conduit,hovering);
+				end
+				--local Text;
+				OnClick = function(clicking)
+					if clicking == true then
+						if not world.entityExists(ID) then
+							Conduit.SetColor({150,150,150});
+							return nil;
+						else
+							Conduit.SetColor(nil);
 						end
-						if Info.UI.Data.IsModified ~= true then
-							local Data = Info.UI.Data;
-							Data.IsModified = true;
-							Data.SourcePlayer = PlayerID;
-							Data.MainObject = ID;
-							Data.scripts[#Data.scripts + 1] = "/Core/Conduit Scripts/Terminal/TerminalGUIController.lua";
+						--Conduit.SetColor({255,0,0});
+						local ConduitPos = Conduit.GetPosition();
+						local MenuItems = {};
+						if Info.UI ~= nil then
+							--sb.logInfo("INFO = " .. sb.printJson(Info,1));
+							if Info.UI.Link ~= nil then
+								Info.UI.Data = root.assetJson(Info.UI.Link);
+								Info.UI.Link = nil;
+							end
+							if Info.UI.Data.IsModified ~= true then
+								local Data = Info.UI.Data;
+								Data.IsModified = true;
+								Data.SourcePlayer = PlayerID;
+								Data.MainObject = ID;
+								Data.scripts[#Data.scripts + 1] = "/Core/Conduit Scripts/Terminal/TerminalGUIController.lua";
+							end
+							--sb.logInfo("Main Object = " .. sb.print(Info.UI.Data.MainObject));
+							MenuItems[#MenuItems + 1] = "Open UI";
+							MenuItems[#MenuItems + 1] = function()
+								player.interact(Info.UI.Type,Info.UI.Data,PlayerID);
+							end
 						end
-						--sb.logInfo("Main Object = " .. sb.print(Info.UI.Data.MainObject));
-						MenuItems[#MenuItems + 1] = "Open UI";
-						MenuItems[#MenuItems + 1] = function()
-							player.interact(Info.UI.Type,Info.UI.Data,PlayerID);
-						end
+						ViewWindow.SetSelectedObject(Conduit,table.unpack(MenuItems));
 					end
-					ViewWindow.SetSelectedObject(Conduit,table.unpack(MenuItems));
 				end
+				--Conduit = ViewWindow.AddConduit(Network[i],Info.Position,Color,OnClick,OnHover,nil,Info.TerminalData,Info.ObjectName);
+			--else
+			--	Conduit = ViewWindow.AddConduit(Network[i]);
 			end
+			local Color;
+			if not world.entityExists(Network[i]) then
+				Color = {150,150,150};
+			end
+			Conduit = ViewWindow.AddConduit(Network[i],Info.Position,Color,OnClick,OnHover,nil,Info.TerminalData,Info.ObjectName);
+			--local Status,Error = pcall(function() 
+			
+			--[[end);
+			if Error ~= nil then
+				sb.logInfo("Error = " .. sb.print(Error));
+				error(Error);
+			end--]]
+		--	coroutine.yield();
+			--end
 		end
-		Conduit = ViewWindow.AddConduit(Network[i],Info.Position,nil,OnClick,OnHover);
-	end
 
-	--Render all the containers in the network
-	--sb.logInfo("OBJECTS");
-	local NetworkContainers = Data.GetNetworkContainers();
-	--sb.logInfo("NETWORK CONTAINERS = " .. sb.print(NetworkContainers));
-	for StringObject,data in pairs(NetworkContainers) do
-		--for _,object in ipairs(data) do
-		local object = tonumber(StringObject);
-		local Controller;
-		local OnClick = function(clicking)
-			if clicking == true then
-				local MenuItems = {};
-				MenuItems[#MenuItems + 1] = "View Contents";
-				MenuItems[#MenuItems + 1] = function()
-					--TODO
-					--Open up an area where you can view, extract, and insert items into it
-					ContainerArea.SetContainer(object,data.Extraction,data.Insertion);
+		--Render all the containers in the network
+		--sb.logInfo("OBJECTS");
+		local NetworkContainers = Data.GetNetworkContainers();
+		--sb.logInfo("NETWORK CONTAINERS = " .. sb.print(NetworkContainers));
+		for StringObject,data in pairs(NetworkContainers) do
+			--for _,object in ipairs(data) do
+			local object = tonumber(StringObject);
+			local Controller;
+			local OnClick = function(clicking)
+				if clicking == true then
+					if not world.entityExists(object) then
+						Controller.SetColor({150,150,150});
+						return nil;
+					else
+						Controller.SetColor(nil);
+					end
+					local MenuItems = {};
+					MenuItems[#MenuItems + 1] = "View Contents";
+					MenuItems[#MenuItems + 1] = function()
+						--TODO
+						--Open up an area where you can view, extract, and insert items into it
+						ContainerArea.SetContainer(object,data.Extraction,data.Insertion);
+					end
+					ViewWindow.SetSelectedObject(Controller,table.unpack(MenuItems));
 				end
-				ViewWindow.SetSelectedObject(Controller,table.unpack(MenuItems));
 			end
+			local OnHover = function(hovering)
+				DefaultHover(Controller,hovering);
+			end
+			local Color;
+			if not world.entityExists(object) then
+				Color = {150,150,150};
+			end
+			Controller = ViewWindow.AddObject(object,data.Position,Color,OnClick,OnHover,nil,data.Name);
+			Controller.MoveToBottom();
+			--end
 		end
-		local OnHover = function(hovering)
-			DefaultHover(Controller,hovering);
-		end
-		Controller = ViewWindow.AddObject(object,data.Position,nil,OnClick,OnHover);
-		Controller.MoveToBottom();
-		--end
-	end
+	
+	--end);
 	local endTime = TerminalUI.GetTime();
 	--sb.logInfo("end Time = " .. sb.print(endTime));
 	--sb.logInfo("Difference = " .. sb.print(endTime - StartTime));

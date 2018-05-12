@@ -232,14 +232,22 @@ end
 
 --Adds a conduit to be rendered
 --Returns 3 if the object isn't a valid conduit
-function ViewWindow.AddConduit(object,position,color,onClick,onHover,scale)
+function ViewWindow.AddConduit(object,position,color,onClick,onHover,scale,terminalData,objectName)
 	if scale == nil then
 		scale = 1;
 	end
-	sb.logInfo("Position = " .. sb.print(world.entityPosition(object)));
+	--sb.logInfo("Position = " .. sb.print(world.entityPosition(object)));
+	--sb.logInfo("SOURCE OBJECT NAME = " .. sb.print(objectName));
+	objectName = objectName or world.entityName(object);
 	local RelativePosition = VectorCore.Subtract(position or world.entityPosition(object),SourcePosition);
-	local TerminalParameters = UICore.AsyncFunctionCall(object,"ConduitCore.GetTerminalImageParameters",ConduitPreviousData[object] or {FlipX = false,FlipY = false,AnimationName = nil,AnimationState = nil});
-	local TerminalData = TerminalParameters();
+	local TerminalParameters,TerminalData;
+	if terminalData == nil then
+		TerminalParameters = UICore.AsyncFunctionCall(object,"ConduitCore.GetTerminalImageParameters",ConduitPreviousData[object] or {FlipX = false,FlipY = false,AnimationName = nil,AnimationState = nil});
+		TerminalData = TerminalParameters();
+	else
+		TerminalData = terminalData;
+	end
+	--TODO Replace object in SetupConduitRenderer with objectName
 	if TerminalData ~= nil then
 		local Controller;
 		local Render,CollisionRect;
@@ -247,9 +255,9 @@ function ViewWindow.AddConduit(object,position,color,onClick,onHover,scale)
 		local Textures;
 		local FlipX,FlipY;
 		if TerminalData.AnimationName ~= nil then
-			Render,CollisionRect,Offset,Textures,FlipX,FlipY = SetupConduitRenderer(object,RelativePosition,color,TerminalData,scale);
+			Render,CollisionRect,Offset,Textures,FlipX,FlipY = SetupConduitRenderer(objectName,RelativePosition,color,TerminalData,scale);
 		else
-			Render,CollisionRect,Offset,Textures,FlipX,FlipY = SetupObjectRenderer(object,RelativePosition,color,scale);
+			Render,CollisionRect,Offset,Textures,FlipX,FlipY = SetupObjectRenderer(objectName,RelativePosition,color,scale);
 		end
 		local RenderFunction = function()
 			Render();
@@ -263,9 +271,9 @@ function ViewWindow.AddConduit(object,position,color,onClick,onHover,scale)
 				TerminalData,Done = TerminalParameters();
 				if Done == true then
 					if TerminalData.AnimationName ~= nil then
-						Render,CollisionRect,Offset,Textures,FlipX,FlipY = SetupConduitRenderer(object,RelativePosition,color,TerminalData,scale);
+						Render,CollisionRect,Offset,Textures,FlipX,FlipY = SetupConduitRenderer(objectName,RelativePosition,color,TerminalData,scale);
 					else
-						Render,CollisionRect,Offset,Textures,FlipX,FlipY = SetupObjectRenderer(object,RelativePosition,color,scale);
+						Render,CollisionRect,Offset,Textures,FlipX,FlipY = SetupObjectRenderer(objectName,RelativePosition,color,scale);
 					end
 					ViewChanged = true;
 					ConduitPreviousData[object] = TerminalData;
@@ -288,6 +296,9 @@ function ViewWindow.AddConduit(object,position,color,onClick,onHover,scale)
 		Controller.GetOffset = function()
 			return Offset;
 		end
+		Controller.ObjectID = function()
+			return object;
+		end
 		Controller.SetPosition = function(newPosition,includesOffset)
 			if includesOffset == true then
 				RelativePosition = {newPosition[1] - SourcePosition[1] - Offset[1] / 8,newPosition[2] - SourcePosition[2] - Offset[2] / 8};
@@ -296,9 +307,9 @@ function ViewWindow.AddConduit(object,position,color,onClick,onHover,scale)
 			end
 			ViewChanged = true;
 			if TerminalData.AnimationName ~= nil then
-				Render,CollisionRect,Offset,Textures,FlipX,FlipY = SetupConduitRenderer(object,RelativePosition,color,TerminalData,scale);
+				Render,CollisionRect,Offset,Textures,FlipX,FlipY = SetupConduitRenderer(objectName,RelativePosition,color,TerminalData,scale);
 			else
-				Render,CollisionRect,Offset,Textures,FlipX,FlipY = SetupObjectRenderer(object,RelativePosition,color,scale);
+				Render,CollisionRect,Offset,Textures,FlipX,FlipY = SetupObjectRenderer(objectName,RelativePosition,color,scale);
 			end
 		end
 		Controller.GetScale = function()
@@ -309,9 +320,9 @@ function ViewWindow.AddConduit(object,position,color,onClick,onHover,scale)
 				scale = newScale;
 				ViewChanged = true;
 				if TerminalData.AnimationName ~= nil then
-					Render,CollisionRect,Offset,Textures,FlipX,FlipY = SetupConduitRenderer(object,RelativePosition,color,TerminalData,scale);
+					Render,CollisionRect,Offset,Textures,FlipX,FlipY = SetupConduitRenderer(objectName,RelativePosition,color,TerminalData,scale);
 				else
-					Render,CollisionRect,Offset,Textures,FlipX,FlipY = SetupObjectRenderer(object,RelativePosition,color,scale);
+					Render,CollisionRect,Offset,Textures,FlipX,FlipY = SetupObjectRenderer(objectName,RelativePosition,color,scale);
 				end
 			end
 		end
@@ -319,13 +330,16 @@ function ViewWindow.AddConduit(object,position,color,onClick,onHover,scale)
 			return color;
 		end
 		Controller.SetColor = function(newColor)
+			if newColor == nil then
+				color = newColor;
+			end
 			if color == nil then
 				color = newColor;
 				ViewChanged = true;
 				if TerminalData.AnimationName ~= nil then
-					Render,CollisionRect,Offset,Textures,FlipX,FlipY = SetupConduitRenderer(object,RelativePosition,color,TerminalData,scale);
+					Render,CollisionRect,Offset,Textures,FlipX,FlipY = SetupConduitRenderer(objectName,RelativePosition,color,TerminalData,scale);
 				else
-					Render,CollisionRect,Offset,Textures,FlipX,FlipY = SetupObjectRenderer(object,RelativePosition,color,scale);
+					Render,CollisionRect,Offset,Textures,FlipX,FlipY = SetupObjectRenderer(objectName,RelativePosition,color,scale);
 				end
 			else
 				color[1],color[2],color[3],color[4] = newColor[1],newColor[2],newColor[3],newColor[4];
@@ -349,12 +363,13 @@ function ViewWindow.AddConduit(object,position,color,onClick,onHover,scale)
 end
 
 --Adds an object to be rendered
-function ViewWindow.AddObject(object,position,color,onClick,onHover,scale)
+function ViewWindow.AddObject(object,position,color,onClick,onHover,scale,objectName)
 	if scale == nil then
 		scale = 1;
 	end
-	local RelativePosition = VectorCore.Subtract(position or world.entityPosition(object),SourcePosition);
-	local Render,CollisionRect,Offset,Textures,FlipX,FlipY = SetupObjectRenderer(object,RelativePosition,color,scale);
+	objectName = objectName or world.entityName(object);
+	local RelativePosition = VectorCore.Subtract(position or world.entityPosition(objectName),SourcePosition);
+	local Render,CollisionRect,Offset,Textures,FlipX,FlipY = SetupObjectRenderer(objectName,RelativePosition,color,scale);
 	local RenderFunction = function()
 		Render();
 	end
@@ -381,7 +396,7 @@ function ViewWindow.AddObject(object,position,color,onClick,onHover,scale)
 			RelativePosition = {newPosition[1] - SourcePosition[1],newPosition[2] - SourcePosition[2]};
 		end
 		ViewChanged = true;
-		Render,CollisionRect,Offset,Textures,FlipX,FlipY = SetupObjectRenderer(object,RelativePosition,color,scale);
+		Render,CollisionRect,Offset,Textures,FlipX,FlipY = SetupObjectRenderer(objectName,RelativePosition,color,scale);
 	end
 	Controller.GetScale = function()
 		return scale;
@@ -390,7 +405,7 @@ function ViewWindow.AddObject(object,position,color,onClick,onHover,scale)
 		if newScale ~= scale then
 			scale = newScale;
 			ViewChanged = true;
-			Render,CollisionRect,Offset,Textures,FlipX,FlipY = SetupObjectRenderer(object,RelativePosition,color,scale);
+			Render,CollisionRect,Offset,Textures,FlipX,FlipY = SetupObjectRenderer(objectName,RelativePosition,color,scale);
 		end
 	end
 	Controller.GetColor = function()
@@ -398,7 +413,14 @@ function ViewWindow.AddObject(object,position,color,onClick,onHover,scale)
 	end
 	Controller.SetColor = function(newColor)
 		ViewChanged = true;
-		color[1],color[2],color[3],color[4] = newColor[1],newColor[2],newColor[3],newColor[4];
+		if color == nil or newColor == nil then
+			color = newColor;
+		else
+			color[1],color[2],color[3],color[4] = newColor[1],newColor[2],newColor[3],newColor[4];
+		end
+	end
+	Controller.ObjectID = function()
+		return object;
 	end
 	Controller.GetTextures = function()
 		return Textures;
@@ -661,6 +683,8 @@ end
 --Sets up the Object renderer
 SetupObjectRenderer = function(object,RelativePosition,color,scale)
 	local ImageData = ImageCore.ObjectToImage(object);
+	--sb.logInfo("ImageData = " .. sb.print(ImageData));
+	--sb.logInfo("Object = " .. sb.print(object));
 	local CollisionRegion = {};
 	local ImageSize = {};
 	local ScreenRects = {};
@@ -710,6 +734,7 @@ end
 --Gets an image from an object's animation name and state
 --Returns the image properties and the image offset
 AnimationToImage = function(Object,Name,State,File,AnimationParts,AnimationSource)
+	--sb.logInfo("Animation To Image Object = " .. sb.print(Object));
 	local Animation;
 	if File ~= nil then
 		Animation = ImageCore.TranslateAnimationFile(File,AnimationParts or world.getObjectParameter(Object,"animationParts"),AnimationSource or Object);
@@ -1043,6 +1068,9 @@ function ViewWindow.SetSelectedObject(Controller,...)
 			local Rect;
 			local ClickFunction = function(clicking)
 				if clicking == true then
+					if not world.entityExists(Controller.ObjectID()) then
+						return nil;
+					end
 					if func ~= nil then
 						func();
 					end
