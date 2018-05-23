@@ -73,12 +73,6 @@ local IndexToStringMeta = {
 			return tonumber(k),i;
 		end
 	end}
---[[local SaveParameters = false;
-local SavingItem;
-local SavingParameters = {};
-local SavingDisplayName;
-local SavingPosition;
-local SaveColor;--]]
 local SaveSettings = {
 	IsSaving = false,
 	DropItem = nil,
@@ -198,9 +192,6 @@ function ConduitCore.GetTerminalData()
 	local AnimationFile;
 	local AnimationParts;
 	local AnimationSource;
-	--sb.logInfo("Default Animated = " .. sb.print(DefaultAnimated));
-	--sb.logInfo("Facade = " .. sb.print(Facade));
-	--sb.logInfo("Default Animated = " .. sb.print(DefaultAnimated));
 	if DefaultAnimated or Facade then
 		AnimationName = "cable";
 		if Connections[3] ~= 0 and Connections[4] ~= 0 and Connections[1] == 0 and Connections[2] == 0 then
@@ -244,7 +235,6 @@ function ConduitCore.GetTerminalData()
 			AnimationState = "up";
 		end
 		if Facade then 
-			--sb.logInfo("IS FACADED");
 			if FacadeInfo == nil then
 				require("/Core/FacadeInfo.lua");
 			end
@@ -254,7 +244,6 @@ function ConduitCore.GetTerminalData()
 				AnimationSource = FacadeInfo.FacadeToObject(object.name());
 		end
 	end
-	--sb.logInfo("RETURN VALUE = " .. sb.print({FlipX = FlipX,FlipY = FlipY,AnimationName = AnimationName,AnimationState = AnimationState}));
 	return {FlipX = FlipX,FlipY = FlipY,AnimationName = AnimationName,AnimationState = AnimationState,AnimationFile = AnimationFile,AnimationParts = AnimationParts,AnimationSource = AnimationSource};
 end
 
@@ -420,7 +409,7 @@ end
 
 --Forcefully triggers a Connection change
 function ConduitCore.TriggerConnectionUpdate(connectionType)
-	ConnectionUpdate();
+	ConnectionUpdate(connectionType);
 end
 
 --Called whenever the network changes

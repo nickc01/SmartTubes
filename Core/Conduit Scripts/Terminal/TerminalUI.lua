@@ -5,6 +5,7 @@ require("/Core/MathCore.lua");
 require("/Core/Conduit Scripts/Terminal/ViewWindow.lua");
 --require("/Core/Conduit Scripts/Terminal/ItemTray.lua");
 require("/Core/Conduit Scripts/Terminal/ContainerViewArea.lua");
+require("/Core/Conduit Scripts/Terminal/AllItemsArea.lua");
 
 --Declaration
 
@@ -29,6 +30,7 @@ local Colors = {};
 local ColorToHex = {};
 local ColorIndex = 1;
 local NetworkUpdateCoID;
+--local TESTCANVAS;
 
 --Functions
 local Update;
@@ -53,6 +55,8 @@ function TerminalUI.Initialize()
 	UICore.SetAsSyncedValues("ConduitNetwork",SourceID,"Network",{},"NetworkContainers",{},"ConduitInfo",{});
 	UICore.SetAsSyncedValues("Settings",SourceID,"Color","red","Speed",0);
 	Data.AddSpeedChangeFunction(SpeedChange);
+	--TESTCANVAS = widget.bindCanvas("allItemsCanvas");
+	--TESTCANVAS:drawRect({0,0,TESTCANVAS:size()[1],TESTCANVAS:size()[2]},{255,0,0});
 	local ColorData = root.assetJson("/Projectiles/Traversals/Colors.json").Colors;
 	Colors = {};
 	for k,color in ipairs(ColorData) do
@@ -68,7 +72,7 @@ function TerminalUI.Initialize()
 	Data.AddNetworkChangeFunction(NetworkChange);
 	ViewWindow.Initialize();
 	ContainerArea.Initialize();
-	--ItemTray.Initialize();
+	AllItems.Initialize();
 	ViewWindow.AddBackgroundClickFunction(BackgroundClick);
 	NetworkChange();
 	local OldUpdate = update;
@@ -89,10 +93,8 @@ end
 
 --The Update Loop for the Terminal UI
 Update = function(dt)
-	--[[if ContainerArea.HasContainer() then
-		local Item = ContainerArea.ItemInSlot(2) or {name = "perfectlygenericitem",count = 0};
-		ContainerArea.SetItemInSlot(2,{name = "perfectlygenericitem",count = Item.count + 1,parameters = Item.parameters});
-	end--]]
+	--local PreviousPosition = widget.getPosition("allItemsCanvas");
+	--widget.setPosition("allItemsCanvas",{PreviousPosition[1] - 1,PreviousPosition[2]});
 end
 
 BackgroundClick = function(clicking)
@@ -106,7 +108,6 @@ NetworkChange = function()
 	ContainerArea.SetContainer(nil);
 	ViewWindow.SetSelectedObject(nil);
 	local StartTime = TerminalUI.GetTime();
-	--sb.logInfo("Start Time = " .. sb.print(StartTime));
 	ViewWindow.Clear();
 	if NetworkUpdateCoID ~= nil then
 		UICore.CancelCoroutine(NetworkUpdateCoID);
@@ -116,8 +117,6 @@ NetworkChange = function()
 		local Network = Data.GetNetwork();
 		local ConduitInfo = Data.GetConduitInfo();
 		if Network == nil then return nil end;
-		--sb.logInfo("Network = " .. sb.printJson(Network,1));
-		--sb.logInfo("Conduit Info = " .. sb.printJson(ConduitInfo,1));
 		--Render all conduits in the network
 		for i=1,#Network,1 do
 			local Controllers;
@@ -126,43 +125,10 @@ NetworkChange = function()
 			local Info = ConduitInfo[tostring(ID)];
 			local OnHover;
 			local OnClick;
-			--[[if world.entityPosition(ID) == nil then
-				coroutine.yield();
-			end--]]
-			--[[sb.logInfo("EXISTS = " .. sb.print(world.entityExists(ID)));
-			while world.entityPosition(ID) == nil do
-				--sb.logInfo("YIELDING");
-				coroutine.yield();
-			end--]]
-			--sb.logInfo("A");
-			--[[while world.entityExists(ID) == false do
-				sb.logInfo("C");
-				sb.logInfo("TEST 2 = " .. sb.print(1));
-				sb.logInfo("D");
-				coroutine.yield(function()
-					sb.logInfo("In Yield Function");
-				end);
-				for key,val in pairs(world) do
-					sb.logInfo(sb.print(key) .. " = " .. sb.print(val));
-				end
-				sb.logInfo("WOrld = " .. sb.print(world));
-				world.loadRegion({Info.Position[1] - 1,Info.Position[2] - 1,Info.Position[1] + 1,Info.Position[2] + 1});
-				--sb.logInfo("Loaded = " .. sb.print(world.loadRegion({Info.Position[1] - 1,Info.Position[2] - 1,Info.Position[1] + 1,Info.Position[2] + 1})));
-				sb.logInfo("TEST");
-				world.regionActive({Info.Position[1] - 1,Info.Position[2] - 1,Info.Position[1] + 1,Info.Position[2] + 1});
-				--sb.logInfo("Region Active = " .. sb.print(world.regionActive({Info.Position[1] - 1,Info.Position[2] - 1,Info.Position[1] + 1,Info.Position[2] + 1})));
-				coroutine.yield();
-				--coroutine.yield();
-			end--]]
-			--sb.logInfo("B");
-			--sb.logInfo("Object Name Test = " .. sb.print(Info.ObjectName));
-			--if world.entityExists(ID) then
-			if Info ~= nil and Info.HasMenuData == true and Info.ObjectName ~= "conduitterminal" then
-				--OnHover = GetDefaultHoverFunction(Conduit);
+			if Info.HasMenuData == true and Info.ObjectName ~= "conduitterminal" then
 				OnHover = function(hovering)
 					DefaultHover(Conduit,hovering);
 				end
-				--local Text;
 				OnClick = function(clicking)
 					if clicking == true then
 						if not world.entityExists(ID) then
@@ -171,11 +137,9 @@ NetworkChange = function()
 						else
 							Conduit.SetColor(nil);
 						end
-						--Conduit.SetColor({255,0,0});
 						local ConduitPos = Conduit.GetPosition();
 						local MenuItems = {};
 						if Info.UI ~= nil then
-							--sb.logInfo("INFO = " .. sb.printJson(Info,1));
 							if Info.UI.Link ~= nil then
 								Info.UI.Data = root.assetJson(Info.UI.Link);
 								Info.UI.Link = nil;
@@ -187,7 +151,6 @@ NetworkChange = function()
 								Data.MainObject = ID;
 								Data.scripts[#Data.scripts + 1] = "/Core/Conduit Scripts/Terminal/TerminalGUIController.lua";
 							end
-							--sb.logInfo("Main Object = " .. sb.print(Info.UI.Data.MainObject));
 							MenuItems[#MenuItems + 1] = "Open UI";
 							MenuItems[#MenuItems + 1] = function()
 								player.interact(Info.UI.Type,Info.UI.Data,PlayerID);
@@ -196,24 +159,12 @@ NetworkChange = function()
 						ViewWindow.SetSelectedObject(Conduit,table.unpack(MenuItems));
 					end
 				end
-				--Conduit = ViewWindow.AddConduit(Network[i],Info.Position,Color,OnClick,OnHover,nil,Info.TerminalData,Info.ObjectName);
-			--else
-			--	Conduit = ViewWindow.AddConduit(Network[i]);
 			end
 			local Color;
 			if not world.entityExists(Network[i]) then
 				Color = {150,150,150};
 			end
 			Conduit = ViewWindow.AddConduit(Network[i],Info.Position,Color,OnClick,OnHover,nil,Info.TerminalData,Info.ObjectName);
-			--local Status,Error = pcall(function() 
-			
-			--[[end);
-			if Error ~= nil then
-				sb.logInfo("Error = " .. sb.print(Error));
-				error(Error);
-			end--]]
-		--	coroutine.yield();
-			--end
 		end
 
 		--Render all the containers in the network
@@ -263,6 +214,16 @@ end
 --Gets the Current Time Elapsed
 function TerminalUI.GetTime()
 	return os.clock();
+end
+
+--Returns the entire Conduit Network
+function TerminalUI.GetNetwork()
+	return Data.GetNetwork();
+end
+
+--Returns the Information of the Conduits in the Network
+function TerminalUI.GetNetworkInfo()
+	return Data.GetConduitInfo();
 end
 
 --returns a default OnHover function

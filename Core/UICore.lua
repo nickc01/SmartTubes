@@ -37,12 +37,13 @@ function UICore.Initialize()
 					CoroutineCalls[id] = nil;
 					return nil;
 				end
-				local Value,Error = coroutine.resume(Data.Coroutine);
+				local Value,Error = coroutine.resume(Data.Coroutine,dt);
 				if Value == false then
 					error(Error or "");
 				elseif Value ~= nil then
 					local Type = type(Value);
 					if Type == "string" then
+						sb.logInfo(Value);
 					elseif Type == "function" then
 						Value();
 					end
@@ -53,8 +54,10 @@ function UICore.Initialize()
 end
 
 --Adds a coroutine function to be called asycronously each frame
---The Coroutine is passed as the first parameter
 function UICore.AddAsyncCoroutine(Coroutine,onCancel)
+	if Initialized == false then
+		UICore.Initialize();
+	end
 	local ID = sb.makeUuid();
 	local Coroutine = coroutine.create(Coroutine);
 	local Table = {
@@ -62,7 +65,17 @@ function UICore.AddAsyncCoroutine(Coroutine,onCancel)
 		OnCancel = onCancel
 	}
 	CoroutineCalls[ID] = Table;
-	coroutine.resume(Coroutine,Coroutine);
+	local Value,Error = coroutine.resume(Coroutine);
+	if Value == false then
+		sb.logError(Error or "");
+	elseif Value ~= nil then
+		local Type = type(Value);
+		if Type == "string" then
+			sb.logInfo(Value);
+		elseif Type == "function" then
+			Value();
+		end
+	end
 	return ID;
 end
 

@@ -33,6 +33,9 @@ local ZeroIfNilMetatable = {__index = function(tbl,k)
 	return rawget(tbl,k) or 0; end};
 local LocalOnConfigUpdate = {};
 local Data = {};
+local ContainerQueryUUID;
+local AllContainerItems;
+
 --Functions
 local SetMessages;
 local ConfigUpdate;
@@ -92,6 +95,7 @@ function Extraction.Initialize()
 		SetCachedConfigValue("TakeFromSidesWithIDs",nil);
 		SetCachedConfigValue("InsertionConduits",nil);
 		ConduitCore.TriggerNetworkUpdate("TerminalFindings");
+		AllContainerItems = nil;
 		for _,container in ipairs(ConduitCore.GetConnections("Containers")) do
 			if container ~= 0 then
 				HasContainersConnected = true;
@@ -162,6 +166,9 @@ SetMessages = function()
 	message.setHandler("Extraction.SaveParameters",function(_,_,dropPosition)
 		__Extraction__.SaveParameters();
 		ConduitCore.DropAndSaveParameters(nil,dropPosition);
+	end);
+	message.setHandler("ExtractionQueryContainers",function(_,_,uuid)
+		return {Extraction.QueryContainers(uuid)};
 	end);
 end
 
@@ -477,6 +484,62 @@ CheckItemWithOperators = function(item)
 	end
 	
 	return false;
+end
+
+--Queries all neighboring containers for changes
+--Returns false if no changes have taken place
+--Returns the table of items in all the containers and a new uuid if there's changes
+function Extraction.QueryContainers(uuid,asTable)
+	local HasChanges = false;
+	local ContainerItems = AllContainerItems;
+	if AllContainerItems == nil then
+		ContainerItems = {};
+		HasChanges = true;
+	end
+	local Containers = ConduitCore.GetConnections("Containers");
+	for _,container in ipairs(Containers) do
+		if container ~= 0 then
+			local StringContainer = tostring(container);
+			if ContainerItems[StringContainer] == nil then
+				ContainerItems[StringContainer] = {};
+				HasChanges = true;
+			end
+			local ContainerContents = ContainerItems[StringContainer];
+			sb.logInfo("Container = " .. sb.print(container));
+			local Size = world.containerSize(container);
+			sb.logInfo("Size = " .. sb.print(Size));
+			for i=1,Size do
+				local Item = world.containerItemAt(container,i - 1);
+				if ContainerContents[i] == nil then
+					ContainerContents[i] = "";
+					HasChanges = true;
+				end
+				if Item == nil and ContainerContents[i] ~= "" then
+					ContainerContents[i] = "";
+					HasChanges = true;
+				elseif Item ~= nil and ContainerContents[i] == "" then
+					ContainerContents[i] = Item;
+					HasChanges = true;
+				elseif root.itemDescriptorsMatch(Item,ContainerContents[i],true) == false then
+					ContainerContents[i] = Item;
+					HasChanges = true;
+				end
+			end
+		end
+	end
+	AllContainerItems = ContainerItems;
+	if HasChanges == true then
+		ContainerQueryUUID = sb.makeUuid();
+	end
+	if uuid ~= ContainerQueryUUID then
+		if asTable == true then
+			return {ContainerItems,ContainerQueryUUID};
+		else
+			return ContainerItems,ContainerQueryUUID;
+		end
+	else
+		return false;
+	end
 end
 
 --Returns an iterator of possible insertion conduits to send the item to

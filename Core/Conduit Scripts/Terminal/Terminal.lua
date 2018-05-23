@@ -70,6 +70,12 @@ SetMessages = function()
 	message.setHandler("ExtractFromContainer",function(_,_,container,slot,amount)
 		return ExtractFromContainer(container,slot,amount);
 	end);
+	message.setHandler("ExecuteScript",function(_,_,object,functionName,...)
+		return world.callScriptedEntity(object,functionName,...);
+	end);
+	--[[message.setHandler("ExecuteScriptMultiParam",function(_,_,object,functionName,...)
+		return world.callScriptedEntity(object,functionName,...);
+	end);--]]
 end
 
 --The Update Loop for the Terminal
@@ -155,6 +161,7 @@ UpdateNetwork = function()
 				Info.Position = world.entityPosition(conduit);
 				Info.TerminalData = world.callScriptedEntity(conduit,"ConduitCore.GetTerminalData");
 				Info.ObjectName = world.entityName(conduit);
+				Info.ConduitType = world.getObjectParameter(conduit,"conduitType");
 			--end
 		end
 		--sb.logInfo("ALL NETWORK CONTAINERS = " .. sb.printJson(Containers,1));
@@ -273,7 +280,7 @@ function PostExtract(Extraction,Item,Slot,Container)
 	SentTraversals[tostring(Traversal)] = {
 		Item = Item
 	}
-	world.callScriptedEntity(Traversal,"__Traversal__.Initialize",Insertion,Container,"Conduits",Data.GetSpeed());
+	world.callScriptedEntity(Traversal,"__Traversal__.Initialize",Insertion,Container,"Conduits",Data.GetSpeed() + 1);
 end
 
 --Extracts an item from the container

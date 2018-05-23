@@ -39,6 +39,8 @@ local InsertID;
 local InsertUUID;
 local Uninitializing = false;
 local Dying = false;
+local ContainerQueryUUID;
+local AllContainerItems;
 
 --Prediction Layout
 --Item
@@ -230,6 +232,9 @@ SetMessages = function()
 		else
 			return false;
 		end
+	end);
+	message.setHandler("InsertionQueryContainers",function(_,_,uuid)
+		return {Insertion.QueryContainers(uuid)};
 	end);
 end
 
@@ -449,6 +454,61 @@ function __Insertion__.DropTraversalItems(Traversal)
 		for k,i in ipairs(PredictionsForTossing) do
 			RemovePredictionForTossing(Object,i);
 		end
+	end
+end
+
+--Queries all neighboring containers for changes
+--Returns false if no changes have taken place
+--Returns the table of items in all the containers and a new uuid if there's changes
+function Insertion.QueryContainers(uuid,asTable)
+	if Extraction ~= nil then
+		return Extraction.QueryContainers(uuid,asTable);
+	end
+	local HasChanges = false;
+	if AllContainerItems == nil then
+		AllContainerItems = {};
+		HasChanges = true;
+	end
+	local Containers = ConduitCore.GetConnections("Containers");
+	for _,container in ipairs(Containers) do
+		if container ~= 0 then
+			local StringContainer = tostring(container);
+			if AllContainerItems[StringContainer] == nil then
+				AllContainerItems[StringContainer] = {};
+				HasChanges = true;
+			end
+			local ContainerContents = AllContainerItems[StringContainer];
+			local Size = world.containerSize(container);
+			for i=1,Size do
+				local Item = world.containerItemAt(container,i - 1);
+				if ContainerContents[i] == nil then
+					ContainerContents[i] = "";
+					HasChanges = true;
+				end
+				if Item == nil and ContainerContents[i] ~= "" then
+					ContainerContents[i] = "";
+					HasChanges = true;
+				elseif Item ~= nil and ContainerContents[i] == "" then
+					ContainerContents[i] = Item;
+					HasChanges = true;
+				elseif root.itemDescriptorsMatch(Item,ContainerContents[i],true) == false then
+					ContainerContents[i] = Item;
+					HasChanges = true;
+				end
+			end
+		end
+	end
+	if HasChanges == true then
+		ContainerQueryUUID = sb.makeUuid();
+	end
+	if uuid ~= ContainerQueryUUID then
+		if asTable == true then
+			return {AllContainerItems,ContainerQueryUUID};
+		else
+			return AllContainerItems,ContainerQueryUUID;
+		end
+	else
+		return false;
 	end
 end
 
