@@ -26,9 +26,7 @@ local SlotRows = {};
 local MainLoadingRoutine;
 local ConduitContainerUUIDMap = {};
 local InternalInventoryItems = {};
-local ItemBuffer = {
-
-};
+local ItemBuffer = {};
 
 
 --Functions
@@ -77,37 +75,13 @@ local InventoryItemsMeta = {
             SlotRows[RowNumber] = {Name = NewSlot,Full = AllItemsList ..  "." .. NewSlot};
         end
         local Slot = SlotRows[RowNumber].Full .. ".slot" .. SlotAtRow;
-       -- sb.logInfo("Row Number = " .. sb.print(RowNumber));
-       -- sb.logInfo("SlotAtRow = " .. sb.print(SlotAtRow));
-        --sb.logInfo("Global Slot = " .. sb.print(k));
-        --sb.logInfo("Slot = " .. sb.print(Slot));
-      --[[  if SlotAtRow == 1 then
-            if v == nil then
-                widget.setItemSlotItem(Slot,nil);
-                widget.setText(Slot .. "count","");
-            else
-                widget.setItemSlotItem(Slot,{name = v.name,count = 100,parameters = v.parameters});
-                sb.logInfo("Count Text = " .. sb.print(Slot .. "count"));
-                widget.setText(Slot .. "count",tostring(100));
-                sb.logInfo("Position = " .. sb.print(widget.getPosition(Slot .. "count")));
-                sb.logInfo("Text = " .. sb.print(widget.getText(Slot .. "count")));
-            end
-        else
-            widget.setItemSlotItem(Slot,v);
-        end--]]
         if v == nil then
             widget.setItemSlotItem(Slot,nil);
             widget.setText(Slot .. "count","");
         else
-           -- sb.logInfo("V = " .. sb.print(v));
-           -- sb.logInfo("SLOT ITEM FINAL = " .. sb.print({name = v.name,count = 1,parameters = v.parameters}));
             widget.setItemSlotItem(Slot,{name = v.name,count = 1,parameters = v.parameters});
-            --sb.logInfo("Count Text = " .. sb.print(Slot .. "count"));
             widget.setText(Slot .. "count",NumberToString(v.count));
-            --sb.logInfo("Position = " .. sb.print(widget.getPosition(Slot .. "count")));
-            --sb.logInfo("Text = " .. sb.print(widget.getText(Slot .. "count")));
         end
-        --sb.logInfo("Set Slot Item = " .. sb.print(widget.itemSlotItem(Slot)));
         rawset(InternalInventoryItems,k,v);
         local IsNil = true;
         for row=#SlotRows,1,-1 do
@@ -343,7 +317,20 @@ OnEnable = function(enabled)
                         local AsyncCounter = 0;
                         for slot,item in ipairs(ContainerItems) do
                             if item ~= "" then
-                                for i=1,#ItemBuffer do
+                                if ItemBuffer[item.name] ~= nil then
+                                    local Variants = ItemBuffer[item.name];
+                                    for _,variant in ipairs(Variants) do
+                                        if root.itemDescriptorsMatch(variant,item,true) then
+                                            variant.count = variant.count + item.count;
+                                            goto FirstContinue;
+                                        end
+                                    end
+                                    Variants[#Variants + 1] = {name = item.name,count = item.count,parameters = item.parameters};
+
+                                else
+                                    ItemBuffer[item.name] = {{name = item.name,count = item.count,parameters = item.parameters}};
+                                end
+                               --[[ for i=1,#ItemBuffer do
                                     if root.itemDescriptorsMatch(ItemBuffer[i].Item,item,true) then
                                    -- ItemBuffer[i].Sources
                                         --sb.logInfo("Item Buffer = " .. sb.print(ItemBuffer));
@@ -366,14 +353,16 @@ OnEnable = function(enabled)
                                 ItemBuffer[#ItemBuffer + 1] = {Item = {name = item.name,count = item.count,parameters = item.parameters}};
                                 InventoryItems[#ItemBuffer] = ItemBuffer[#ItemBuffer].Item;
                                 ::FirstContinue::
-                                AsyncCounter = AsyncCounter + 1;
+                                AsyncCounter = AsyncCounter + 1;--]]
                               --[[  if AsyncCounter > 10 then
                                     AsyncCounter = 0;
                                     coroutine.yield();
                                 end--]]
-                                coroutine.yield();
+                                ::FirstContinue::
+                                --coroutine.yield();
                             end
                         end
+                        --coroutine.yield();
                         ::NextContainer::
                     end
                     sb.logInfo("K");
@@ -381,10 +370,20 @@ OnEnable = function(enabled)
                 ::Continue::
             end
             --Display the item buffer
-            table.sort(ItemBuffer,function(a,b) return a.Item.count > b.Item.count end);
-            for i=1,#ItemBuffer do
+            --table.sort(ItemBuffer,function(a,b) return a.Item.count > b.Item.count end);
+           --[[ for i=1,#ItemBuffer do
                -- sb.logInfo("DISPLAYING ITEM = " .. sb.print(ItemBuffer[i].Item));
                 InventoryItems[i] = ItemBuffer[i].Item;
+            end--]]
+            local NumericItemTable = {};
+            for _,variants in pairs(ItemBuffer) do
+                for _,item in ipairs(variants) do
+                    NumericItemTable[#NumericItemTable + 1] = item;
+                end
+            end
+            --table.sort(NumericItemTable,function(a,b) return a.count > b.count end);
+            for i=1,#NumericItemTable do
+                InventoryItems[i] = NumericItemTable[i];
             end
         end);
     else
