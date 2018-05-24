@@ -836,7 +836,7 @@ function ConduitCore.GetConnectionsWithExtra(connectionType)
 	else
 		local Final = {};
 		local Connections = ConduitCore.GetConnections(connectionType);
-		if Connections ~= nil then
+		if Connections ~= nil and Connections ~= false then
 			for _,connection in ipairs(Connections) do
 				if connection ~= 0 then
 					Final[#Final + 1] = connection;

@@ -26,6 +26,25 @@ local SlotRows = {};
 local MainLoadingRoutine;
 local ConduitContainerUUIDMap = {};
 local InternalInventoryItems = {};
+local ItemBuffer = {
+
+};
+
+
+--Functions
+local Update;
+local AddAllBoundElements;
+local BindElement;
+local __SlotClick__;
+local __RightClickSlot__;
+local OnEnable;
+local ExecuteScript;
+local ExecuteScriptAsync;
+local SendEntityMessageAsync;
+local GetDecimalPlace;
+local NumberToString;
+
+--Metatables
 local InventoryItemsMeta = {
     __index = function(tbl,k)
         return rawget(InternalInventoryItems,k);
@@ -62,7 +81,32 @@ local InventoryItemsMeta = {
        -- sb.logInfo("SlotAtRow = " .. sb.print(SlotAtRow));
         --sb.logInfo("Global Slot = " .. sb.print(k));
         --sb.logInfo("Slot = " .. sb.print(Slot));
-        widget.setItemSlotItem(Slot,v);
+      --[[  if SlotAtRow == 1 then
+            if v == nil then
+                widget.setItemSlotItem(Slot,nil);
+                widget.setText(Slot .. "count","");
+            else
+                widget.setItemSlotItem(Slot,{name = v.name,count = 100,parameters = v.parameters});
+                sb.logInfo("Count Text = " .. sb.print(Slot .. "count"));
+                widget.setText(Slot .. "count",tostring(100));
+                sb.logInfo("Position = " .. sb.print(widget.getPosition(Slot .. "count")));
+                sb.logInfo("Text = " .. sb.print(widget.getText(Slot .. "count")));
+            end
+        else
+            widget.setItemSlotItem(Slot,v);
+        end--]]
+        if v == nil then
+            widget.setItemSlotItem(Slot,nil);
+            widget.setText(Slot .. "count","");
+        else
+           -- sb.logInfo("V = " .. sb.print(v));
+           -- sb.logInfo("SLOT ITEM FINAL = " .. sb.print({name = v.name,count = 1,parameters = v.parameters}));
+            widget.setItemSlotItem(Slot,{name = v.name,count = 1,parameters = v.parameters});
+            --sb.logInfo("Count Text = " .. sb.print(Slot .. "count"));
+            widget.setText(Slot .. "count",NumberToString(v.count));
+            --sb.logInfo("Position = " .. sb.print(widget.getPosition(Slot .. "count")));
+            --sb.logInfo("Text = " .. sb.print(widget.getText(Slot .. "count")));
+        end
         --sb.logInfo("Set Slot Item = " .. sb.print(widget.itemSlotItem(Slot)));
         rawset(InternalInventoryItems,k,v);
         local IsNil = true;
@@ -101,18 +145,10 @@ InventoryItems = setmetatable({
         end
         SlotRows = {};
         widget.clearListItems(AllItemsList);
-    end
-},InventoryItemsMeta);
+    end},InventoryItemsMeta);
 
---Functions
-local Update;
-local AddAllBoundElements;
-local BindElement;
-local __SlotClick__;
-local __RightClickSlot__;
-local OnEnable;
-local ExecuteScript;
-local ExecuteScriptAsync;
+
+--MAIN FUNCTIONS
 
 --Initializes the All Items Area
 function AllItems.Initialize()
@@ -250,7 +286,10 @@ OnEnable = function(enabled)
             MainLoadingRoutine = nil;
         end
         MainLoadingRoutine = UICore.AddAsyncCoroutine(function()
+            local AddedContainers = {};
+            ItemBuffer = {};
             InventoryItems.Clear();
+          --  sb.logInfo("ItemBuffer = " .. sb.print(ItemBuffer));
             local Network = TerminalUI.GetNetwork();
             local Info = TerminalUI.GetNetworkInfo();
             for _,conduit in ipairs(Network) do
@@ -267,44 +306,92 @@ OnEnable = function(enabled)
                         ID = ConduitContainerUUIDMap[tostring(conduit)].ID;
                     end
                     local Value;
+                    sb.logInfo("X");
                     if ConduitInfo.ConduitType == "extraction" or ConduitInfo.ConduitType == "io" then
                         Value = ExecuteScriptAsync(conduit,"Extraction.QueryContainers",ID,true);
                     elseif ConduitInfo.ConduitType == "insertion" then
                         Value = ExecuteScriptAsync(conduit,"Insertion.QueryContainers",ID,true);
                     end         
+                    --sb.logInfo("Y : Value = " .. sb.print(Value));
                     if Value == false then
                         Contents = ConduitContainerUUIDMap[tostring(conduit)].Contents;
-                        sb.logInfo("A");                        
+                       -- sb.logInfo("A");                        
                     elseif Value ~= nil then
                         ConduitContainerUUIDMap[tostring(conduit)] = {ID = Value[2],Contents = Value[1]};
                         Contents = Value[1];
-                        sb.logInfo("B");
+                       -- sb.logInfo("B");
                     end
-                    sb.logInfo("Contents for " .. sb.print(conduit) .. " = " .. sb.print(Contents));
+                   -- sb.logInfo("Contents for " .. sb.print(conduit) .. " = " .. sb.print(Contents));
                -- elseif ConduitInfo.ConduitType == "insertion" then
                     --TODO
                  --   Contents = {};
                  --   sb.logInfo("C");
                -- end
-                sb.logInfo("Contents = " .. sb.print(Contents));
+                --sb.logInfo("Contents = " .. sb.print(Contents));
                 -- TODO -- TODO -- TODO -- TODO -- TODO -- TODO -- TODO -- TODO -- TODO -- TODO -- TODO -- TODO -- TODO -- TODO -- TODO -- TODO -- TODO -- TODO -- TODO -- TODO 
                 --Track Containers to avoid duplicates and to allow taking out of them
                 if Contents ~= nil then
+                    sb.logInfo("J");
                     for stringContainer,ContainerItems in pairs(Contents) do
                         local Container = tonumber(stringContainer);
-                        for _,item in ipairs(ContainerItems) do
-                            --Add items to the all items list
-                            if type(item) == "table" then
-                                InventoryItems[#InventoryItems + 1] = item;
-                            else
-                                InventoryItems[#InventoryItems + 1] = nil;
+                        for i=#AddedContainers,1,-1 do
+                            if AddedContainers[i] == Container then
+                                goto NextContainer;
                             end
                         end
+                        AddedContainers[#AddedContainers + 1] = Container;
+                        local AsyncCounter = 0;
+                        for slot,item in ipairs(ContainerItems) do
+                            if item ~= "" then
+                                for i=1,#ItemBuffer do
+                                    if root.itemDescriptorsMatch(ItemBuffer[i].Item,item,true) then
+                                   -- ItemBuffer[i].Sources
+                                        --sb.logInfo("Item Buffer = " .. sb.print(ItemBuffer));
+                                        --sb.logInfo("Item Buffer Item = " .. sb.print(ItemBuffer[i].Item));
+                                        --sb.logInfo("Item = " .. sb.print(item));
+                                       -- sb.logInfo("M");
+                                        ItemBuffer[i].Item.count = ItemBuffer[i].Item.count + item.count;
+                                        InventoryItems[i] = ItemBuffer[i].Item;
+                                        if i % 100 == 0 then
+                                            for x=100,i,100 do
+                                                coroutine.yield();
+                                            end
+                                        end
+                                        goto FirstContinue;
+                                        
+                                    end
+                                end
+                                --Add a new item to the item buffer
+                                --sb.logInfo("N");                                
+                                ItemBuffer[#ItemBuffer + 1] = {Item = {name = item.name,count = item.count,parameters = item.parameters}};
+                                InventoryItems[#ItemBuffer] = ItemBuffer[#ItemBuffer].Item;
+                                ::FirstContinue::
+                                AsyncCounter = AsyncCounter + 1;
+                              --[[  if AsyncCounter > 10 then
+                                    AsyncCounter = 0;
+                                    coroutine.yield();
+                                end--]]
+                                coroutine.yield();
+                            end
+                        end
+                        ::NextContainer::
                     end
+                    sb.logInfo("K");
                 end
                 ::Continue::
             end
+            --Display the item buffer
+            table.sort(ItemBuffer,function(a,b) return a.Item.count > b.Item.count end);
+            for i=1,#ItemBuffer do
+               -- sb.logInfo("DISPLAYING ITEM = " .. sb.print(ItemBuffer[i].Item));
+                InventoryItems[i] = ItemBuffer[i].Item;
+            end
         end);
+    else
+        if MainLoadingRoutine ~= nil then
+            UICore.CancelCoroutine(MainLoadingRoutine);
+            MainLoadingRoutine = nil;
+        end
     end
 end
 
@@ -320,9 +407,73 @@ end
 ExecuteScriptAsync = function(object,functionName,...)
     local Promise = ExecuteScript(object,functionName,...);
     while not Promise:finished() do
+        --sb.logInfo("YIELD");
         coroutine.yield();
     end
     return Promise:result();
+end
+
+--Sends an entity message async
+--THIS MUST BE USED IN A COROUTINE
+SendEntityMessageAsync = function(object,functionName,...)
+    local Promise = world.sendEntityMessage(object,functionName,...);
+    while not Promise:finished() do
+        coroutine.yield();
+    end
+    return Promise:result();
+end
+
+--Returns the (n * 10)th decimal place of a number (ignores negative numbers)
+GetDecimalPlace = function(num,n)
+    num = math.abs(num);
+    for i=1,n do
+        local Number,Decimal = math.modf(num);
+        if Decimal == nil then return 0 end;
+        num = Decimal * 10;
+        if num == 0 then
+            return 0;
+        end
+    end
+    return math.floor(num);
+end
+
+--Converts a number into a string variant of only 4 characters
+NumberToString = function(num)
+    num = math.floor(num);
+    --Million
+    if num >= 1000000 then
+        local Number = num / 1000000;
+        local Final = math.floor(Number);
+        if Number < 10 then
+            Final = Final + (GetDecimalPlace(Number,1) / 10);
+        end
+        if Number < 1 then
+            Final = Final + (GetDecimalPlace(Number,2) / 100);
+        end
+        --local Tenth = GetDecimalPlace(Number,1);
+        --local Hundreth = GetDecimalPlace(Number,2);
+        --local Final = Number + (Tenth / 10) + (Hundreth / 100);
+        sb.logInfo("FINAL NUMBER M = " .. sb.print(Final));
+        return tostring(Final) .. "M";
+    --Thousand
+    elseif num >= 1000 then
+        local Number = num / 1000;
+        local Final = math.floor(Number);
+        if Number < 10 then
+            Final = Final + (GetDecimalPlace(Number,1) / 10);
+        end
+        if Number < 1 then
+            Final = Final + (GetDecimalPlace(Number,2) / 100);
+        end
+        --local Tenth = GetDecimalPlace(Number,1);
+        --local Hundreth = GetDecimalPlace(Number,2);
+        --local Final = Number + (Tenth / 10) + (Hundreth / 100);
+        sb.logInfo("FINAL NUMBER K = " .. sb.print(Final));
+        return tostring(Final) .. "K";
+        --Leave Alone
+    else
+        return tostring(num);
+    end
 end
 
 

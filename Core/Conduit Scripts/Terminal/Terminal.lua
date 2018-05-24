@@ -71,7 +71,11 @@ SetMessages = function()
 		return ExtractFromContainer(container,slot,amount);
 	end);
 	message.setHandler("ExecuteScript",function(_,_,object,functionName,...)
-		return world.callScriptedEntity(object,functionName,...);
+		if world.entityExists(object) then
+			return world.callScriptedEntity(object,functionName,...);
+		else
+			return nil;
+		end
 	end);
 	--[[message.setHandler("ExecuteScriptMultiParam",function(_,_,object,functionName,...)
 		return world.callScriptedEntity(object,functionName,...);

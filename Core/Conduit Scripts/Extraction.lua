@@ -490,6 +490,7 @@ end
 --Returns false if no changes have taken place
 --Returns the table of items in all the containers and a new uuid if there's changes
 function Extraction.QueryContainers(uuid,asTable)
+	sb.logInfo("A");
 	local HasChanges = false;
 	local ContainerItems = AllContainerItems;
 	if AllContainerItems == nil then
@@ -531,13 +532,16 @@ function Extraction.QueryContainers(uuid,asTable)
 	if HasChanges == true then
 		ContainerQueryUUID = sb.makeUuid();
 	end
+	sb.logInfo("B");
 	if uuid ~= ContainerQueryUUID then
+		sb.logInfo("C");
 		if asTable == true then
 			return {ContainerItems,ContainerQueryUUID};
 		else
 			return ContainerItems,ContainerQueryUUID;
 		end
 	else
+		sb.logInfo("D");
 		return false;
 	end
 end
