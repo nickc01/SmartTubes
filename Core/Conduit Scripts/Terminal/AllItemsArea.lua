@@ -25,6 +25,7 @@ local AllItemsList = "allItemsInventoryArea.itemList";
 local SlotRows = {};
 local MainLoadingRoutine;
 local LoadingCircleRoutine;
+local Loading = false;
 local LoadingCircleRotation;
 local LoadingCircleRotationSpeed = 7;
 local ConduitContainerUUIDMap = {};
@@ -33,6 +34,10 @@ local ItemBuffer = {};
 local InventoryItems = {};
 local InternalInventoryItems = {};
 local FPS;
+local SortingAlgoritm = function(item1,item2) return item1.count < item2.count end;
+local SearchKeyword = "";
+local SearchAlgorithm = function(Item,keyword) return string.find(string.lower(Item.name),string.lower(keyword)) ~= nil end;
+--local OnDoneLoadingFunctions;
 
 
 --Functions
@@ -48,88 +53,11 @@ local SendEntityMessageAsync;
 local GetDecimalPlace;
 local NumberToString;
 local IfNumEqual;
-
---Metatables
---[[local InventoryItemsMeta = {
-    __index = function(tbl,k)
-        return rawget(InternalInventoryItems,k);
-    end,
-    __len = function()
-        return #InternalInventoryItems;
-    end,
-    __newindex = function(tbl,k,v)
-      --  sb.logInfo("k = " .. sb.print(k));
-        --sb.logInfo("v = " .. sb.print(v));
-       -- sb.logInfo("START=======");
-        local RowNumber = math.ceil(k / SlotsPerRow);
-        local SlotAtRow = ((k - 1) % SlotsPerRow) + 1;
-        if RowNumber > #SlotRows then
-            if RowNumber - 1 ~= 0 then
-                for row=#SlotRows,RowNumber - 1 do
-                    if SlotRows[row] == nil then
-                        local NewSlot = widget.addListItem(AllItemsList);
-                        SlotRows[row] = {Name = NewSlot,Full = AllItemsList ..  "." .. NewSlot};
-                    end
-                    local Top = SlotRows[row].Full;
-                    for i=1,SlotsPerRow do
-                        widget.setVisible(Top .. ".slot" .. SlotAtRow,true);
-                        widget.setVisible(Top .. ".slot" .. SlotAtRow .. "background",true);
-                        widget.setData(Top .. ".slot" .. SlotAtRow,((row - 1) * SlotsPerRow) + i);
-                    end
-                end
-            end
-            local NewSlot = widget.addListItem(AllItemsList);
-            SlotRows[RowNumber] = {Name = NewSlot,Full = AllItemsList ..  "." .. NewSlot};
-        end
-        local Slot = SlotRows[RowNumber].Full .. ".slot" .. SlotAtRow;
-        if v == nil then
-            widget.setItemSlotItem(Slot,nil);
-            widget.setText(Slot .. "count","");
-        else
-            widget.setItemSlotItem(Slot,{name = v.name,count = 1,parameters = v.parameters});
-            widget.setText(Slot .. "count",NumberToString(v.count));
-        end
-        rawset(InternalInventoryItems,k,v);
-        local IsNil = true;
-        for row=#SlotRows,1,-1 do
-            local RowPath = SlotRows[row].Full;
-            local RowEmpty = true;
-            for slot=SlotsPerRow,1,-1 do
-                local SlotPath = RowPath .. ".slot" .. slot;
-               -- sb.logInfo("SLOTPATH = " .. sb.print(SlotPath));
-               -- sb.logInfo("Item = " .. sb.print(widget.itemSlotItem(SlotPath)));
-                if IsNil == true then
-                    IsNil = widget.itemSlotItem(SlotPath) == nil;
-                else
-                    if widget.itemSlotItem(SlotPath) ~= nil then
-                        break;
-                    end
-                end
-                if RowEmpty == true then
-                    RowEmpty = widget.itemSlotItem(SlotPath) == nil;
-                end
-                widget.setVisible(SlotPath,not IsNil);
-                widget.setVisible(SlotPath .. "background",not IsNil);
-            end
-            if IsNil and RowEmpty then
-                table.remove(SlotRows,row);
-                widget.removeListItem(AllItemsList,row);
-            end
-        end
-       -- sb.logInfo("END=======");        
-    end}
-local InventoryItems;
-InventoryItems = setmetatable({
-    Clear = function() 
-        for i=#InternalInventoryItems,1,-1 do 
-            InventoryItems[i] = nil 
-        end
-        SlotRows = {};
-        widget.clearListItems(AllItemsList);
-    end},InventoryItemsMeta);
-
---]]
---MAIN FUNCTIONS
+local SetSortingAlgorithm;
+local SetSearchKeyword;
+local SetSearchAlgorithm;
+local ApplySearch;
+--local AddOnDoneLoadingFunction;
 
 --Initializes the All Items Area
 function AllItems.Initialize()
@@ -183,6 +111,7 @@ end
 AddAllBoundElements = function()
     BindElement("allItemsInventoryArea");
     BindElement("allItemsLoadingCircle");
+    BindElement("allItemsSearchBox");
     widget.setVisible("allItemsLoadingCircle",false);
 end
 
@@ -271,8 +200,9 @@ end
 OnEnable = function(enabled)
     if enabled == true then
         if MainLoadingRoutine ~= nil then
-            UICore.CancelCoroutine(MainLoadingRoutine);
-            MainLoadingRoutine = nil;
+            --UICore.CancelCoroutine(MainLoadingRoutine);
+            --MainLoadingRoutine = nil;
+            return nil;
         end
         MainLoadingRoutine = UICore.AddAsyncCoroutine(function()
             InventoryItems.EnableLoading();
@@ -605,10 +535,10 @@ OnEnable = function(enabled)
         end
         end);
     else
-        if MainLoadingRoutine ~= nil then
+       --[[ if MainLoadingRoutine ~= nil then
             UICore.CancelCoroutine(MainLoadingRoutine);
             MainLoadingRoutine = nil;
-        end
+        end--]]
     end
 end
 
@@ -769,11 +699,12 @@ end
 function InventoryItems.Refresh()
     local HideSlot = true;
     --sb.logInfo("InternalInventoryItems = " .. sb.print(InternalInventoryItems));    
+    local SortedTable = ApplySearch(InternalInventoryItems);
     for row=#SlotRows,1,-1 do
         for slot=SlotsPerRow,1,-1 do
             local GlobalSlot = (row - 1) * SlotsPerRow + slot;
             local SlotPath = SlotRows[row].Full .. ".slot" .. slot;
-            local Item = InternalInventoryItems[GlobalSlot];
+            local Item = SortedTable[GlobalSlot];
             --sb.logInfo("Item = " .. sb.print(Item));
             --sb.logInfo("Global Slot = " .. sb.print(GlobalSlot));
             if type(Item) ~= "table" then
@@ -801,21 +732,29 @@ function InventoryItems.Refresh()
 end
 
 --Sets all the slots to a table
-function InventoryItems.SetAllSlots(tbl)
-    InventoryItems.Clear();
-    local MaxSlot = #tbl;
-    local RowNumber = math.ceil(MaxSlot / SlotsPerRow);
-    local SlotAtRow = ((MaxSlot - 1) % SlotsPerRow) + 1;
+function InventoryItems.SetAllSlots(tbl,forceSyncronous)
+    --InventoryItems.Clear();
    -- sb.logInfo("G");
-    InternalInventoryItems = tbl;
+    local SortedTable = ApplySearch(tbl);
+    local MaxSlot = #SortedTable;
+    local RowNumber = math.ceil(MaxSlot / SlotsPerRow);
+    if #SlotRows > RowNumber then
+        for i=#SlotRows,RowNumber + 1,-1 do
+            widget.removeListItem(AllItemsList,i);
+            table.remove(SlotRows,i);
+        end
+    end
+    local SlotAtRow = ((MaxSlot - 1) % SlotsPerRow) + 1;
     for row=1,RowNumber do
         --local Start = os.clock();
-        local NewSlot = widget.addListItem(AllItemsList);
-        SlotRows[row] = {Name = NewSlot,Full = AllItemsList ..  "." .. NewSlot};
+        if SlotRows[row] == nil then
+            local NewSlot = widget.addListItem(AllItemsList);
+            SlotRows[row] = {Name = NewSlot,Full = AllItemsList ..  "." .. NewSlot};
+        end
         for slot=1,IfNumEqual(row,RowNumber,SlotAtRow,SlotsPerRow) do
             local GlobalSlot = (row - 1) * SlotsPerRow + slot;
             local SlotPath = SlotRows[row].Full .. ".slot" .. slot;
-            local Value = tbl[GlobalSlot];
+            local Value = SortedTable[GlobalSlot];
             if type(Value) ~= "table" then
                 widget.setItemSlotItem(SlotPath,nil);
                 widget.setText(SlotPath .. "count","");
@@ -827,15 +766,23 @@ function InventoryItems.SetAllSlots(tbl)
             widget.setVisible(SlotPath,true);
             widget.setVisible(SlotPath .. "background",true);
             widget.setData(SlotPath,GlobalSlot);
+           -- if coroutine.running() ~= nil and slot == math.floor(SlotsPerRow / 2) then
+            --    coroutine.yield();
+            --end
+            if Enabled == false and forceSyncronous ~= true and coroutine.running() ~= nil then
+                coroutine.yield();
+            end
         end
        -- local Delta = os.clock() - Start;
        -- sb.logInfo("FPS = " .. sb.print(FPS))
         --sb.logInfo("Delta = " .. sb.print(Delta))
         --sb.logInfo("Speed = " .. sb.print(Delta * FPS));
-        if coroutine.running() ~= nil then
+        --sb.logInfo("Running = " .. sb.print(coroutine.running()));
+        if forceSyncronous ~= true and coroutine.running() ~= nil then
             coroutine.yield();
         end
     end
+    InternalInventoryItems = tbl;
    -- sb.logInfo("H");
 end
 
@@ -850,6 +797,7 @@ end
 function InventoryItems.EnableLoading()
     if LoadingCircleRoutine == nil then
         --Create a loading circle function
+        Loading = true;
         LoadingCircleRoutine = UICore.AddAsyncCoroutine(function()
             widget.setVisible("allItemsLoadingCircle",true);
             LoadingCircleRotation = 0;
@@ -864,6 +812,7 @@ end
 --Hides the loading circle in the inventory Items Area
 function InventoryItems.DisableLoading()
     if LoadingCircleRoutine ~= nil then
+        Loading = false;
         UICore.CancelCoroutine(LoadingCircleRoutine);
         widget.setVisible("allItemsLoadingCircle",false);
         LoadingCircleRoutine = nil;
@@ -876,5 +825,53 @@ IfNumEqual = function(a,b,first,second)
         return first;
     else
         return second;
+    end
+end
+
+--Sets the Current Sorting algorithm
+SetSortingAlgorithm = function(func)
+    SortingAlgoritm = func;
+end
+
+--Sets the Current Search keyword, set to "" for no searching to be applied
+SetSearchKeyword = function(word)
+    if SearchKeyword ~= word then
+        SearchKeyword = word;
+        InventoryItems.SetAllSlots(InternalInventoryItems,true);
+    end
+end
+
+--Sets the Current Search algorithm
+SetSearchAlgorithm = function(func)
+    SearchAlgorithm = func;
+    InventoryItems.SetAllSlots(InternalInventoryItems,true);
+end
+
+--Applies the Search algorithm over a table and returns a new table with the results
+ApplySearch = function(tbl)
+    if SearchKeyword == "" then
+        return tbl;
+    end
+    local NewTableCount = 0;
+    local NewTable = {};
+    for i=1,#tbl do
+       -- sb.logInfo("Item = " .. sb.print(tbl[i]));
+       -- sb.logInfo("Keyword = " .. sb.print(SearchKeyword));
+        if SearchAlgorithm(tbl[i],SearchKeyword) == true then
+           -- sb.logInfo("Matches");
+            NewTableCount = NewTableCount + 1;
+            NewTable[NewTableCount] = tbl[i];
+        end
+    end
+    --sb.logInfo("Final = " .. sb.print(NewTable));
+    return NewTable;
+end
+
+--Called when the all Items Area Search Box is updated
+allItemsSearchBoxUpdated = function()
+    if Loading then
+        widget.setText("allItemsSearchBox","");
+    else
+        SetSearchKeyword(widget.getText("allItemsSearchBox"));
     end
 end

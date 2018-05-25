@@ -574,7 +574,7 @@ function __Insertion__.GetMasterPredictions(Object,Tossing)
 			return Predictions;
 		end
 	else
-		if world.entityExists(Master) then
+		if Master ~= nil and world.entityExists(Master) then
 			return world.callScriptedEntity(Master,"__Insertion__.GetMasterPredictions",Object,Tossing);
 		else
 			return nil;

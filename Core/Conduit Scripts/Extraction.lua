@@ -406,6 +406,7 @@ function Extraction.GetItemFromContainer(container)
 end
 
 CheckItemWithOperators = function(item)
+	--sb.logInfo("Operators = " .. sb.print(Operators));
 	if item ~= nil and item.count > 0 then
 		local Config = Extraction.GetConfig();
 		--If the item is specific

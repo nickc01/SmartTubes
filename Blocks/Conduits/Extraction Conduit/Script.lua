@@ -14,7 +14,10 @@ function init()
 	ConduitCore.Initialize();
 	Extraction.Initialize();
 	--local Test = setmetatable({},{__index = function(_,k) return k end});
-	
+	Extraction.AddOperator("#",function(Item,string) return root.itemType(Item.name) == string end);
+	Extraction.AddOperator("&",function(Item,string) return string.find(string.lower(Item.name),string.lower(string)) ~= nil end);
+	Extraction.AddOperator("@",function(Item,string) return root.itemConfig(Item).config.category == string end);
+	Extraction.AddOperator("%",function(Item,string) return root.itemHasTag(Item.name,string) end);
 end
 
 --The Update Loop for the Extraction Conduit
