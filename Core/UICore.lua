@@ -65,7 +65,7 @@ function UICore.AddAsyncCoroutine(Coroutine,onCancel)
 		OnCancel = onCancel
 	}
 	CoroutineCalls[ID] = Table;
-	local Value,Error = coroutine.resume(Coroutine);
+	local Value,Error = coroutine.resume(Coroutine,0);
 	if Value == false then
 		sb.logError(Error or "");
 	elseif Value ~= nil then

@@ -490,7 +490,7 @@ end
 --Returns false if no changes have taken place
 --Returns the table of items in all the containers and a new uuid if there's changes
 function Extraction.QueryContainers(uuid,asTable)
-	sb.logInfo("A");
+	--sb.logInfo("A");
 	local HasChanges = false;
 	local ContainerItems = AllContainerItems;
 	if AllContainerItems == nil then
@@ -498,6 +498,7 @@ function Extraction.QueryContainers(uuid,asTable)
 		HasChanges = true;
 	end
 	local Containers = ConduitCore.GetConnections("Containers");
+	if Containers == nil or Containers == false then return nil end;
 	for _,container in ipairs(Containers) do
 		if container ~= 0 then
 			local StringContainer = tostring(container);
@@ -506,42 +507,68 @@ function Extraction.QueryContainers(uuid,asTable)
 				HasChanges = true;
 			end
 			local ContainerContents = ContainerItems[StringContainer];
-			sb.logInfo("Container = " .. sb.print(container));
+			--sb.logInfo("Container = " .. sb.print(container));
 			local Size = world.containerSize(container);
-			sb.logInfo("Size = " .. sb.print(Size));
+			--sb.logInfo("Size = " .. sb.print(Size));
+			--sb.logInfo("ContainerItems = " .. sb.print(ContainerContents));
+			--sb.logInfo("Actual Container Items = " .. sb.print(world.containerItems(container)));
 			for i=1,Size do
 				local Item = world.containerItemAt(container,i - 1);
 				if ContainerContents[i] == nil then
 					ContainerContents[i] = "";
 					HasChanges = true;
 				end
-				if Item == nil and ContainerContents[i] ~= "" then
-					ContainerContents[i] = "";
-					HasChanges = true;
-				elseif Item ~= nil and ContainerContents[i] == "" then
-					ContainerContents[i] = Item;
-					HasChanges = true;
-				elseif root.itemDescriptorsMatch(Item,ContainerContents[i],true) == false then
-					ContainerContents[i] = Item;
-					HasChanges = true;
+				if Item == nil then
+					if ContainerContents[i] ~= "" then
+						ContainerContents[i] = "";
+						HasChanges = true;
+					end
+				else
+					if ContainerContents[i] == "" then
+						ContainerContents[i] = Item;
+						HasChanges = true;
+					else
+						if root.itemDescriptorsMatch(Item,ContainerContents[i],true) == false then
+							ContainerContents[i] = Item;
+							HasChanges = true;
+						else
+							if Item.count ~= ContainerContents[i].count then
+								ContainerContents[i].count = Item.count;
+								HasChanges = true;
+							end
+						end
+					end
 				end
 			end
 		end
 	end
+	--if HasChanges == true then
+		--sb.logInfo("CONTAINER CONTENTS CHANGED");
+		--for container,_ in pairs(AllContainerItems or ContainerItems) do
+			--[[if AllContainerItems ~= nil then
+				sb.logInfo(container .. " From = " .. sb.print(AllContainerItems[container]));
+			else
+				sb.logInfo(container .. " From = nil");
+			end--]]
+			--sb.logInfo(container .. " To = " .. sb.print(ContainerItems[container]));
+			--sb.logInfo(container .. " Actual = " .. sb.print(world.containerItems(tonumber(container))));
+		--end
+	--end
 	AllContainerItems = ContainerItems;
 	if HasChanges == true then
 		ContainerQueryUUID = sb.makeUuid();
 	end
-	sb.logInfo("B");
+	--sb.logInfo("Has Changes = " .. sb.print(HasChanges));
+	--sb.logInfo("B");
 	if uuid ~= ContainerQueryUUID then
-		sb.logInfo("C");
+		--sb.logInfo("C");
 		if asTable == true then
 			return {ContainerItems,ContainerQueryUUID};
 		else
 			return ContainerItems,ContainerQueryUUID;
 		end
 	else
-		sb.logInfo("D");
+		--sb.logInfo("D");
 		return false;
 	end
 end

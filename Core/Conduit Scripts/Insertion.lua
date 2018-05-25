@@ -470,6 +470,7 @@ function Insertion.QueryContainers(uuid,asTable)
 		HasChanges = true;
 	end
 	local Containers = ConduitCore.GetConnections("Containers");
+	if Containers == nil or Containers == false then return nil end;
 	for _,container in ipairs(Containers) do
 		if container ~= 0 then
 			local StringContainer = tostring(container);
@@ -485,15 +486,30 @@ function Insertion.QueryContainers(uuid,asTable)
 					ContainerContents[i] = "";
 					HasChanges = true;
 				end
-				if Item == nil and ContainerContents[i] ~= "" then
+				if ContainerContents[i] == nil then
 					ContainerContents[i] = "";
 					HasChanges = true;
-				elseif Item ~= nil and ContainerContents[i] == "" then
-					ContainerContents[i] = Item;
-					HasChanges = true;
-				elseif root.itemDescriptorsMatch(Item,ContainerContents[i],true) == false then
-					ContainerContents[i] = Item;
-					HasChanges = true;
+				end
+				if Item == nil then
+					if ContainerContents[i] ~= "" then
+						ContainerContents[i] = "";
+						HasChanges = true;
+					end
+				else
+					if ContainerContents[i] == "" then
+						ContainerContents[i] = Item;
+						HasChanges = true;
+					else
+						if root.itemDescriptorsMatch(Item,ContainerContents[i],true) == false then
+							ContainerContents[i] = Item;
+							HasChanges = true;
+						else
+							if Item.count ~= ContainerContents[i].count then
+								ContainerContents[i].count = Item.count;
+								HasChanges = true;
+							end
+						end
+					end
 				end
 			end
 		end
