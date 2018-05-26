@@ -309,7 +309,7 @@ function Extraction.GetContainer()
 end
 
 --Gets an item from the container based off of the config data
-function Extraction.GetItemFromContainer(container)
+function Extraction.GetItemFromContainer(container,debugging)
 	local Config = Extraction.GetConfig();
 	local Slots;
 	if not IsCached("TakeFromSlots") then
@@ -349,6 +349,9 @@ function Extraction.GetItemFromContainer(container)
 			ForEntireInventory = true;
 		end
 	end
+	if debugging == true then
+		sb.logInfo("Beginning");
+	end
 	local FinalCount = 0;
 	for i=1,ContainerSize do
 		local slot = Slots[i];
@@ -368,8 +371,10 @@ function Extraction.GetItemFromContainer(container)
 					if Item.count <= AmountCanTake then
 						
 						--CheckItemWithOperators(Item); TODO
-						if CheckItemWithOperators(Item) then
-							
+						if CheckItemWithOperators(Item,debugging) then
+							if debugging == true then
+								sb.logInfo("A");
+							end
 							return Item,slot;
 						end
 					else
@@ -377,8 +382,10 @@ function Extraction.GetItemFromContainer(container)
 						--local Count = AmountCanTake;
 						Item = {name = Item.name,count = AmountCanTake,parameters = Item.parameters};
 						--CheckItemWithOperators(Item); 
-						if CheckItemWithOperators(Item) then
-							
+						if CheckItemWithOperators(Item,debugging) then
+							if debugging == true then
+								sb.logInfo("B");
+							end
 							return Item,slot;
 						end
 					end
@@ -389,13 +396,17 @@ function Extraction.GetItemFromContainer(container)
 						
 						Item = {name = Item.name,count = Item.count - AmountToLeave[slot],parameters = Item.parameters};
 						--CheckItemWithOperators(Item); TODO
-						if CheckItemWithOperators(Item) then
-							
+						if CheckItemWithOperators(Item,debugging) then
+							if debugging == true then
+								sb.logInfo("C");
+							end
 							return Item,slot;
 						end
 					else
-						if CheckItemWithOperators(Item) then
-							
+						if CheckItemWithOperators(Item,debugging) then
+							if debugging == true then
+								sb.logInfo("D");
+							end
 							return Item,slot;
 						end
 					end
@@ -403,15 +414,23 @@ function Extraction.GetItemFromContainer(container)
 			end
 		--end
 	end
+	if debugging == true then
+		sb.logInfo("End");
+	end
 end
 
-CheckItemWithOperators = function(item)
+CheckItemWithOperators = function(item,debugging)
 	--sb.logInfo("Operators = " .. sb.print(Operators));
 	if item ~= nil and item.count > 0 then
+		if debugging == true then
+			sb.logInfo("Item = " .. sb.print(item));
+		end
 		local Config = Extraction.GetConfig();
 		--If the item is specific
 		if Config.isSpecific == true then
-			
+			if debugging == true then
+				sb.logInfo("T");
+			end
 			return root.itemDescriptorsMatch(item,{name = item.name,count = item.count,parameters = Config.specificData},true);
 		end
 		if not IsCached("ItemCheckCache") then
@@ -433,6 +452,9 @@ CheckItemWithOperators = function(item)
 				Positives = {},
 				Negatives = {}
 			};
+			if debugging == true then
+				sb.logInfo("U");
+			end
 			for str in string.gmatch(Config.itemName,"[%w#&@%%_%^;:,<%.>]+,-") do
 				local Table = ItemNames.Positives;
 				if string.find(str,"^%^") ~= nil then
@@ -441,6 +463,10 @@ CheckItemWithOperators = function(item)
 				end
 				local firstCharacter = string.sub(str,1,1);
 				local OperationString = string.sub(str,2);
+				--[[if debugging == true then
+					sb.logInfo("First Character = " .. sb.print(firstCharacter));
+					sb.logInfo("Operation String = " .. sb.print(OperationString));
+				end--]]
 				for character,operation in pairs(Operators) do
 					if character == firstCharacter then
 						Table[#Table + 1] = function(item) return operation(item,OperationString) end;
@@ -465,6 +491,9 @@ CheckItemWithOperators = function(item)
 				if CanCache then
 					ItemCheckCache[item.name] = false;
 				end
+				if debugging == true then
+					sb.logInfo("Failed 1");
+				end
 				return false;
 			end
 		end
@@ -474,6 +503,9 @@ CheckItemWithOperators = function(item)
 				if CanCache then
 					ItemCheckCache[item.name] = false;
 				end
+				if debugging == true then
+					sb.logInfo("Failed 2");
+				end
 				return false;
 			end
 		end
@@ -481,9 +513,14 @@ CheckItemWithOperators = function(item)
 		if CanCache then
 			ItemCheckCache[item.name] = Valid;
 		end
+		if debugging == true then
+			sb.logInfo("Final 3");
+		end
 		return Valid;
 	end
-	
+	if debugging == true then
+		sb.logInfo("Item End");
+	end
 	return false;
 end
 
@@ -662,6 +699,15 @@ SetConfigs = function(configs,UUID)
 	NewConfigUUID = UUID or sb.makeUuid();
 	object.setConfigParameter("Configs",configs);
 	object.setConfigParameter("ConfigsUUID",NewConfigUUID);
+end
+
+--Returns the Amount of configs
+function Extraction.AmountOfConfigs()
+	if Config ~= nil then
+		return #Config;
+	else
+		return 0;
+	end
 end
 
 --Gets the latest config

@@ -3,10 +3,12 @@ require("/Core/Conduit Scripts/Extraction.lua");
 --Variables
 local OldInit = init;
 local OldUpdate = update;
+local Debugging = false;
 --local OldUninit = uninit;
 
 --Functions
 local Extract;
+local Debug;
 
 --Initializes the Extraction Conduit
 function init()
@@ -23,11 +25,21 @@ end
 --The Update Loop for the Extraction Conduit
 function update(dt)
 	if OldUpdate ~= nil then OldUpdate(dt) end;
-	
+	--sb.logInfo("A");
 	if Extraction.HasContainers() then
+	--sb.logInfo("B");		
 		Extraction.RefreshConfig();
-		if Extraction.IsConfigAvailable() and ConduitCore.FirstUpdateCompleted() then		
+		if Extraction.IsConfigAvailable() and ConduitCore.FirstUpdateCompleted() then
+			--sb.logInfo("C");
+			--local Configs = Extraction.GetConfig();
+			--sb.logInfo("Configs ~= nil = " .. sb.print(Configs ~= nil));
+			--sb.logInfo("Configs = " .. sb.print(Configs));
+			--if Configs ~= nil then
+				--sb.logInfo("Configs Size = " .. sb.print(Extraction.AmountOfConfigs()));
+			--end
+			Debugging = Extraction.AmountOfConfigs() == 67;
 			Extract();
+			Extraction.CycleConfigIndex();
 		end
 	end
 end
@@ -35,10 +47,12 @@ end
 --The Main Extraction Function for the Extraction Conduit
 Extract = function()
 	local Container = Extraction.GetContainer();
+	Debug("Container = " .. sb.print(Container));
 	
 	if Container ~= nil then
-		local Item,Slot = Extraction.GetItemFromContainer(Container);
-		
+		local Item,Slot = Extraction.GetItemFromContainer(Container,Debugging);
+		Debug("Item = " .. sb.print(Item));
+		Debug("Slot = " .. sb.print(Slot));
 		
 		if Item ~= nil then
 			for _,Conduit in Extraction.InsertionConduitFinder() do
@@ -48,6 +62,12 @@ Extract = function()
 				end
 			end
 		end
+	end
+end
+
+Debug = function(str)
+	if Debugging == true then
+		sb.logInfo(str);
 	end
 end
 

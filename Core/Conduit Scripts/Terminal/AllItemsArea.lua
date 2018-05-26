@@ -32,12 +32,13 @@ local ConduitContainerUUIDMap = {};
 local InternalInventoryItems = {};
 local ItemBuffer = {};
 local InventoryItems = {};
+local SettingInventoryItems = false;
 local InternalInventoryItems = {};
 local FPS;
 local SortingAlgoritm = function(item1,item2) return item1.count < item2.count end;
 local SearchKeyword = "";
 local SearchAlgorithm = function(Item,keyword) return string.find(string.lower(Item.name),string.lower(keyword)) ~= nil end;
---local OnDoneLoadingFunctions;
+local SearchRoutine;
 
 
 --Functions
@@ -57,6 +58,7 @@ local SetSortingAlgorithm;
 local SetSearchKeyword;
 local SetSearchAlgorithm;
 local ApplySearch;
+local StartUpAllItemsArea;
 --local AddOnDoneLoadingFunction;
 
 --Initializes the All Items Area
@@ -73,38 +75,16 @@ function AllItems.Initialize()
         end
         Update(dt);
     end
-    --sb.logInfo("For Loop Test");
     widget.registerMemberCallback("allItemsInventoryArea.itemList","__SlotClick__",__SlotClick__);
     widget.registerMemberCallback("allItemsInventoryArea.itemList","__SlotRightClick__",__SlotRightClick__);
-    --[[for i=1,1 do
-        sb.logInfo("I of A = " .. sb.print(i));
-    end
-    for i=1,2 do
-        sb.logInfo("I of B = " .. sb.print(i));
-    end--]]
-    --[[for i=1,50 do
-        InventoryItems[i] = {name = "perfectlygenericitem",count = i % 1000};
-    end--]]
-   -- InventoryItems[500] = {name = "perfectlygenericitem",count = 1};
     Canvas = widget.bindCanvas("allItemsCanvas");
     GlideDestination = AllItemsDefaultPosition;
     widget.setPosition("allItemsCanvas",GlideDestination);
     Position = {GlideDestination[1],GlideDestination[2]};
     Size = Canvas:size();
     Canvas:drawImageRect(AllItemsBackground,{0,0,AllItemsBackgroundSize[1],AllItemsBackgroundSize[2]},{0,0,Size[1],Size[2]});
-   -- Canvas:drawRect({0,0,Canvas:size()[1],Canvas:size()[2]},{0,0,255});
-   AddAllBoundElements();
-   --TEST FUNCTIONS
-   --[[ widget.registerMemberCallback("allItemsInventoryArea.itemList","__SlotClick__",__SlotClick__);
-   widget.registerMemberCallback("allItemsInventoryArea.itemList","__SlotRightClick__",__SlotRightClick__);
-   local Item = widget.addListItem("allItemsInventoryArea.itemList");
-   local FullLink = "allItemsInventoryArea.itemList." .. Item .. ".";
-   for i=1,12 do
-        local SlotName = FullLink .. "slot" .. i;
-       -- sb.logInfo("SlotName = " .. sb.print(SlotName));
-        widget.setVisible(SlotName,true);
-        widget.setVisible(SlotName .. "background",true);
-    end--]]
+    AddAllBoundElements();
+    StartUpAllItemsArea();
 end
 
 --Adds any bound elements
@@ -112,7 +92,13 @@ AddAllBoundElements = function()
     BindElement("allItemsInventoryArea");
     BindElement("allItemsLoadingCircle");
     BindElement("allItemsSearchBox");
+    BindElement("allItemsSettingsArea");
+    BindElement("allItemsOpenerArrow");
+    BindElement("allItemsSearchIcon");
     widget.setVisible("allItemsLoadingCircle",false);
+    widget.setVisible("allItemsSettingsArea",false);
+    widget.setVisible("allItemsSearchIcon",false);
+    widget.setVisible("allItemsSearchBox",false);
 end
 
 --Binds an element to move with the All Items Canvas
@@ -139,7 +125,6 @@ function AllItems.Enable(bool)
         end
         OnEnable(bool);
     end
-
 end
 
 --TEST TEST TEST
@@ -179,7 +164,9 @@ end
 --Called when the AllItemsArea is clicked
 function __AllItemsAreaClick__(position,buttonType,isDown)
     if buttonType == 0 and isDown == true then
-        AllItems.Enable(not Enabled);
+        if not Enabled then
+            AllItems.Enable(not Enabled);
+        end
     end
 end
 
@@ -199,347 +186,16 @@ end
 --Called when the Enable Variable is changed
 OnEnable = function(enabled)
     if enabled == true then
-        if MainLoadingRoutine ~= nil then
-            --UICore.CancelCoroutine(MainLoadingRoutine);
-            --MainLoadingRoutine = nil;
-            return nil;
-        end
-        MainLoadingRoutine = UICore.AddAsyncCoroutine(function()
-            InventoryItems.EnableLoading();
-            local AddedContainers = {};
-            ItemBuffer = {};
-            InventoryItems.Clear();
-          --  sb.logInfo("ItemBuffer = " .. sb.print(ItemBuffer));
-            local Network = TerminalUI.GetNetwork();
-            local Info = TerminalUI.GetNetworkInfo();
-            for _,conduit in ipairs(Network) do
-                local ConduitInfo = Info[tostring(conduit)];
-                local Contents;
-                    local ID;
-                    if ConduitContainerUUIDMap[tostring(conduit)] ~= nil then
-                        ID = ConduitContainerUUIDMap[tostring(conduit)].ID;
-                    end
-                    local Value;
-                   -- sb.logInfo("X");
-                    if ConduitInfo.ConduitType == "extraction" or ConduitInfo.ConduitType == "io" then
-                        Value = ExecuteScriptAsync(conduit,"Extraction.QueryContainers",ID,true);
-                    elseif ConduitInfo.ConduitType == "insertion" then
-                        Value = ExecuteScriptAsync(conduit,"Insertion.QueryContainers",ID,true);
-                    end         
-                    if Value == false then
-                        Contents = ConduitContainerUUIDMap[tostring(conduit)].Contents;                       
-                    elseif Value ~= nil then
-                        ConduitContainerUUIDMap[tostring(conduit)] = {ID = Value[2],Contents = Value[1]};
-                        Contents = Value[1];
-                    end
-                --Track Containers to avoid duplicates and to allow taking out of them
-                if Contents ~= nil then
-                    --sb.logInfo("J");
-                    for stringContainer,ContainerItems in pairs(Contents) do
-                        local Container = tonumber(stringContainer);
-                        for i=#AddedContainers,1,-1 do
-                            if AddedContainers[i] == Container then
-                                goto NextContainer;
-                            end
-                        end
-                        AddedContainers[#AddedContainers + 1] = Container;
-                        local AsyncCounter = 0;
-                        for slot,item in ipairs(ContainerItems) do
-                            if item ~= "" then
-                                if ItemBuffer[item.name] ~= nil then
-                                    local Variants = ItemBuffer[item.name];
-                                    for _,variant in ipairs(Variants) do
-                                        if root.itemDescriptorsMatch(variant,item,true) then
-                                            variant.count = variant.count + item.count;
-                                            goto FirstContinue;
-                                        end
-                                    end
-                                    Variants[#Variants + 1] = {name = item.name,count = item.count,parameters = item.parameters};
-
-                                else
-                                    ItemBuffer[item.name] = {{name = item.name,count = item.count,parameters = item.parameters}};
-                                end
-                                ::FirstContinue::
-                            end
-                        end
-                        ::NextContainer::
-                    end
-                    --sb.logInfo("K");
-                end
-                ::Continue::
-            end
-            --Display the item buffer
-            --table.sort(ItemBuffer,function(a,b) return a.Item.count > b.Item.count end);
-           --[[ for i=1,#ItemBuffer do
-               -- sb.logInfo("DISPLAYING ITEM = " .. sb.print(ItemBuffer[i].Item));
-                InventoryItems[i] = ItemBuffer[i].Item;
-            end--]]
-            local NumericItemTable = {};
-            for _,variants in pairs(ItemBuffer) do
-                for _,item in ipairs(variants) do
-                    NumericItemTable[#NumericItemTable + 1] = item;
-                    item.ControllerSlot = #NumericItemTable;
-                end
-            end
-            table.sort(NumericItemTable,function(a,b) return a.count > b.count end);
-            --for i=1,#NumericItemTable do
-                --InventoryItems.SetItem(NumericItemTable[i]);
-                --InventoryItems[i] = NumericItemTable[i];
-           -- end
-           --table.sort()
-           InventoryItems.SetAllSlots(NumericItemTable);
-           InventoryItems.DisableLoading();
-           --Go Into passive mode, where you make sure the inventory items stay up to date
-           --local Value;
-          -- sb.logInfo("X");
-           --[[if ConduitInfo.ConduitType == "extraction" or ConduitInfo.ConduitType == "io" then
-               Value = ExecuteScriptAsync(conduit,"Extraction.QueryContainers",ID,true);
-           elseif ConduitInfo.ConduitType == "insertion" then
-               Value = ExecuteScriptAsync(conduit,"Insertion.QueryContainers",ID,true);
-           end         
-           if Value == false then
-               Contents = ConduitContainerUUIDMap[tostring(conduit)].Contents;                       
-           elseif Value ~= nil then
-               ConduitContainerUUIDMap[tostring(conduit)] = {ID = Value[2],Contents = Value[1]};
-               Contents = Value[1];
-           end--]]
-           while (true) do
-
-            local CurrentlyZero = {};
-            local NeedsSorting = false;
-            local NeedsRefreshing = false;
-            local NewNetwork = TerminalUI.GetNetwork();
-            if NewNetwork ~= Network then
-                --A New network is in place
-                local NewInfo = TerminalUI.GetNetworkInfo();
-                local RemovedConduits = {};
-                for x=1,#Network do
-                    for y=1,#NewNetwork do
-                        if Network[x] == NewNetwork[y] then
-                            goto Next;
-                        end
-                    end
-                    RemovedConduits[#RemovedConduits + 1] = Network[x];
-                    ::Next::
-                end
-                for i=1,#RemovedConduits do
-                    local StringConduit = tostring(RemovedConduits[i]);
-                    if ConduitContainerUUIDMap[StringConduit] ~= nil then
-                        for _,containerContents in pairs(ConduitContainerUUIDMap[StringConduit].Contents) do
-                            for i=1,#containerContents do
-                                if containerContents[i] ~= "" then
-                                    local Item = containerContents[i];
-                                    for _,variant in ipairs(ItemBuffer[Item.name]) do
-                                        if root.itemDescriptorsMatch(variant,Item,true) then
-                                            variant.count = variant.count - Item.count;
-                                            if variant.count == 0 then
-                                                CurrentlyZero[variant] = true;
-                                            end
-                                            NeedsRefreshing = true;
-                                            break;
-                                        end
-                                    end
-                                end
-                            end
-                        end
-                        ConduitContainerUUIDMap[StringConduit] = nil;
-                    end
-                end
-                local AddedConduits = {};
-                for x=1,#NewNetwork do
-                    for y=1,#Network do
-                        if NewNetwork[x] == Network[y] then
-                            goto Next;
-                        end
-                    end
-                    AddedConduits[#AddedConduits + 1] = NewNetwork[x];
-                    ::Next::
-                end
-                for i=1,#AddedConduits do
-                    local conduit = AddedConduits[i];
-                    local StringConduit = tostring(conduit);
-                    local ConduitInfo = NewInfo[StringConduit];
-                    local Value;
-                    if ConduitInfo.ConduitType == "extraction" or ConduitInfo.ConduitType == "io" then
-                        Value = ExecuteScriptAsync(conduit,"Extraction.QueryContainers",nil,true);
-                    elseif ConduitInfo.ConduitType == "insertion" then
-                        Value = ExecuteScriptAsync(conduit,"Insertion.QueryContainers",nil,true);
-                    else
-                        goto NextConduit;
-                    end
-                    if Value ~= false and Value ~= nil then
-                        local ID,CurrentContents = Value[2],Value[1];
-                        for _,containerContents in pairs(CurrentContents) do
-                            for i=1,#containerContents do
-                                if containerContents[i] ~= "" then
-                                    local Item = containerContents[i];
-                                    --sb.logInfo("Item = " .. sb.print(Item));
-                                    if ItemBuffer[Item.name] == nil then
-                                        local NewBufferItem = {name = Item.name,count = Item.count,parameters = Item.parameters}
-                                        ItemBuffer[Item.name] = {NewBufferItem};
-                                        NumericItemTable[#NumericItemTable + 1] = NewBufferItem;
-                                        InventoryItems.SetItem(NewBufferItem,#NumericItemTable);
-                                        --sb.logInfo("NewBufferItem 1 = " .. sb.print(NewBufferItem)); 
-                                        NeedsRefreshing = true;                                   
-                                        NeedsSorting = true;
-                                    else
-                                        for _,variant in ipairs(ItemBuffer[Item.name]) do
-                                            if root.itemDescriptorsMatch(variant,Item,true) then
-                                                variant.count = variant.count + Item.count;
-                                                if CurrentlyZero[variant] == true then
-                                                    CurrentlyZero[variant] = nil;
-                                                end
-                                                NeedsRefreshing = true;
-                                                goto FoundMatch;
-                                            end
-                                        end
-                                        local NewBufferItem = {name = Item.name,count = Item.count,parameters = Item.parameters};
-                                        --sb.logInfo("NewBufferItem 2 = " .. sb.print(NewBufferItem));
-                                        local Variants = ItemBuffer[Item.name];
-                                        Variants[#Variants + 1] = NewBufferItem;
-                                        NumericItemTable[#NumericItemTable + 1] = NewBufferItem;
-                                        InventoryItems.SetItem(NewBufferItem,#NumericItemTable);
-                                        NeedsSorting = true;
-                                        NeedsRefreshing = true;
-                                        ::FoundMatch::
-                                    end
-                                end
-                            end
-                        end
-                        ConduitContainerUUIDMap[StringConduit] = {Contents = CurrentContents,ID = ID};
-                        --ConduitContainerUUIDMap[StringConduit].Contents = CurrentContents;
-                        --ConduitContainerUUIDMap[StringConduit].ID = ID;
-                    end
-                    coroutine.yield();
-                    ::NextConduit::
-                end
-                Network = NewNetwork;
-                Info = NewInfo;
-            end
-            for _,conduit in ipairs(Network) do
-                local StringConduit = tostring(conduit);
-                local ConduitInfo = Info[StringConduit];
-                local Value;
-                local ID;
-                if ConduitContainerUUIDMap[StringConduit] ~= nil then
-                    ID = ConduitContainerUUIDMap[StringConduit].ID;
-                end
-               -- sb.logInfo("ID = " .. sb.print(ID));
-               -- sb.logInfo("V");
-                if ConduitInfo.ConduitType == "extraction" or ConduitInfo.ConduitType == "io" then
-                    Value = ExecuteScriptAsync(conduit,"Extraction.QueryContainers",ID,true);
-                elseif ConduitInfo.ConduitType == "insertion" then
-                    Value = ExecuteScriptAsync(conduit,"Insertion.QueryContainers",ID,true);
-                else
-                    goto NextConduit;
-                end
-               -- sb.logInfo("W");
-                --sb.logInfo("Test");
-                --Check if container has changed
-                if Value ~= false and Value ~= nil then
-                   -- sb.logInfo("Contents Updated");
-                  -- sb.logInfo("UI CONTENTS Updated");
-                   -- sb.logInfo("Value = " .. sb.print(Value));
-                    local PreviousContents = ConduitContainerUUIDMap[StringConduit].Contents;
-                    local CurrentContents = Value[1];
-                   -- sb.logInfo("PreviousContents = " .. sb.print(PreviousContents));
-                   -- sb.logInfo("CurrentContents = " .. sb.print(CurrentContents));
-                    for _,containerContents in pairs(PreviousContents) do
-                        for i=1,#containerContents do
-                            if containerContents[i] ~= "" then
-                                local Item = containerContents[i];
-                                for _,variant in ipairs(ItemBuffer[Item.name]) do
-                                    if root.itemDescriptorsMatch(variant,Item,true) then
-                                        variant.count = variant.count - Item.count;
-                                        if variant.count == 0 then
-                                            CurrentlyZero[variant] = true;
-                                        end
-                                        NeedsRefreshing = true;
-                                        break;
-                                    end
-                                end
-                            end
-                        end
-                    end
-                    for _,containerContents in pairs(CurrentContents) do
-                        for i=1,#containerContents do
-                            if containerContents[i] ~= "" then
-                                local Item = containerContents[i];
-                                --sb.logInfo("Item = " .. sb.print(Item));
-                                if ItemBuffer[Item.name] == nil then
-                                    local NewBufferItem = {name = Item.name,count = Item.count,parameters = Item.parameters}
-                                    ItemBuffer[Item.name] = {NewBufferItem};
-                                    NumericItemTable[#NumericItemTable + 1] = NewBufferItem;
-                                    InventoryItems.SetItem(NewBufferItem,#NumericItemTable);
-                                    --sb.logInfo("NewBufferItem 1 = " .. sb.print(NewBufferItem)); 
-                                    NeedsRefreshing = true;                                   
-                                    NeedsSorting = true;
-                                else
-                                    for _,variant in ipairs(ItemBuffer[Item.name]) do
-                                        if root.itemDescriptorsMatch(variant,Item,true) then
-                                            variant.count = variant.count + Item.count;
-                                            if CurrentlyZero[variant] == true then
-                                                CurrentlyZero[variant] = nil;
-                                            end
-                                            NeedsRefreshing = true;
-                                            goto FoundMatch;
-                                        end
-                                    end
-                                    local NewBufferItem = {name = Item.name,count = Item.count,parameters = Item.parameters};
-                                    --sb.logInfo("NewBufferItem 2 = " .. sb.print(NewBufferItem));
-                                    local Variants = ItemBuffer[Item.name];
-                                    Variants[#Variants + 1] = NewBufferItem;
-                                    NumericItemTable[#NumericItemTable + 1] = NewBufferItem;
-                                    InventoryItems.SetItem(NewBufferItem,#NumericItemTable);
-                                    NeedsSorting = true;
-                                    NeedsRefreshing = true;
-                                    ::FoundMatch::
-                                end
-                            end
-                        end
-                    end
-                    ConduitContainerUUIDMap[StringConduit].Contents = CurrentContents;
-                    ConduitContainerUUIDMap[StringConduit].ID = Value[2];
-                end
-                coroutine.yield();
-                ::NextConduit::
-            end
-            --sb.logInfo("End 1");
-            for variant,_ in pairs(CurrentlyZero) do
-                for i,bufferVariant in ipairs(ItemBuffer[variant.name]) do
-                    if bufferVariant == variant then
-                        table.remove(ItemBuffer[variant.name],i);
-                        if #ItemBuffer[variant.name] == 0 then
-                            ItemBuffer[variant.name] = nil;
-                        end
-                        for i=1,#NumericItemTable do
-                            if NumericItemTable[i] == variant then
-                                table.remove(NumericItemTable,i);
-                                NeedsSorting = true;
-                            end
-                        end
-                        break;
-                    end
-                end
-            end
-            --sb.logInfo("Needs Sorting = " .. sb.print(NeedsSorting));
-            if NeedsSorting then
-                table.sort(NumericItemTable,function(a,b) return a.count > b.count end);
-           -- else
-                --InventoryItems.SetAllSlots(NumericItemTable);
-            end
-            if NeedsRefreshing then
-                --sb.logInfo("Refreshing");
-                InventoryItems.Refresh();
-            end
-        end
-        end);
+        
     else
        --[[ if MainLoadingRoutine ~= nil then
             UICore.CancelCoroutine(MainLoadingRoutine);
             MainLoadingRoutine = nil;
         end--]]
     end
+    widget.setVisible("allItemsSettingsArea",enabled);
+    widget.setVisible("allItemsSearchIcon",enabled);
+    widget.setVisible("allItemsSearchBox",enabled);
 end
 
 --Calls a script on the passed in object on the server side
@@ -629,7 +285,15 @@ end
 
 --Sets the item at the slot
 function InventoryItems.SetItem(item,slot)
+    if coroutine.running() ~= nil then
+        while(SettingInventoryItems == true) do
+            coroutine.yield();
+        end
+    end
+    --sb.logInfo("Setting 3");    
+    SettingInventoryItems = true;
     if type(rawget(InternalInventoryItems,slot)) == type(item) then
+        SettingInventoryItems = false;
         return nil;
     end
     local RowNumber = math.ceil(slot / SlotsPerRow);
@@ -688,6 +352,7 @@ function InventoryItems.SetItem(item,slot)
             widget.removeListItem(AllItemsList,row);
         end
     end
+    SettingInventoryItems = false;
 end
 
 --Gets the item at the slot
@@ -697,6 +362,13 @@ end
 
 --Refreshes the Items in the Inventory
 function InventoryItems.Refresh()
+    if coroutine.running() ~= nil then
+        while(SettingInventoryItems == true) do
+            coroutine.yield();
+        end
+    end
+    --sb.logInfo("Setting 2");    
+    SettingInventoryItems = true;
     local HideSlot = true;
     --sb.logInfo("InternalInventoryItems = " .. sb.print(InternalInventoryItems));    
     local SortedTable = ApplySearch(InternalInventoryItems);
@@ -729,21 +401,29 @@ function InventoryItems.Refresh()
             table.remove(SlotRows,row);
         end
     end
+    SettingInventoryItems = false;
 end
 
 --Sets all the slots to a table
 function InventoryItems.SetAllSlots(tbl,forceSyncronous)
-    --InventoryItems.Clear();
+    if forceSyncronous ~= true and coroutine.running() ~= nil then
+        while(SettingInventoryItems == true) do
+            coroutine.yield();
+        end
+    end
+    --sb.logInfo("Setting");
+    SettingInventoryItems = true;
+    InventoryItems.Clear(true);
    -- sb.logInfo("G");
     local SortedTable = ApplySearch(tbl);
     local MaxSlot = #SortedTable;
     local RowNumber = math.ceil(MaxSlot / SlotsPerRow);
-    if #SlotRows > RowNumber then
+    --[[if #SlotRows > RowNumber then
         for i=#SlotRows,RowNumber + 1,-1 do
             widget.removeListItem(AllItemsList,i);
             table.remove(SlotRows,i);
         end
-    end
+    end--]]
     local SlotAtRow = ((MaxSlot - 1) % SlotsPerRow) + 1;
     for row=1,RowNumber do
         --local Start = os.clock();
@@ -751,6 +431,7 @@ function InventoryItems.SetAllSlots(tbl,forceSyncronous)
             local NewSlot = widget.addListItem(AllItemsList);
             SlotRows[row] = {Name = NewSlot,Full = AllItemsList ..  "." .. NewSlot};
         end
+        local Start = os.clock();
         for slot=1,IfNumEqual(row,RowNumber,SlotAtRow,SlotsPerRow) do
             local GlobalSlot = (row - 1) * SlotsPerRow + slot;
             local SlotPath = SlotRows[row].Full .. ".slot" .. slot;
@@ -769,26 +450,37 @@ function InventoryItems.SetAllSlots(tbl,forceSyncronous)
            -- if coroutine.running() ~= nil and slot == math.floor(SlotsPerRow / 2) then
             --    coroutine.yield();
             --end
-            if Enabled == false and forceSyncronous ~= true and coroutine.running() ~= nil then
+            if Enabled == false and 1 / (os.clock() - Start) < 100 and forceSyncronous ~= true and coroutine.running() ~= nil then
+               -- sb.logInfo("G = " .. sb.print(row) .. ", " .. sb.print(slot));
                 coroutine.yield();
             end
         end
+       -- local End = os.clock();
+       -- local Delta = End - Start;
+       -- if Delta ~= 0 then
+        --    sb.logInfo("Speed = " .. sb.print(1 / Delta));
+        --end
        -- local Delta = os.clock() - Start;
        -- sb.logInfo("FPS = " .. sb.print(FPS))
         --sb.logInfo("Delta = " .. sb.print(Delta))
         --sb.logInfo("Speed = " .. sb.print(Delta * FPS));
         --sb.logInfo("Running = " .. sb.print(coroutine.running()));
         if forceSyncronous ~= true and coroutine.running() ~= nil then
+          --  sb.logInfo("R = " .. sb.print(row));
             coroutine.yield();
         end
     end
     InternalInventoryItems = tbl;
+   -- sb.logInfo("Done");
+    SettingInventoryItems = false;
    -- sb.logInfo("H");
 end
 
 --Clears the entire inventory
-function InventoryItems.Clear()
-    InternalInventoryItems = {};
+function InventoryItems.Clear(notTable)
+    if notTable ~= true then
+        InternalInventoryItems = {};
+    end
     SlotRows = {};
     widget.clearListItems(AllItemsList);
 end
@@ -836,8 +528,19 @@ end
 --Sets the Current Search keyword, set to "" for no searching to be applied
 SetSearchKeyword = function(word)
     if SearchKeyword ~= word then
+        if SearchRoutine ~= nil then
+            UICore.CancelCoroutine(SearchRoutine);
+        end
         SearchKeyword = word;
-        InventoryItems.SetAllSlots(InternalInventoryItems,true);
+        SearchRoutine = UICore.AddAsyncCoroutine(function()
+            --sb.logInfo("Internal Inventory Items = " .. sb.print(InternalInventoryItems));
+            InventoryItems.SetAllSlots(InternalInventoryItems);
+            UICore.CancelCoroutine(SearchRoutine);
+        end,function()
+           -- sb.logInfo("Search Canceled");
+            SettingInventoryItems = false;
+            SearchRoutine = nil;
+        end);
     end
 end
 
@@ -874,4 +577,363 @@ allItemsSearchBoxUpdated = function()
     else
         SetSearchKeyword(widget.getText("allItemsSearchBox"));
     end
+end
+
+--Starts Up the Routine that displays all the items
+StartUpAllItemsArea = function()
+    MainLoadingRoutine = UICore.AddAsyncCoroutine(function()
+        InventoryItems.EnableLoading();
+        local AddedContainers = {};
+        ItemBuffer = {};
+        InventoryItems.Clear();
+      --  sb.logInfo("ItemBuffer = " .. sb.print(ItemBuffer));
+        local Network = TerminalUI.GetNetwork();
+        local Info = TerminalUI.GetNetworkInfo();
+        for _,conduit in ipairs(Network) do
+            local ConduitInfo = Info[tostring(conduit)];
+            local Contents;
+                local ID;
+                if ConduitContainerUUIDMap[tostring(conduit)] ~= nil then
+                    ID = ConduitContainerUUIDMap[tostring(conduit)].ID;
+                end
+                local Value;
+               -- sb.logInfo("X");
+                if ConduitInfo.ConduitType == "extraction" or ConduitInfo.ConduitType == "io" then
+                    Value = ExecuteScriptAsync(conduit,"Extraction.QueryContainers",ID,true);
+                elseif ConduitInfo.ConduitType == "insertion" then
+                    Value = ExecuteScriptAsync(conduit,"Insertion.QueryContainers",ID,true);
+                end         
+                if Value == false then
+                    Contents = ConduitContainerUUIDMap[tostring(conduit)].Contents;                       
+                elseif Value ~= nil then
+                    ConduitContainerUUIDMap[tostring(conduit)] = {ID = Value[2],Contents = Value[1]};
+                    Contents = Value[1];
+                end
+            --Track Containers to avoid duplicates and to allow taking out of them
+            if Contents ~= nil then
+                --sb.logInfo("J");
+                for stringContainer,ContainerItems in pairs(Contents) do
+                    local Container = tonumber(stringContainer);
+                    for i=#AddedContainers,1,-1 do
+                        if AddedContainers[i] == Container then
+                            goto NextContainer;
+                        end
+                    end
+                    AddedContainers[#AddedContainers + 1] = Container;
+                    local AsyncCounter = 0;
+                    for slot,item in ipairs(ContainerItems) do
+                        if item ~= "" then
+                            if ItemBuffer[item.name] ~= nil then
+                                local Variants = ItemBuffer[item.name];
+                                for _,variant in ipairs(Variants) do
+                                    if root.itemDescriptorsMatch(variant,item,true) then
+                                        variant.count = variant.count + item.count;
+                                        goto FirstContinue;
+                                    end
+                                end
+                                Variants[#Variants + 1] = {name = item.name,count = item.count,parameters = item.parameters};
+
+                            else
+                                ItemBuffer[item.name] = {{name = item.name,count = item.count,parameters = item.parameters}};
+                            end
+                            ::FirstContinue::
+                        end
+                    end
+                    ::NextContainer::
+                end
+                --sb.logInfo("K");
+            end
+            ::Continue::
+        end
+        --Display the item buffer
+        --table.sort(ItemBuffer,function(a,b) return a.Item.count > b.Item.count end);
+       --[[ for i=1,#ItemBuffer do
+           -- sb.logInfo("DISPLAYING ITEM = " .. sb.print(ItemBuffer[i].Item));
+            InventoryItems[i] = ItemBuffer[i].Item;
+        end--]]
+        local NumericItemTable = {};
+        for _,variants in pairs(ItemBuffer) do
+            for _,item in ipairs(variants) do
+                NumericItemTable[#NumericItemTable + 1] = item;
+                item.ControllerSlot = #NumericItemTable;
+            end
+        end
+        table.sort(NumericItemTable,function(a,b) return a.count > b.count end);
+        --for i=1,#NumericItemTable do
+            --InventoryItems.SetItem(NumericItemTable[i]);
+            --InventoryItems[i] = NumericItemTable[i];
+       -- end
+       --table.sort()
+       InventoryItems.SetAllSlots(NumericItemTable);
+       InventoryItems.DisableLoading();
+       --Go Into passive mode, where you make sure the inventory items stay up to date
+       --local Value;
+      -- sb.logInfo("X");
+       --[[if ConduitInfo.ConduitType == "extraction" or ConduitInfo.ConduitType == "io" then
+           Value = ExecuteScriptAsync(conduit,"Extraction.QueryContainers",ID,true);
+       elseif ConduitInfo.ConduitType == "insertion" then
+           Value = ExecuteScriptAsync(conduit,"Insertion.QueryContainers",ID,true);
+       end         
+       if Value == false then
+           Contents = ConduitContainerUUIDMap[tostring(conduit)].Contents;                       
+       elseif Value ~= nil then
+           ConduitContainerUUIDMap[tostring(conduit)] = {ID = Value[2],Contents = Value[1]};
+           Contents = Value[1];
+       end--]]
+       while (true) do
+
+        local CurrentlyZero = {};
+        local NeedsSorting = false;
+        local NeedsRefreshing = false;
+        local NewNetwork = TerminalUI.GetNetwork();
+        if NewNetwork ~= Network then
+            sb.logInfo("J");
+            --A New network is in place
+            local NewInfo = TerminalUI.GetNetworkInfo();
+            local RemovedConduits = {};
+            for x=1,#Network do
+                for y=1,#NewNetwork do
+                    if Network[x] == NewNetwork[y] then
+                        goto Next;
+                    end
+                end
+                RemovedConduits[#RemovedConduits + 1] = Network[x];
+                ::Next::
+            end
+            for i=1,#RemovedConduits do
+                local StringConduit = tostring(RemovedConduits[i]);
+                if ConduitContainerUUIDMap[StringConduit] ~= nil then
+                    for _,containerContents in pairs(ConduitContainerUUIDMap[StringConduit].Contents) do
+                        for i=1,#containerContents do
+                            if containerContents[i] ~= "" then
+                                local Item = containerContents[i];
+                                for _,variant in ipairs(ItemBuffer[Item.name]) do
+                                    if root.itemDescriptorsMatch(variant,Item,true) then
+                                        variant.count = variant.count - Item.count;
+                                        if variant.count == 0 then
+                                            CurrentlyZero[variant] = true;
+                                        end
+                                        NeedsRefreshing = true;
+                                        break;
+                                    end
+                                end
+                            end
+                        end
+                    end
+                    ConduitContainerUUIDMap[StringConduit] = nil;
+                end
+            end
+            local AddedConduits = {};
+            for x=1,#NewNetwork do
+                for y=1,#Network do
+                    if NewNetwork[x] == Network[y] then
+                        goto Next;
+                    end
+                end
+                AddedConduits[#AddedConduits + 1] = NewNetwork[x];
+                ::Next::
+            end
+            for i=1,#AddedConduits do
+                local conduit = AddedConduits[i];
+                local StringConduit = tostring(conduit);
+                local ConduitInfo = NewInfo[StringConduit];
+                local Value;
+                if ConduitInfo.ConduitType == "extraction" or ConduitInfo.ConduitType == "io" then
+                    Value = ExecuteScriptAsync(conduit,"Extraction.QueryContainers",nil,true);
+                elseif ConduitInfo.ConduitType == "insertion" then
+                    Value = ExecuteScriptAsync(conduit,"Insertion.QueryContainers",nil,true);
+                else
+                    goto NextConduit;
+                end
+                if Value ~= false and Value ~= nil then
+                    local ID,CurrentContents = Value[2],Value[1];
+                    for _,containerContents in pairs(CurrentContents) do
+                        for i=1,#containerContents do
+                            if containerContents[i] ~= "" then
+                                local Item = containerContents[i];
+                                --sb.logInfo("Item = " .. sb.print(Item));
+                                if ItemBuffer[Item.name] == nil then
+                                    local NewBufferItem = {name = Item.name,count = Item.count,parameters = Item.parameters}
+                                    ItemBuffer[Item.name] = {NewBufferItem};
+                                    NumericItemTable[#NumericItemTable + 1] = NewBufferItem;
+                                    InventoryItems.SetItem(NewBufferItem,#NumericItemTable);
+                                    --sb.logInfo("NewBufferItem 1 = " .. sb.print(NewBufferItem)); 
+                                    NeedsRefreshing = true;                                   
+                                    NeedsSorting = true;
+                                else
+                                    for _,variant in ipairs(ItemBuffer[Item.name]) do
+                                        if root.itemDescriptorsMatch(variant,Item,true) then
+                                            variant.count = variant.count + Item.count;
+                                            if CurrentlyZero[variant] == true then
+                                                CurrentlyZero[variant] = nil;
+                                            end
+                                            NeedsRefreshing = true;
+                                            goto FoundMatch;
+                                        end
+                                    end
+                                    local NewBufferItem = {name = Item.name,count = Item.count,parameters = Item.parameters};
+                                    --sb.logInfo("NewBufferItem 2 = " .. sb.print(NewBufferItem));
+                                    local Variants = ItemBuffer[Item.name];
+                                    Variants[#Variants + 1] = NewBufferItem;
+                                    NumericItemTable[#NumericItemTable + 1] = NewBufferItem;
+                                    InventoryItems.SetItem(NewBufferItem,#NumericItemTable);
+                                    NeedsSorting = true;
+                                    NeedsRefreshing = true;
+                                    ::FoundMatch::
+                                end
+                            end
+                        end
+                    end
+                    if ConduitContainerUUIDMap[StringConduit] == nil then
+                        ConduitContainerUUIDMap[StringConduit] = {Contents = CurrentContents,ID = ID};
+                    else
+                        ConduitContainerUUIDMap[StringConduit].Contents = CurrentContents;
+                        ConduitContainerUUIDMap[StringConduit].ID = ID;
+                    end
+                    --ConduitContainerUUIDMap[StringConduit].Contents = CurrentContents;
+                    --ConduitContainerUUIDMap[StringConduit].ID = ID;
+                end
+                coroutine.yield();
+                ::NextConduit::
+            end
+            Network = NewNetwork;
+            Info = NewInfo;
+            sb.logInfo("K");
+        end
+        for _,conduit in ipairs(Network) do
+            local StringConduit = tostring(conduit);
+            local ConduitInfo = Info[StringConduit];
+            local Value;
+            local ID;
+            if ConduitContainerUUIDMap[StringConduit] ~= nil then
+                ID = ConduitContainerUUIDMap[StringConduit].ID;
+            end
+           -- sb.logInfo("ID = " .. sb.print(ID));
+           -- sb.logInfo("V");
+            if ConduitInfo.ConduitType == "extraction" or ConduitInfo.ConduitType == "io" then
+                Value = ExecuteScriptAsync(conduit,"Extraction.QueryContainers",ID,true);
+            elseif ConduitInfo.ConduitType == "insertion" then
+                Value = ExecuteScriptAsync(conduit,"Insertion.QueryContainers",ID,true);
+            else
+                goto NextConduit;
+            end
+           -- sb.logInfo("W");
+            --sb.logInfo("Test");
+            --Check if container has changed
+            if Value ~= false and Value ~= nil then
+               -- sb.logInfo("Contents Updated");
+              -- sb.logInfo("UI CONTENTS Updated");
+               -- sb.logInfo("Value = " .. sb.print(Value));
+               sb.logInfo("L");
+               local CurrentContents = Value[1];
+                if ConduitContainerUUIDMap[StringConduit] ~= nil then
+                    local PreviousContents = ConduitContainerUUIDMap[StringConduit].Contents;
+                    local CurrentContents = Value[1];
+                    -- sb.logInfo("PreviousContents = " .. sb.print(PreviousContents));
+                    -- sb.logInfo("CurrentContents = " .. sb.print(CurrentContents));
+                    for _,containerContents in pairs(PreviousContents) do
+                        for i=1,#containerContents do
+                            if containerContents[i] ~= "" then
+                                local Item = containerContents[i];
+                                for _,variant in ipairs(ItemBuffer[Item.name]) do
+                                    if root.itemDescriptorsMatch(variant,Item,true) then
+                                        variant.count = variant.count - Item.count;
+                                        if variant.count == 0 then
+                                            CurrentlyZero[variant] = true;
+                                        end
+                                        NeedsRefreshing = true;
+                                        break;
+                                    end
+                                end
+                            end
+                        end
+                    end
+                end
+                sb.logInfo("M");
+                for _,containerContents in pairs(CurrentContents) do
+                    for i=1,#containerContents do
+                        if containerContents[i] ~= "" then
+                            local Item = containerContents[i];
+                            --sb.logInfo("Item = " .. sb.print(Item));
+                            if ItemBuffer[Item.name] == nil then
+                                local NewBufferItem = {name = Item.name,count = Item.count,parameters = Item.parameters}
+                                ItemBuffer[Item.name] = {NewBufferItem};
+                                NumericItemTable[#NumericItemTable + 1] = NewBufferItem;
+                                InventoryItems.SetItem(NewBufferItem,#NumericItemTable);
+                                --sb.logInfo("NewBufferItem 1 = " .. sb.print(NewBufferItem)); 
+                                NeedsRefreshing = true;                                   
+                                NeedsSorting = true;
+                            else
+                                for _,variant in ipairs(ItemBuffer[Item.name]) do
+                                    if root.itemDescriptorsMatch(variant,Item,true) then
+                                        variant.count = variant.count + Item.count;
+                                        if CurrentlyZero[variant] == true then
+                                            CurrentlyZero[variant] = nil;
+                                        end
+                                        NeedsRefreshing = true;
+                                        goto FoundMatch;
+                                    end
+                                end
+                                local NewBufferItem = {name = Item.name,count = Item.count,parameters = Item.parameters};
+                                --sb.logInfo("NewBufferItem 2 = " .. sb.print(NewBufferItem));
+                                local Variants = ItemBuffer[Item.name];
+                                Variants[#Variants + 1] = NewBufferItem;
+                                NumericItemTable[#NumericItemTable + 1] = NewBufferItem;
+                                InventoryItems.SetItem(NewBufferItem,#NumericItemTable);
+                                NeedsSorting = true;
+                                NeedsRefreshing = true;
+                                ::FoundMatch::
+                            end
+                        end
+                    end
+                end
+                sb.logInfo("N");
+                if ConduitContainerUUIDMap[StringConduit] == nil then
+                    ConduitContainerUUIDMap[StringConduit] = {Contents = CurrentContents,ID = ID};
+                else
+                    ConduitContainerUUIDMap[StringConduit].Contents = CurrentContents;
+                    ConduitContainerUUIDMap[StringConduit].ID = ID;
+                end
+            end
+            coroutine.yield();
+            ::NextConduit::
+        end
+        --sb.logInfo("End 1");
+        sb.logInfo("o");
+        for variant,_ in pairs(CurrentlyZero) do
+            for i,bufferVariant in ipairs(ItemBuffer[variant.name]) do
+                if bufferVariant == variant then
+                    table.remove(ItemBuffer[variant.name],i);
+                    if #ItemBuffer[variant.name] == 0 then
+                        ItemBuffer[variant.name] = nil;
+                    end
+                    for i=1,#NumericItemTable do
+                        if NumericItemTable[i] == variant then
+                            table.remove(NumericItemTable,i);
+                            NeedsSorting = true;
+                        end
+                    end
+                    break;
+                end
+            end
+        end
+        sb.logInfo("P");
+        --sb.logInfo("Needs Sorting = " .. sb.print(NeedsSorting));
+        if NeedsSorting then
+            table.sort(NumericItemTable,function(a,b) return a.count > b.count end);
+       -- else
+            --InventoryItems.SetAllSlots(NumericItemTable);
+        end
+        if NeedsRefreshing then
+            --sb.logInfo("Refreshing");
+            InventoryItems.Refresh();
+        end
+    end
+    end);
+end
+
+--Called when the arrow is clicked
+function allItemsArrowClicked()
+    --TODO
+    AllItems.Enable(not Enabled);
 end

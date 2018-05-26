@@ -361,6 +361,7 @@ end
 
 --Sends a traversal and sends it to the destination
 function Insertion.SendItem(Item,DestinationContainer,Slot,ExtractionID,PossibleSlots,TraversalColor,TraversalSpeed)
+	--local Start = os.time();
 	if TraversalSpeed == nil then
 		TraversalSpeed = 1;
 	elseif TraversalSpeed == 0 then
@@ -374,7 +375,10 @@ function Insertion.SendItem(Item,DestinationContainer,Slot,ExtractionID,Possible
 	TraversalColor = TraversalColor or "red";
 	PossibleSlots = PossibleSlots or "any";
 	local StartPosition = world.entityPosition(ExtractionID);
+	--sb.logInfo("Before Spawn");
 	local Traversal = world.spawnProjectile("traversal" .. TraversalColor,{StartPosition[1] + 0.5,StartPosition[2] + 0.5});
+	--sb.logInfo("After Spawn");
+	--sb.logInfo("Speed = " .. sb.print(End - Start));
 
 	if PossibleSlots == "any" then
 		--Set Possible Slots to be all the slots in the container
@@ -392,6 +396,8 @@ function Insertion.SendItem(Item,DestinationContainer,Slot,ExtractionID,Possible
 	local Prediction = {Item = Item,Slot = Slot,MaxStack = Insertion.GetItemConfig(Item).config.maxstack or 1000,Traversal = Traversal,PossibleSlots = PossibleSlots};
 	AddPrediction(DestinationContainer,Prediction);
 	world.callScriptedEntity(Traversal,"__Traversal__.Initialize",Insertion,DestinationContainer,"Conduits",TraversalSpeed);
+	--local End = os.time();
+	--sb.logInfo("Speed = " .. sb.print(End - Start));
 	return true;
 end
 
