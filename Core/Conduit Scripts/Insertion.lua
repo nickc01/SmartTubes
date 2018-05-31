@@ -463,6 +463,43 @@ function __Insertion__.DropTraversalItems(Traversal)
 	end
 end
 
+function __Insertion__.SetContainerCache(Contents,UUID)
+	if __Extraction__ ~= nil then
+		return __Extraction__.SetContainerCache(Contents,UUID);
+	else
+		sb.logInfo("Replacing Insertion for " .. sb.print(SourceID) .. " from " .. sb.print(ContainerQueryUUID) .. " to = " .. sb.print(UUID));
+		AllContainerItems = Contents;
+		ContainerQueryUUID = UUID;
+	end
+end
+
+function __Insertion__.SetContainerCachePortion(Contents,UUID,Container)
+	if __Extraction__ ~= nil then
+		return __Extraction__.SetContainerCachePortion(Contents,UUID,Container);
+	else
+		AllContainerItems[tostring(Container)] = Contents;
+		ContainerQueryUUID = UUID; 
+	end
+end
+
+--Gets the Container Cache UUID
+function __Insertion__.GetContainerCacheUUID()
+	if __Extraction__ ~= nil then
+		return __Extraction__.GetContainerCacheUUID();
+	else
+		return ContainerQueryUUID;
+	end
+end
+
+--Gets the Container Cache
+function __Insertion__.GetContainerCache()
+	if __Extraction__ ~= nil then
+		return __Extraction__.GetContainerCache();
+	else
+		return AllContainerItems;
+	end
+end
+
 --Queries all neighboring containers for changes
 --Returns false if no changes have taken place
 --Returns the table of items in all the containers and a new uuid if there's changes

@@ -18,11 +18,12 @@ local SourceID;
 local ConfigList = "configArea.itemList";
 local SearchText = "";
 local ListItemIndexer;
+local SearchKeyword = "";
 ListItemIndexer = setmetatable({},{
 	__index = function(tbl,index)
-		for configIndex,i in UICore.Rawipairs(tbl) do
+		for configIndex,i in pairs(tbl) do
 			if i == index then
-				return configIndex;
+				return tonumber(configIndex);
 			end
 		end
 		return nil;
@@ -70,6 +71,8 @@ local StackChange;
 local ColorChange;
 local CopyBufferChange;
 local AddPremadeConfig;
+local UpdateSearchResults;
+local MatchesSearchResults;
 
 
 --Initializes the Extraction UI
@@ -160,16 +163,19 @@ end
 function ExtractionUI.DisplayConfigs()
 	widget.clearListItems(ConfigList);
 	ListItemIndexer();
-	for _,config in ipairs(Config) do
-		AddConfigToDisplay(config);
+	for index,config in ipairs(Config) do
+		if MatchesSearchResults(config) then
+			AddConfigToDisplay(config,index);
+		end
 	end
 end
 
 --Adds a config to the display window
-AddConfigToDisplay = function(config)
+AddConfigToDisplay = function(config,index)
+	index = index or #ListItemIndexer + 1;
 	if ExtractionUI.TextFulfillsSearch(config.itemName) then
 		local NewItem = widget.addListItem(ConfigList);
-		ListItemIndexer[#ListItemIndexer + 1] = NewItem;
+		ListItemIndexer[index] = NewItem;
 		local ItemName = ConfigList .. "." .. NewItem .. ".";
 		widget.setText(ItemName .. "itemName","Name : " .. config.itemName);
 		widget.setText(ItemName .. "insertID","Insert ID : " .. config.insertID);
@@ -188,7 +194,7 @@ AddConfigToDisplay = function(config)
 			widget.setItemSlotItem(ItemName .. "itemImage",nil);
 		end
 	else
-		ListItemIndexer[#ListItemIndexer + 1] = 0;
+		ListItemIndexer[index] = 0;
 	end
 end
 
@@ -332,6 +338,17 @@ end
 --Moves a config down a level in the list, returns true if successful
 function ExtractionUI.MoveDownConfig(index)
 	return ExtractionUI.MoveConfig(index,index + 1);
+end
+
+--Gets the Currently Set Search Keyword
+function ExtractionUI.GetSearchKeyword()
+	return SearchKeyword;
+end
+
+--Sets the Search Keyword
+function ExtractionUI.SetSearchKeyword(keyword)
+	SearchKeyword = keyword;
+	ExtractionUI.DisplayConfigs();
 end
 
 --Removes the selected config from the list, returns true if successful
@@ -531,6 +548,11 @@ CopyBufferChange = function(newBufferValue)
 			func();
 		end
 	end
+end
+
+--Returns true if the config matches the search results and false otherwise
+MatchesSearchResults = function(config)
+	return string.find(string.lower(config.itemName),string.lower(SearchKeyword)) ~= nil;
 end
 
 --Sets all the text boxes based off of the config passed in, and returns true if successful

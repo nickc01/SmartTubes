@@ -33,6 +33,7 @@ local UpdateNetwork;
 local Drop;
 local ExtractFromContainer;
 local Uninit;
+local SplitIter;
 
 --Initializes the Terminal
 function Terminal.Initialize()
@@ -77,9 +78,9 @@ SetMessages = function()
 			return nil;
 		end
 	end);
-	--[[message.setHandler("ExecuteScriptMultiParam",function(_,_,object,functionName,...)
-		return world.callScriptedEntity(object,functionName,...);
-	end);--]]
+	message.setHandler("ExtractFromNetwork",function(_,_,item,count,plusSend)
+		return ExtractFromNetwork(item,count,plusSend);
+	end);
 end
 
 --The Update Loop for the Terminal
@@ -94,6 +95,9 @@ end
 --Updates the Network
 UpdateNetwork = function()
 	if ForceUpdate == true or ConduitCore.NetworkHasChanged("TerminalFindings") and Data.SetNetwork ~= nil then
+		sb.logInfo("Network changed = " .. sb.print(ConduitCore.NetworkHasChanged("TerminalFindings")));
+		sb.logInfo("Force CHange = " .. sb.print(ForceUpdate));
+		sb.logInfo("Updating Network");
 		local Network = ConduitCore.GetNetwork("TerminalFindings");
 		local Containers = {};
 		ForceUpdate = false;
@@ -101,12 +105,16 @@ UpdateNetwork = function()
 		for _,conduit in ipairs(Network) do
 			if world.entityExists(conduit) then
 				local Pos = world.entityPosition(conduit);
-				local ConnectedContainers = world.callScriptedEntity(conduit,"ConduitCore.GetConnections","Containers");
-				if ConnectedContainers == false then
+				if world.callScriptedEntity(conduit,"ConduitCore.FullyLoaded") ~= true then
 					ForceUpdate = true;
 					return nil;
 				end
-				if ConnectedContainers ~= nil then
+				local ConnectedContainers = world.callScriptedEntity(conduit,"ConduitCore.GetConnections","Containers");
+				--[[if ConnectedContainers == false then
+					ForceUpdate = true;
+					return nil;
+				end--]]
+				if ConnectedContainers ~= false then
 					for _,container in ipairs(ConnectedContainers) do
 						if container ~= 0 then
 							local StringContainer = tostring(container);
@@ -145,6 +153,7 @@ UpdateNetwork = function()
 				end
 			end
 		end
+		sb.logInfo("FULL CONTAINER CONNECTIONS = " .. sb.print(ContainerConnections));
 		local ConduitInfo = {};
 		for _,conduit in ipairs(Network) do
 			--if world.entityExists(conduit) then
@@ -326,6 +335,140 @@ Uninit = function()
 		if world.entityExists(Traversal) then
 			world.callScriptedEntity(Traversal,"__Traversal__.SetInsertionTable",nil);
 			world.callScriptedEntity(Traversal,"__Traversal__.AddPrediction",{Item = data.Item,Traversal = Traversal});
+		end
+	end
+end
+
+--Extracts the set amount of an item from any container in the network
+--If sucessful, will return the amount that was extracted and all the containers it extracted from and along with them, the new contents and a new UUID for each
+--If not sucessful, it will return the amount it was able to extract plus the above
+function ExtractFromNetwork(item,count,plusSend)
+	if plusSend == nil then
+		plusSend = true;
+	end
+	count = count or item.count;
+	local Network = Data.GetNetwork();
+	if Network == nil then return nil end;
+	local Return = {
+		Amount = 0,
+		DirectConduits = {},
+		SideConduits = {}
+	}
+	local AmountToExtract = count;
+	local ExtractedConduits = Return.DirectConduits;
+	for _,conduit in ipairs(Network) do
+		if world.entityExists(conduit) and world.getObjectParameter(conduit,"conduitType") == "extraction" then
+			local ConduitInfo = {
+				ID = conduit,
+				UUID = nil,
+				ContainerContents = {},
+				Amount = 0
+			};
+			local ContainerContents = ConduitInfo.ContainerContents;
+			local Connections = world.callScriptedEntity(conduit,"ConduitCore.GetConnections","Containers");
+			if Connections ~= false then
+				local AffectedContainers = {};
+				for _,container in ipairs(Connections) do
+					if world.entityExists(container) then
+						local Available = world.containerAvailable(container,{name = item.name,count = 1,parameters = item.parameters});
+						if Available > AmountToExtract then
+							Available = AmountToExtract;
+						end
+						if Available > 0 then
+							world.containerConsume(container,{name = item.name,count = Available,parameters = item.parameters});
+							if plusSend == true then
+								--Send the Item to the terminal
+								sb.logInfo("Now Send");
+								sb.logInfo("Available = " .. sb.print(Available));
+								for number in SplitIter(Available,1000) do
+									sb.logInfo("Sending = " .. sb.print(number));
+									PostExtract(world.callScriptedEntity(conduit,"__Extraction__.GetExtraction"),{name = item.name,count = number,parameters = item.parameters},nil,container);
+								end
+							end
+							ConduitInfo.Amount = ConduitInfo.Amount + Available;
+							AmountToExtract = AmountToExtract - Available;
+							AffectedContainers[#AffectedContainers + 1] = container;
+						end
+						local Contents = {};
+						local Size = world.containerSize(container);
+						for i=1,Size do
+							Contents[i] = world.containerItemAt(container,i - 1) or "";
+						end
+						ContainerContents[tostring(container)] = Contents;
+					end
+				end
+				if ConduitInfo.Amount > 0 then
+					Return.Amount = Return.Amount + ConduitInfo.Amount;
+					ConduitInfo.UUID = sb.makeUuid();
+					for _,container in ipairs(AffectedContainers) do
+						sb.logInfo("Container Connections = " .. sb.print(ContainerConnections));
+						local LocalConnections = ContainerConnections[tostring(container)];
+						for _,extraction in ipairs(LocalConnections.Extraction) do
+							if extraction == conduit then
+								world.callScriptedEntity(extraction,"__Extraction__.SetContainerCache",ContainerContents,ConduitInfo.UUID);
+							else
+								world.callScriptedEntity(extraction,"__Extraction__.SetContainerCachePortion",ContainerContents[tostring(container)],ConduitInfo.UUID,container);
+								for i=1,#Return.SideConduits do
+									if Return.SideConduits[i].ID == extraction then
+										Return.SideConduits[i].UUID = ConduitInfo.UUID;
+										Return.SideConduits[i].Contents = world.callScriptedEntity(insertion,"__Extraction__.GetContainerCache");
+										goto AddedSideConduit;
+									end
+								end
+								Return.SideConduits[#Return.SideConduits + 1] = {ID = extraction,UUID = ConduitInfo.UUID,Contents = world.callScriptedEntity(insertion,"__Extraction__.GetContainerCache")};
+								::AddedSideConduit::
+							end
+						end
+						for _,insertion in ipairs(LocalConnections.Insertion) do
+							if insertion == conduit then
+								world.callScriptedEntity(insertion,"__Insertion__.SetContainerCache",ContainerContents,ConduitInfo.UUID);
+							else
+								world.callScriptedEntity(insertion,"__Insertion__.SetContainerCachePortion",ContainerContents[tostring(container)],ConduitInfo.UUID,container);
+								for i=1,#Return.SideConduits do
+									if Return.SideConduits[i].ID == insertion then
+										Return.SideConduits[i].UUID = ConduitInfo.UUID;
+										Return.SideConduits[i].Contents = world.callScriptedEntity(insertion,"__Insertion__.GetContainerCache");
+										goto AddedSideConduit;
+									end
+								end
+								Return.SideConduits[#Return.SideConduits + 1] = {ID = insertion,UUID = ConduitInfo.UUID,Contents = world.callScriptedEntity(insertion,"__Insertion__.GetContainerCache")};
+								::AddedSideConduit::
+							end
+						end
+					end
+					--world.callScriptedEntity(conduit,"__Extraction__.SetContainerCache",ContainerContents,ConduitInfo.UUID);
+					ExtractedConduits[#ExtractedConduits + 1] = ConduitInfo;
+					for index,sideConduit in ipairs(Return.SideConduits) do
+						if sideConduit.ID == conduit then
+							table.remove(Return.SideConduits,index);
+							break;
+						end
+					end
+				end
+				if AmountToExtract == 0 then
+					break;
+				end
+			end
+		end
+	end
+	return Return;
+end
+
+--Iterates over a number while splitting it into sections
+SplitIter = function(number,sectionSize)
+	local Current = number;
+	return function()
+		if Current == 0 then
+			return nil;
+		end
+		if Current <= sectionSize then
+			local Ret = Current;
+			Current = 0;
+			return Ret;
+		else
+			local Ret = sectionSize;
+			Current = Current - sectionSize;
+			return Ret;
 		end
 	end
 end

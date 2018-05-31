@@ -147,6 +147,11 @@ function ColorDecrement()
 	ExtractionUI.DecrementColor();
 end
 
+--Called when the text in the search box has changed
+function SearchChange()
+	ExtractionUI.SetSearchKeyword(widget.getText("searchBox") or "");
+end
+
 --THE BOTTOM FUNCTIONS ARE FOR HELP BUTTONS
 
 function itemNameHelp()

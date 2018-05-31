@@ -349,9 +349,9 @@ function Extraction.GetItemFromContainer(container,debugging)
 			ForEntireInventory = true;
 		end
 	end
-	if debugging == true then
+	--[[if debugging == true then
 		sb.logInfo("Beginning");
-	end
+	end--]]
 	local FinalCount = 0;
 	for i=1,ContainerSize do
 		local slot = Slots[i];
@@ -371,10 +371,10 @@ function Extraction.GetItemFromContainer(container,debugging)
 					if Item.count <= AmountCanTake then
 						
 						--CheckItemWithOperators(Item); TODO
-						if CheckItemWithOperators(Item,debugging) then
-							if debugging == true then
+						if CheckItemWithOperators(Item) then
+							--[[if debugging == true then
 								sb.logInfo("A");
-							end
+							end--]]
 							return Item,slot;
 						end
 					else
@@ -382,10 +382,10 @@ function Extraction.GetItemFromContainer(container,debugging)
 						--local Count = AmountCanTake;
 						Item = {name = Item.name,count = AmountCanTake,parameters = Item.parameters};
 						--CheckItemWithOperators(Item); 
-						if CheckItemWithOperators(Item,debugging) then
-							if debugging == true then
+						if CheckItemWithOperators(Item) then
+							--[[if debugging == true then
 								sb.logInfo("B");
-							end
+							end--]]
 							return Item,slot;
 						end
 					end
@@ -396,17 +396,17 @@ function Extraction.GetItemFromContainer(container,debugging)
 						
 						Item = {name = Item.name,count = Item.count - AmountToLeave[slot],parameters = Item.parameters};
 						--CheckItemWithOperators(Item); TODO
-						if CheckItemWithOperators(Item,debugging) then
-							if debugging == true then
+						if CheckItemWithOperators(Item) then
+							--[[if debugging == true then
 								sb.logInfo("C");
-							end
+							end--]]
 							return Item,slot;
 						end
 					else
-						if CheckItemWithOperators(Item,debugging) then
-							if debugging == true then
+						if CheckItemWithOperators(Item) then
+							--[[if debugging == true then
 								sb.logInfo("D");
-							end
+							end--]]
 							return Item,slot;
 						end
 					end
@@ -414,23 +414,23 @@ function Extraction.GetItemFromContainer(container,debugging)
 			end
 		--end
 	end
-	if debugging == true then
+	--[[if debugging == true then
 		sb.logInfo("End");
-	end
+	end--]]
 end
 
-CheckItemWithOperators = function(item,debugging)
+CheckItemWithOperators = function(item)
 	--sb.logInfo("Operators = " .. sb.print(Operators));
 	if item ~= nil and item.count > 0 then
-		if debugging == true then
+		--[[if debugging == true then
 			sb.logInfo("Item = " .. sb.print(item));
-		end
+		end--]]
 		local Config = Extraction.GetConfig();
 		--If the item is specific
 		if Config.isSpecific == true then
-			if debugging == true then
+			--[[if debugging == true then
 				sb.logInfo("T");
-			end
+			end--]]
 			return root.itemDescriptorsMatch(item,{name = item.name,count = item.count,parameters = Config.specificData},true);
 		end
 		if not IsCached("ItemCheckCache") then
@@ -452,9 +452,9 @@ CheckItemWithOperators = function(item,debugging)
 				Positives = {},
 				Negatives = {}
 			};
-			if debugging == true then
+			--[[if debugging == true then
 				sb.logInfo("U");
-			end
+			end--]]
 			for str in string.gmatch(Config.itemName,"[%w#&@%%_%^;:,<%.>]+,-") do
 				local Table = ItemNames.Positives;
 				if string.find(str,"^%^") ~= nil then
@@ -491,9 +491,9 @@ CheckItemWithOperators = function(item,debugging)
 				if CanCache then
 					ItemCheckCache[item.name] = false;
 				end
-				if debugging == true then
+				--[[if debugging == true then
 					sb.logInfo("Failed 1");
-				end
+				end--]]
 				return false;
 			end
 		end
@@ -503,9 +503,9 @@ CheckItemWithOperators = function(item,debugging)
 				if CanCache then
 					ItemCheckCache[item.name] = false;
 				end
-				if debugging == true then
+				--[[if debugging == true then
 					sb.logInfo("Failed 2");
-				end
+				end--]]
 				return false;
 			end
 		end
@@ -513,16 +513,44 @@ CheckItemWithOperators = function(item,debugging)
 		if CanCache then
 			ItemCheckCache[item.name] = Valid;
 		end
-		if debugging == true then
+		--[[if debugging == true then
 			sb.logInfo("Final 3");
-		end
+		end--]]
 		return Valid;
 	end
-	if debugging == true then
+	--[[if debugging == true then
 		sb.logInfo("Item End");
-	end
+	end--]]
 	return false;
 end
+
+--Sets the container Cache
+function __Extraction__.SetContainerCache(Contents,UUID)
+	sb.logInfo("Replacing Extraction for " .. sb.print(SourceID) .. " from " .. sb.print(ContainerQueryUUID) .. " to = " .. sb.print(UUID));
+	AllContainerItems = Contents;
+	ContainerQueryUUID = UUID;
+end
+
+--Gets the Extraction Table
+function __Extraction__.GetExtraction()
+	return Extraction;
+end
+
+function __Extraction__.SetContainerCachePortion(Contents,UUID,Container)
+	AllContainerItems[tostring(Container)] = Contents;
+	ContainerQueryUUID = UUID; 
+end
+
+--Gets the Container Cache UUID
+function __Extraction__.GetContainerCacheUUID()
+	return ContainerQueryUUID;
+end
+
+--Gets the Container Cache
+function __Extraction__.GetContainerCache()
+	return AllContainerItems;
+end
+
 
 --Queries all neighboring containers for changes
 --Returns false if no changes have taken place
@@ -772,7 +800,7 @@ SetDelta = function(Speed)
 	if Value < 10 then
 		Value = 10;
 	end
-	script.setUpdateDelta(Value);
+	script.setUpdateDelta(1);
 end
 
 --Called when the speed changes

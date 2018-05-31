@@ -664,6 +664,21 @@ function ConduitCore.GetConnections(ConnectionType)
 	if FirstUpdateComplete == false then
 		return false;
 	end
+	return false;
+end
+
+--Returns true if there are any connections
+function ConduitCore.HasConnections(ConnectionType)
+	if FirstUpdateComplete and ConnectionType[ConnectionType] ~= nil and #ConnectionTypes[ConnectionType].Connections > 0 then
+		return true;
+	else
+		return false;
+	end
+end
+
+--Returns true if the Conduit is fully loaded
+function ConduitCore.FullyLoaded()
+	return FirstUpdateComplete;
 end
 
 --Sets the function that is called when the sprite needs to be updated
