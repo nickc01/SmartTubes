@@ -41,6 +41,18 @@ local SearchKeyword = "";
 local SearchAlgorithm = function(Item,keyword) return string.find(string.lower(Item.name),string.lower(keyword)) ~= nil end;
 local SearchRoutine;
 local SelectedItem;
+local SortMode = {
+    Modes = {
+        Default = {
+            Contents = {},
+            Buffer = {},
+            Updated = false,
+            Algorithm = function(item,sourceID,sourceInfo) return item end;
+        }
+    },
+    Current = "Default"
+};
+local CurrentSortingMode = "Default";
 
 
 --Functions
@@ -102,6 +114,7 @@ AddAllBoundElements = function()
     BindElement("allItemsSelectedItemBackground");
     BindElement("allItemsSelectedItemAmountBox");
     BindElement("allItemsExtractButton");
+    BindElement("allItemsExtractableCheckbox");
     widget.setVisible("allItemsLoadingCircle",false);
     widget.setVisible("allItemsSettingsArea",false);
     widget.setVisible("allItemsSearchIcon",false);
@@ -109,6 +122,7 @@ AddAllBoundElements = function()
     widget.setVisible("allItemsSelectedItemSlot",false);
     widget.setVisible("allItemsSelectedItemBackground",false);
     widget.setVisible("allItemsExtractButton",false);
+    widget.setVisible("allItemsExtractableCheckbox",false);
 end
 
 --Binds an element to move with the All Items Canvas
@@ -213,6 +227,7 @@ OnEnable = function(enabled)
     widget.setVisible("allItemsSettingsArea",enabled);
     widget.setVisible("allItemsSearchIcon",enabled);
     widget.setVisible("allItemsSearchBox",enabled);
+    widget.setVisible("allItemsExtractableCheckbox",enabled);    
 end
 
 --Calls a script on the passed in object on the server side
@@ -662,10 +677,13 @@ StartUpAllItemsArea = function()
                 end
                 local Value;
                -- sb.logInfo("X");
+                local ConduitType;
                 if ConduitInfo.ConduitType == "extraction" or ConduitInfo.ConduitType == "io" then
                     Value = ExecuteScriptAsync(conduit,"Extraction.QueryContainers",ID,true);
+                    ConduitType = "Extraction";
                 elseif ConduitInfo.ConduitType == "insertion" then
                     Value = ExecuteScriptAsync(conduit,"Insertion.QueryContainers",ID,true);
+                    ConduitType = "Insertion";                    
                 end         
                 if Value == false then
                     Contents = ConduitContainerUUIDMap[tostring(conduit)].Contents;                       
@@ -724,6 +742,7 @@ StartUpAllItemsArea = function()
         NumericItemTable = {};
         for _,variants in pairs(ItemBuffer) do
             for _,item in ipairs(variants) do
+                SortMode.Add(NewBufferItem,conduit,ConduitInfo);
                 NumericItemTable[#NumericItemTable + 1] = item;
                 item.ControllerSlot = #NumericItemTable;
             end
@@ -861,6 +880,7 @@ StartUpAllItemsArea = function()
                                     sb.logInfo("Added Item = " .. sb.print(Item));
                                     local NewBufferItem = {name = Item.name,count = Item.count,parameters = Item.parameters}
                                     ItemBuffer[Item.name] = {NewBufferItem};
+                                    SortMode.Add(NewBufferItem,conduit,ConduitInfo);
                                     NumericItemTable[#NumericItemTable + 1] = NewBufferItem;
                                     InventoryItems.SetItem(NewBufferItem,#NumericItemTable);
                                     --sb.logInfo("NewBufferItem 1 = " .. sb.print(NewBufferItem)); 
@@ -881,6 +901,7 @@ StartUpAllItemsArea = function()
                                     --sb.logInfo("NewBufferItem 2 = " .. sb.print(NewBufferItem));
                                     local Variants = ItemBuffer[Item.name];
                                     Variants[#Variants + 1] = NewBufferItem;
+                                    SortMode.Add(NewBufferItem,conduit,ConduitInfo);
                                     NumericItemTable[#NumericItemTable + 1] = NewBufferItem;
                                     InventoryItems.SetItem(NewBufferItem,#NumericItemTable);
                                     NeedsSorting = true;
@@ -968,6 +989,7 @@ StartUpAllItemsArea = function()
                             if ItemBuffer[Item.name] == nil then
                                 local NewBufferItem = {name = Item.name,count = Item.count,parameters = Item.parameters}
                                 ItemBuffer[Item.name] = {NewBufferItem};
+                                SortMode.Add(NewBufferItem,conduit,ConduitInfo);
                                 NumericItemTable[#NumericItemTable + 1] = NewBufferItem;
                                 InventoryItems.SetItem(NewBufferItem,#NumericItemTable);
                                 --sb.logInfo("NewBufferItem 1 = " .. sb.print(NewBufferItem)); 
@@ -988,6 +1010,7 @@ StartUpAllItemsArea = function()
                                 --sb.logInfo("NewBufferItem 2 = " .. sb.print(NewBufferItem));
                                 local Variants = ItemBuffer[Item.name];
                                 Variants[#Variants + 1] = NewBufferItem;
+                                SortMode.Add(NewBufferItem,conduit,ConduitInfo);
                                 NumericItemTable[#NumericItemTable + 1] = NewBufferItem;
                                 InventoryItems.SetItem(NewBufferItem,#NumericItemTable);
                                 NeedsSorting = true;
@@ -1017,8 +1040,10 @@ StartUpAllItemsArea = function()
                     if #ItemBuffer[variant.name] == 0 then
                         ItemBuffer[variant.name] = nil;
                     end
+                    SortMode.Remove(NewBufferItem);
                     for i=1,#NumericItemTable do
                         if NumericItemTable[i] == variant then
+                            --
                             table.remove(NumericItemTable,i);
                             NeedsSorting = true;
                         end
@@ -1124,4 +1149,89 @@ function AllItemsExtract()
             end
         end
     end,Item,Count,true);
+end
+
+--Called when the Extractable checkbox is clicked
+function ExtractableChange()
+
+end
+
+--Gets the current Sorting Mode
+function SortMode.GetCurrentMode()
+    return SortMode.Current;
+end
+
+--Sets the Current Sorting Mode
+function SortMode.SetCurrentMode(mode)
+    SortMode.Current = mode;
+end
+
+--Adds an element to all the sorted tables
+function SortMode.Add(item,sourceID,sourceInfo)
+    for mode,data in pairs(SortMode.Modes) do
+        local result = data.Algorithm(item,sourceID,sourceInfo);
+        local Item;
+        
+        if result == true then
+            --data.Contents[#data.Contents + 1] = item;
+            Item = item;
+        elseif type(result) == "table" then
+            --data.Contents[#data.Contents + 1] = result;
+            Item = result;
+        end
+        if Item ~= nil then
+            if data.Buffer[Item.name] ~= nil then
+                local Variants = data.Buffer[Item.name];
+                for _,variant in ipairs(Variants) do
+                    if root.itemDescriptorsMatch(variant,Item,true) then
+                        variant.count = variant.count + Item.count;
+                        return true;
+                    end
+                end
+                Variants[#Variants + 1] = {name = Item.name,count = Item.count,parameters = Item.parameters};
+                data.Updated = true;
+            else
+                ItemBuffer[item.name] = {{name = Item.name,count = Item.count,parameters = Item.parameters}};
+                data.Updated = true;
+            end
+            return true;
+        else
+            return false;
+        end
+    end
+end
+
+--Adds a new sorting mode
+function SortMode.AddNewMode(name,algorithm)
+    SortMode.Modes[name] = {
+        Contents = {},
+        Buffer = {},
+        Updated = false,
+        Algorithm = algorithm
+    }
+end
+
+--Retrieves the table of the passed in mode, or if nil, the current mode
+function SortMode.GetTable(mode)
+    mode = mode or SortMode.GetCurrentMode();
+    local data = SortMode.Modes[mode];
+    if data.Updated == true then
+        data.Contents = {};
+        data.Updated = false;
+        for _,variants in pairs(data.Buffer) do
+            for _,item in ipairs(variants) do
+               -- NumericItemTable[#NumericItemTable + 1] = item;
+                --item.ControllerSlot = #NumericItemTable;
+                data.Contents[#data.Contents + 1] = item;
+            end
+        end
+    end
+    return data.Contents;
+end
+
+--Removes an element to all the sorted tables
+function SortMode.Remove(item,deepScan)
+    for mode,data in pairs(SortMode.Modes) do
+        
+    end
 end
