@@ -14,6 +14,7 @@ local __UICore__ = __UICore__;
 local PromiseLoopCalls = {};
 local ResetPromiseLoopCalls = {};
 local CoroutineCalls = {};
+local ThreadToID = {};
 local SyncedValues = {};
 local DefinitionTable = UICore;
 local Initialized = false;
@@ -59,15 +60,33 @@ function UICore.AddAsyncCoroutine(Coroutine,onCancel)
 		UICore.Initialize();
 	end
 	local ID = sb.makeUuid();
-	local Coroutine = coroutine.create(Coroutine);
+	local Coroutine = coroutine.create(function()
+		ThreadToID[coroutine.running()] = ID;
+		Coroutine();
+		ThreadToID[coroutine.running()] = nil;
+	end);
 	local Table = {
 		Coroutine = Coroutine,
-		OnCancel = onCancel
+		OnCancel = function()
+			if onCancel ~= nil then
+				onCancel();
+				for _,injection in pairs(CoroutineCalls[ID].Injections) do
+					injection();
+				end
+			end
+		end,
+		Injections = {}
 	}
 	CoroutineCalls[ID] = Table;
 	local Value,Error = coroutine.resume(Coroutine,0);
 	if Value == false then
-		sb.logError(Error or "");
+		if pcall(function()
+			sb.logError(Error or "");
+		end) then
+
+		else
+			error(Error);
+		end
 	elseif Value ~= nil then
 		local Type = type(Value);
 		if Type == "string" then
@@ -77,6 +96,26 @@ function UICore.AddAsyncCoroutine(Coroutine,onCancel)
 		end
 	end
 	return ID;
+end
+
+--Adds a coroutine injection
+function UICore.AddCoroutineInjection(OnCancel)
+	local Running = coroutine.running();
+	local Coroutine = CoroutineCalls[ThreadToID[Running]];
+	if Coroutine ~= nil then
+		local ID = sb.makeUuid();
+		Coroutine.Injections[ID] = OnCancel;
+		return ID;
+	end
+end
+
+--Removes a coroutine injection
+function UICore.RemoveCoroutineInjection(ID)
+	local Running = coroutine.running();
+	local Coroutine = CoroutineCalls[ThreadToID[Running]];
+	if Coroutine ~= nil and ID ~= nil then
+		Coroutine.Injections[ID] = nil;
+	end
 end
 
 --Cancels a coroutine

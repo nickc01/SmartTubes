@@ -34,6 +34,7 @@ local Drop;
 local ExtractFromContainer;
 local Uninit;
 local SplitIter;
+local NetworkUpdateRoutine;
 
 --Initializes the Terminal
 function Terminal.Initialize()
@@ -72,7 +73,7 @@ SetMessages = function()
 		return ExtractFromContainer(container,slot,amount);
 	end);
 	message.setHandler("ExecuteScript",function(_,_,object,functionName,...)
-		if world.entityExists(object) then
+		if object ~= nil and world.entityExists(object) then
 			return world.callScriptedEntity(object,functionName,...);
 		else
 			return nil;
@@ -155,7 +156,7 @@ UpdateNetwork = function()
 		end
 		sb.logInfo("FULL CONTAINER CONNECTIONS = " .. sb.print(ContainerConnections));
 		local ConduitInfo = {};
-		for _,conduit in ipairs(Network) do
+		for index,conduit in ipairs(Network) do
 			--if world.entityExists(conduit) then
 				--sb.logInfo("Conduit = " .. sb.print(conduit));
 				--sb.logInfo("Exists = " .. sb.print(world.entityExists(conduit)));
@@ -171,10 +172,22 @@ UpdateNetwork = function()
 					--sb.logInfo("INFO.UI = " .. sb.printJson(Info.UI,1));
 					Info.HasMenuData = true;
 				end
+				--sb.logInfo("Printing Conduit of = " .. sb.print(conduit));
+				--world.sendEntityMessage(conduit,"ConduitCore.RefreshNetwork","Conduits");
+				--sb.logInfo("A");
 				Info.Position = world.entityPosition(conduit);
 				Info.TerminalData = world.callScriptedEntity(conduit,"ConduitCore.GetTerminalData");
 				Info.ObjectName = world.entityName(conduit);
+				sb.logInfo("Index = " .. sb.print(index));
 				Info.ConduitType = world.getObjectParameter(conduit,"conduitType");
+				if Info.ConduitType == "extraction" or Info.ConduitType == "io" then
+					--Check if the Conduit hs extractable from the terminal
+					if world.callScriptedEntity(conduit,"ConduitCore.GetConduitPath",SourceID) ~= nil then
+						Info.Extractable = true;
+					else
+						Info.Extractable = false;
+					end
+				end
 			--end
 		end
 		--sb.logInfo("ALL NETWORK CONTAINERS = " .. sb.printJson(Containers,1));
@@ -357,7 +370,7 @@ function ExtractFromNetwork(item,count,plusSend)
 	local AmountToExtract = count;
 	local ExtractedConduits = Return.DirectConduits;
 	for _,conduit in ipairs(Network) do
-		if world.entityExists(conduit) and world.getObjectParameter(conduit,"conduitType") == "extraction" then
+		if world.entityExists(conduit) and (world.getObjectParameter(conduit,"conduitType") == "extraction" or world.getObjectParameter(conduit,"conduitType") == "io") then
 			local ConduitInfo = {
 				ID = conduit,
 				UUID = nil,

@@ -29,8 +29,10 @@ local TranslateImage;
 --Returns the json value, or nil if the file doesn't exist or isn't a json file
 GetJson = function(File)
 	local Result = nil;
-	pcall(function() Result = root.assetJson(File) end);
+	coroutine.resume(coroutine.create(function() Result = root.assetJson(File) end));
 	return Result;
+	--pcall(function() Result = root.assetJson(File) end);
+	--return Result;
 end
 
 --Attempts to get the frame file corresponding to an image

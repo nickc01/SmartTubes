@@ -332,7 +332,7 @@ end
 --Called when the "Color Decrement" button is clicked
 function ColorDecrement()
 	ColorIndex = ColorIndex - 1;
-	if ColorIndex < 0 then
+	if ColorIndex < 1 then
 		ColorIndex = #Colors;
 	end
 	Data.SetColor(Colors[ColorIndex]);
@@ -340,6 +340,10 @@ end
 
 --Called when the Color is changed
 ColorChange = function()
+	--sb.logInfo("Color = " .. sb.print(Data.GetColor()));
+	--sb.logInfo("Color Index = " .. sb.print(ColorIndex));
+	--sb.logInfo("All Colors = " .. sb.print(Colors));
+	--sb.logInfo("All Colors to Hex = " .. sb.print(ColorToHex));
 	widget.setImage("colorDisplay",ColorDisplayImage .. ColorToHex[Data.GetColor()]);
 end
 

@@ -251,6 +251,8 @@ end
 SetMessages = function()
 	message.setHandler("ConduitCore.GetSpriteState",ConduitCore.GetSpriteState);
 	message.setHandler("ConduitCore.GetTerminalImageParameters",ConduitCore.GetTerminalData);
+	message.setHandler("ConduitCore.RefreshNetwork",function(_,_,connectionType) return ConduitCore.RefreshNetwork(connectionType); end);
+	message.setHandler("PrintSelf",function() sb.logInfo("Printing = " .. sb.print(entity.id())); end);
 end
 
 --Initialization After the First Update Loop
@@ -576,6 +578,16 @@ function ConduitCore.NetworkHasChanged(ConnectionType)
 		--sb.logInfo("NETWORK HAS CHANGED_____________");
 	--end
 	return NetworkCache[ConnectionType] == nil or NetworkCache[ConnectionType].NeedsUpdating == true;
+end
+
+--Makes sure the network is up to date
+function ConduitCore.RefreshNetwork(ConnectionType)
+	if ConnectionTypes[ConnectionType] == nil then
+		sb.logInfo("Done 1");
+		return nil;
+	end
+	ConduitCore.GetNetwork(ConnectionType);
+	sb.logInfo("Done 2");	
 end
 
 --Returns the Entire Connection Tree for the Passed In Connection Type

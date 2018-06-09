@@ -3,6 +3,8 @@ require("/Core/Conduit Scripts/ExtractionUI.lua");
 --Variables
 local OldInit = init;
 local OldUninit = uninit;
+--TEST
+--local Result;
 
 --Functions
 local ConfigUpdate;
@@ -14,6 +16,12 @@ function init()
 	if OldInit ~= nil then
 		OldInit();
 	end
+	--[[local Test = coroutine.create(function(path)
+        sb.logInfo("Path = " .. sb.print(path));
+        Result = root.assetJson(path);
+    end);
+    coroutine.resume(Test,"/Blocks/Conduits/Item Conduit/Item Conduit.object");--]]
+    sb.logInfo("Result = " .. sb.print(Result));
 	ExtractionUI.AddCopyBufferChangeFunction(CopyBufferChange);
 	ExtractionUI.Initialize();
 end
