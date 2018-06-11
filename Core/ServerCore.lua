@@ -8,6 +8,10 @@ local Server = Server;
 
 --Variables
 local SyncedValues = {};
+local PromiseLoopCalls = {};
+local ResetPromiseLoopCalls = {};
+local CoroutineCalls = {};
+local ThreadToID = {};
 local DefinitionTable = Server;
 local Initialized = false;
 local Dying = false;
@@ -33,6 +37,106 @@ function Server.Initialize()
 			OldDie();
 		end
 		Dying = true;
+	end
+	local OldUpdate = update;
+	update = function(dt)
+		if OldUpdate ~= nil then
+			OldUpdate(dt);
+		end
+		for _,func in pairs(PromiseLoopCalls) do
+			func();
+		end
+		for id,Data in pairs(CoroutineCalls) do
+			if coroutine.status(Data.Coroutine) == "dead" then
+				CoroutineCalls[id] = nil;
+				return nil;
+			end
+			local Value,Error = coroutine.resume(Data.Coroutine,dt);
+			if Value == false then
+				error(Error or "");
+			elseif Value ~= nil then
+				local Type = type(Value);
+				if Type == "string" then
+					sb.logInfo(Value);
+				elseif Type == "function" then
+					Value();
+				end
+			end
+		end
+	end
+end
+
+function Server.AddAsyncCoroutine(Coroutine,onCancel)
+	if Initialized == false then
+		Server.Initialize();
+	end
+	local ID = sb.makeUuid();
+	local Coroutine = coroutine.create(function()
+		ThreadToID[coroutine.running()] = ID;
+		Coroutine();
+		ThreadToID[coroutine.running()] = nil;
+	end);
+	local Table = {
+		Coroutine = Coroutine,
+		OnCancel = function()
+			if onCancel ~= nil then
+				onCancel();
+				for _,injection in pairs(CoroutineCalls[ID].Injections) do
+					injection();
+				end
+			end
+		end,
+		Injections = {}
+	}
+	CoroutineCalls[ID] = Table;
+	local Value,Error = coroutine.resume(Coroutine,0);
+	if Value == false then
+		if pcall(function()
+			sb.logError(Error or "");
+		end) then
+
+		else
+			error(Error);
+		end
+	elseif Value ~= nil then
+		local Type = type(Value);
+		if Type == "string" then
+			sb.logInfo(Value);
+		elseif Type == "function" then
+			Value();
+		end
+	end
+	return ID;
+end
+
+--Adds a coroutine injection
+function Server.AddCoroutineInjection(OnCancel)
+	local Running = coroutine.running();
+	local Coroutine = CoroutineCalls[ThreadToID[Running]];
+	if Coroutine ~= nil then
+		local ID = sb.makeUuid();
+		Coroutine.Injections[ID] = OnCancel;
+		return ID;
+	end
+end
+
+--Removes a coroutine injection
+function Server.RemoveCoroutineInjection(ID)
+	local Running = coroutine.running();
+	local Coroutine = CoroutineCalls[ThreadToID[Running]];
+	if Coroutine ~= nil and ID ~= nil then
+		Coroutine.Injections[ID] = nil;
+	end
+end
+
+--Cancels a coroutine
+function Server.CancelCoroutine(ID)
+	local Data = CoroutineCalls[ID];
+	if Data ~= nil then
+		if Data.OnCancel ~= nil then
+			Data.OnCancel();
+		end
+		CoroutineCalls[ID] = nil;
 	end
 end
 
@@ -125,7 +229,7 @@ end
 function Server.ParameterIter(pairAmount,...)
 	pairAmount = pairAmount or 1;
 	if pairAmount == 1 then
-		local Iterator = UICore.UniIter({...});
+		local Iterator = Server.UniIter({...});
 		return function()
 			local _,i = Iterator();
 			return i;

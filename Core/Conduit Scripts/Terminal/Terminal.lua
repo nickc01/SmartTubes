@@ -19,6 +19,7 @@ local Insertion = {};
 __Insertion__ = {};
 local SentTraversals = {};
 local ForceUpdate = false;
+local UpdatingNetwork = false;
 
 local Data = {};
 
@@ -34,7 +35,6 @@ local Drop;
 local ExtractFromContainer;
 local Uninit;
 local SplitIter;
-local NetworkUpdateRoutine;
 
 --Initializes the Terminal
 function Terminal.Initialize()
@@ -87,8 +87,11 @@ end
 --The Update Loop for the Terminal
 Update = function(dt)
 	--sb.logInfo("UPDATE 1");
-	if ConduitCore.FirstUpdateCompleted() then
-		UpdateNetwork();
+	if ConduitCore.FirstUpdateCompleted() and UpdatingNetwork == false then
+		Server.AddAsyncCoroutine(function()
+			UpdateNetwork();
+		end);
+		--UpdateNetwork();
 	end
 	--UpdateNetwork();
 end
@@ -96,6 +99,13 @@ end
 --Updates the Network
 UpdateNetwork = function()
 	if ForceUpdate == true or ConduitCore.NetworkHasChanged("TerminalFindings") and Data.SetNetwork ~= nil then
+		if UpdatingNetwork == true then
+			while(UpdatingNetwork == true) do
+				coroutine.yield();
+			end
+		end
+		UpdatingNetwork = true;
+		local Injection = Server.AddCoroutineInjection(function() UpdatingNetwork = false; end);
 		sb.logInfo("Network changed = " .. sb.print(ConduitCore.NetworkHasChanged("TerminalFindings")));
 		sb.logInfo("Force CHange = " .. sb.print(ForceUpdate));
 		sb.logInfo("Updating Network");
@@ -108,6 +118,7 @@ UpdateNetwork = function()
 				local Pos = world.entityPosition(conduit);
 				if world.callScriptedEntity(conduit,"ConduitCore.FullyLoaded") ~= true then
 					ForceUpdate = true;
+					UpdatingNetwork = false;
 					return nil;
 				end
 				local ConnectedContainers = world.callScriptedEntity(conduit,"ConduitCore.GetConnections","Containers");
@@ -187,6 +198,7 @@ UpdateNetwork = function()
 					else
 						Info.Extractable = false;
 					end
+					coroutine.yield();
 				end
 			--end
 		end
@@ -194,6 +206,8 @@ UpdateNetwork = function()
 		Data.SetNetworkContainers(Containers);
 		Data.SetConduitInfo(ConduitInfo);
 		Data.SetNetwork(Network);
+		Server.RemoveCoroutineInjection(Injection);
+		UpdatingNetwork = false;
 	end
 end
 
@@ -252,45 +266,47 @@ end
 
 --Called when the UI requests to put an item in a slot of a container
 PutItemInContainer = function(item,container,slot)
-	UpdateNetwork();
-	local ContainerData = Data.GetNetworkContainers();
-	local ContainerInfo = ContainerData[tostring(container)];
-	local ConnectedConduits = ContainerConnections[tostring(container)];
-	if ContainerInfo.Insertion == true then
-		if ConnectedConduits ~= nil and #ConnectedConduits.Insertion > 0 then
-			local FirstInsertion = ConnectedConduits.Insertion[1];
-			if world.entityExists(FirstInsertion) and world.callScriptedEntity(FirstInsertion,"Insertion.IsConnectedTo",container) == true then
-				--local SendingItem =  Insertion.ItemCanFit(container,item,slot,false);
-				--sb.logInfo("Insertion ID = " .. sb.print(FirstInsertion));
-				--sb.logInfo("Is Connected to " .. sb.print(container) .. " = " .. sb.print(world.callScriptedEntity(FirstInsertion,"Insertion.IsConnectedTo",container) == true));
-				local SendingItem = world.callScriptedEntity(FirstInsertion,"Insertion.ItemCanFit",container,item,slot,false);
-				if SendingItem ~= nil then
-					--Find a path that works and send the item over
-					for _,insertion in ipairs(ConnectedConduits.Insertion) do
-						if world.entityExists(insertion) then
-							--sb.logInfo("Insertion ID = " .. sb.print(insertion));
-							--sb.logInfo("Is Connected to " .. sb.print(container) ..  " = " .. sb.print(world.callScriptedEntity(insertion,"Insertion.IsConnectedTo",container) == true));
-							local Path = ConduitCore.GetPath("Conduits",insertion);
-							if Path ~= nil then
-								--Send the Item
-								--TODO Set up traversal color and traversal speed to be configurable
-								--sb.logInfo("FINAL Slot = " .. sb.print(slot));
-								world.callScriptedEntity(insertion,"Insertion.SendItem",SendingItem,container,slot,SourceID,{slot},Data.GetColor(),Data.GetSpeed());
-								if SendingItem.count < item.count then
-									Drop({name = SendingItem.name,count = item.count - SendingItem.count,parameters = SendingItem.parameters});
+	Server.AddAsyncCoroutine(function()
+		UpdateNetwork();
+		local ContainerData = Data.GetNetworkContainers();
+		local ContainerInfo = ContainerData[tostring(container)];
+		local ConnectedConduits = ContainerConnections[tostring(container)];
+		if ContainerInfo.Insertion == true then
+			if ConnectedConduits ~= nil and #ConnectedConduits.Insertion > 0 then
+				local FirstInsertion = ConnectedConduits.Insertion[1];
+				if world.entityExists(FirstInsertion) and world.callScriptedEntity(FirstInsertion,"Insertion.IsConnectedTo",container) == true then
+					--local SendingItem =  Insertion.ItemCanFit(container,item,slot,false);
+					--sb.logInfo("Insertion ID = " .. sb.print(FirstInsertion));
+					--sb.logInfo("Is Connected to " .. sb.print(container) .. " = " .. sb.print(world.callScriptedEntity(FirstInsertion,"Insertion.IsConnectedTo",container) == true));
+					local SendingItem = world.callScriptedEntity(FirstInsertion,"Insertion.ItemCanFit",container,item,slot,false);
+					if SendingItem ~= nil then
+						--Find a path that works and send the item over
+						for _,insertion in ipairs(ConnectedConduits.Insertion) do
+							if world.entityExists(insertion) then
+								--sb.logInfo("Insertion ID = " .. sb.print(insertion));
+								--sb.logInfo("Is Connected to " .. sb.print(container) ..  " = " .. sb.print(world.callScriptedEntity(insertion,"Insertion.IsConnectedTo",container) == true));
+								local Path = ConduitCore.GetPath("Conduits",insertion);
+								if Path ~= nil then
+									--Send the Item
+									--TODO Set up traversal color and traversal speed to be configurable
+									--sb.logInfo("FINAL Slot = " .. sb.print(slot));
+									world.callScriptedEntity(insertion,"Insertion.SendItem",SendingItem,container,slot,SourceID,{slot},Data.GetColor(),Data.GetSpeed());
+									if SendingItem.count < item.count then
+										Drop({name = SendingItem.name,count = item.count - SendingItem.count,parameters = SendingItem.parameters});
+									end
+									return 0;
 								end
-								return 0;
 							end
 						end
+						Drop(item);
+						return 2;
 					end
-					Drop(item);
-					return 2;
 				end
 			end
 		end
-	end
-	Drop(item);
-	return 1;
+		Drop(item);
+		return 1;
+	end);
 end
 
 --Drops an item in front of the terminal
@@ -311,34 +327,36 @@ end
 
 --Extracts an item from the container
 ExtractFromContainer = function(Container,Slot,Amount)
-	UpdateNetwork();
-	local ContainerData = Data.GetNetworkContainers();
-	local ContainerInfo = ContainerData[tostring(Container)];
-	local ConnectedConduits = ContainerConnections[tostring(Container)];
-	if ContainerInfo.Extraction == true then
-		if ConnectedConduits ~= nil and #ConnectedConduits.Extraction > 0 then
-			local Item = world.containerItemAt(Container,Slot - 1);
-			if Item ~= nil then
-				--sb.logInfo("Amount = " .. sb.print(Amount));
-				if Amount == nil or Amount > Item.count then
-					Amount = Item.count;
-				end
-				for _,conduit in ipairs(ConnectedConduits.Extraction) do
-					if world.entityExists(conduit) then
-						local Path = world.callScriptedEntity(conduit,"ConduitCore.GetPath","Conduits",SourceID);
-						if Path ~= nil then
-							world.containerTakeNumItemsAt(Container,Slot - 1,Amount);
-							
-							world.callScriptedEntity(conduit,"Extraction.SendItem",{name = Item.name,count = Amount,parameters = Item.parameters},Container,Slot,SourceID);
-							return true;
+	Server.AddAsyncCoroutine(function()
+		UpdateNetwork();
+		local ContainerData = Data.GetNetworkContainers();
+		local ContainerInfo = ContainerData[tostring(Container)];
+		local ConnectedConduits = ContainerConnections[tostring(Container)];
+		if ContainerInfo.Extraction == true then
+			if ConnectedConduits ~= nil and #ConnectedConduits.Extraction > 0 then
+				local Item = world.containerItemAt(Container,Slot - 1);
+				if Item ~= nil then
+					--sb.logInfo("Amount = " .. sb.print(Amount));
+					if Amount == nil or Amount > Item.count then
+						Amount = Item.count;
+					end
+					for _,conduit in ipairs(ConnectedConduits.Extraction) do
+						if world.entityExists(conduit) then
+							local Path = world.callScriptedEntity(conduit,"ConduitCore.GetPath","Conduits",SourceID);
+							if Path ~= nil then
+								world.containerTakeNumItemsAt(Container,Slot - 1,Amount);
+								
+								world.callScriptedEntity(conduit,"Extraction.SendItem",{name = Item.name,count = Amount,parameters = Item.parameters},Container,Slot,SourceID);
+								return true;
+							end
 						end
 					end
+					return 2;
 				end
-				return 2;
 			end
 		end
-	end
-	return false;
+		return false;
+	end);
 end
 
 --Called when the terminal is uninitialized

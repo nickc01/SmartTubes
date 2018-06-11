@@ -593,7 +593,8 @@ function InventoryItems.SetAllSlots(tbl,topDown,forceSyncronous)
             SlotRows[#SlotRows + 1] = {Name = NewSlot,Full = AllItemsList ..  "." .. NewSlot};
         end
     end
-    local NewInventory = {};
+    local OldInventory = InternalInventoryItems;
+    InternalInventoryItems = {};
     if topDown ~= true then
         --sb.logInfo("SLots 2 = " .. sb.print(#SlotRows));
         local Hide = true;
@@ -604,8 +605,8 @@ function InventoryItems.SetAllSlots(tbl,topDown,forceSyncronous)
                 local SlotPath = SlotRows[row].Full .. ".slot" .. slot;
                 local Value = SortedTable[GlobalSlot];
                 local Previous;
-                if InternalInventoryItems ~= nil then
-                    Previous = InternalInventoryItems[GlobalSlot];
+                if OldInventory ~= nil then
+                    Previous = OldInventory[GlobalSlot];
                 else
                     Previous = 0;
                 end
@@ -626,6 +627,7 @@ function InventoryItems.SetAllSlots(tbl,topDown,forceSyncronous)
                             widget.setVisible(SlotPath .. "background",true);
                             widget.setVisible(SlotPath .. "count",true);
                             widget.setItemSlotItem(SlotPath,nil);
+                            widget.setData(SlotPath,tostring(GlobalSlot));
                             widget.setText(SlotPath .. "count","");
                         end
                     else
@@ -634,11 +636,12 @@ function InventoryItems.SetAllSlots(tbl,topDown,forceSyncronous)
                         widget.setVisible(SlotPath .. "background",true);
                         widget.setVisible(SlotPath .. "count",true);
                         widget.setItemSlotItem(SlotPath,{name = Value.name,count = 1,parameters = Value.parameters});
+                        widget.setData(SlotPath,tostring(GlobalSlot));
                         widget.setText(SlotPath .. "count",NumberToString(Value.count));
                     end
                 end
                 if Value ~= nil then
-                    NewInventory[GlobalSlot] = {name = Value.name,count = Value.count,parameters = Value.parameters};
+                    InternalInventoryItems[GlobalSlot] = {name = Value.name,count = Value.count,parameters = Value.parameters};
                 end
                 if (GlobalSlot > 200 or not Enabled) and GlobalSlot % 2 == 0 and forceSyncronous ~= true and coroutine.running() ~= nil then
                     coroutine.yield();
@@ -677,10 +680,11 @@ function InventoryItems.SetAllSlots(tbl,topDown,forceSyncronous)
                         widget.setVisible(SlotPath,true);
                         widget.setVisible(SlotPath .. "background",true);
                         widget.setVisible(SlotPath .. "count",true);
+                        widget.setData(SlotPath,tostring(GlobalSlot));
                         local Value = SortedTable[GlobalSlot];
                         local Previous;
-                        if InternalInventoryItems ~= nil then
-                            Previous = InternalInventoryItems[GlobalSlot];
+                        if OldInventory ~= nil then
+                            Previous = OldInventory[GlobalSlot];
                         else
                             Previous = 0;
                         end
@@ -694,7 +698,7 @@ function InventoryItems.SetAllSlots(tbl,topDown,forceSyncronous)
                             end
                         end
                         if Value ~= nil then
-                            NewInventory[GlobalSlot] = {name = Value.name,count = Value.count,parameters = Value.parameters};
+                            InternalInventoryItems[GlobalSlot] = {name = Value.name,count = Value.count,parameters = Value.parameters};
                         end
                         if (GlobalSlot > 200 or not Enabled) and GlobalSlot % 2 == 0 and forceSyncronous ~= true and coroutine.running() ~= nil then
                             coroutine.yield();
@@ -715,7 +719,7 @@ function InventoryItems.SetAllSlots(tbl,topDown,forceSyncronous)
     if forceSyncronous ~= true and coroutine.running() ~= nil then
         UICore.RemoveCoroutineInjection(Injection);
     end
-    InternalInventoryItems = NewInventory;
+    --InternalInventoryItems = NewInventory;
     SettingInventoryItems = false;
     --sb.logInfo("Ending");    
 end
@@ -1034,7 +1038,19 @@ function AllItemsExtract()
                     ConduitContainerUUIDMap[StringConduit].ID = conduit.UUID;
                 end
             end
-            InventoryItems.SetAllSlots(Buffer.GetBufferList(),true,true);
+            if UniversalRefreshRoutine ~= nil then
+                 UICore.CancelCoroutine(UniversalRefreshRoutine);
+             end
+             UniversalRefreshRoutine = UICore.AddAsyncCoroutine(function()
+                --sb.logInfo("Internal Inventory Items = " .. sb.print(InternalInventoryItems));
+                InventoryItems.SetAllSlots(Buffer.GetBufferList(),true);
+                UICore.CancelCoroutine(UniversalRefreshRoutine);
+            end,function()
+             --sb.logInfo("Buffer Canceled");
+                --SettingInventoryItems = false;
+                UniversalRefreshRoutine = nil;
+            end);
+            --InventoryItems.SetAllSlots(Buffer.GetBufferList(),true,true);
         end
     end,Item,Count,true);
 end
