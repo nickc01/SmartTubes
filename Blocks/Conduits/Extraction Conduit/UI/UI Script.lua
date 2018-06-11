@@ -21,7 +21,7 @@ function init()
         Result = root.assetJson(path);
     end);
     coroutine.resume(Test,"/Blocks/Conduits/Item Conduit/Item Conduit.object");--]]
-    sb.logInfo("Result = " .. sb.print(Result));
+    --sb.logInfo("Result = " .. sb.print(Result));
 	ExtractionUI.AddCopyBufferChangeFunction(CopyBufferChange);
 	ExtractionUI.Initialize();
 end

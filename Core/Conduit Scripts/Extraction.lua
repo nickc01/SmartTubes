@@ -526,7 +526,7 @@ end
 
 --Sets the container Cache
 function __Extraction__.SetContainerCache(Contents,UUID)
-	sb.logInfo("Replacing Extraction for " .. sb.print(SourceID) .. " from " .. sb.print(ContainerQueryUUID) .. " to = " .. sb.print(UUID));
+	--sb.logInfo("Replacing Extraction for " .. sb.print(SourceID) .. " from " .. sb.print(ContainerQueryUUID) .. " to = " .. sb.print(UUID));
 	AllContainerItems = Contents;
 	ContainerQueryUUID = UUID;
 end

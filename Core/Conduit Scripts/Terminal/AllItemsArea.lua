@@ -248,7 +248,7 @@ __SlotClick__ = function(name,data)
        -- sb.logInfo("Item in buffer = " .. sb.print(Buffer.GetFromBuffer(InventoryItems.GetItem(tonumber(data)),"DefaultExtractable")));
         --SetSelectedItem(InventoryItems.GetItemWithSort(tonumber(data)));
         local ItemInSlot = InventoryItems.GetItem(tonumber(data));
-        sb.logInfo("Item In Slot = " .. sb.print(ItemInSlot));
+        --sb.logInfo("Item In Slot = " .. sb.print(ItemInSlot));
         local BufferItem = Buffer.GetFromBuffer(ItemInSlot,"DefaultExtractable");
         if BufferItem == nil then
             if ItemInSlot ~= nil then
@@ -391,7 +391,7 @@ function InventoryItems.SetItem(item,slot,forceSyncronous)
    -- sb.logInfo("Type In = " .. sb.print(type(rawget(InternalInventoryItems,slot))));
    -- sb.logInfo("Type Out = " .. sb.print(type(item)));
    --[[ if type(rawget(InternalInventoryItems,slot)) == type(item) then
-        sb.logInfo("Short Circuit");
+        --sb.logInfo("Short Circuit");
         SettingInventoryItems = false;
         return nil;
     end--]]
@@ -459,7 +459,7 @@ end
 function InventoryItems.GetItem(slot)
     --return rawget(InternalInventoryItems,slot);
    -- sb.logInfo("Internal Inventory Items = " .. sb.print(InternalInventoryItems));
-   sb.logInfo("Internal Inventory Items = " .. sb.print(#InternalInventoryItems));
+   --sb.logInfo("Internal Inventory Items = " .. sb.print(#InternalInventoryItems));
     return InternalInventoryItems[slot];
 end
 
@@ -559,7 +559,7 @@ function InventoryItems.SetAllSlots(tbl,topDown,forceSyncronous)
         return nil;
     end
     local SortedTable = ApplySearch(tbl);
-    sb.logInfo("Size = " .. sb.print(#SortedTable));
+    --sb.logInfo("Size = " .. sb.print(#SortedTable));
     local MaxSlot = #SortedTable;
     local RowNumber = math.ceil(MaxSlot / SlotsPerRow);
     local SlotAtRow = ((MaxSlot - 1) % SlotsPerRow) + 1;
@@ -986,7 +986,7 @@ end
 
 --Called when the extract button in the all items pane is clicked
 function AllItemsExtract()
-    sb.logInfo("EXTRACTING");
+    --sb.logInfo("EXTRACTING");
     --TODO Extract the selected Item
     local Item = widget.itemSlotItem("allItemsSelectedItemSlot");
    --[[ if Item == nil or ItemBuffer[Item.name] == nil then
@@ -1008,11 +1008,11 @@ function AllItemsExtract()
         end
     end,Item,Count);--]]
     UICore.CallMessageOnce(SourceID,"ExtractFromNetwork",function(result)
-        if result == nil then
+        --[[if result == nil then
             sb.logInfo("result = nil");
         else
             sb.logInfo("result = " .. sb.printJson(result,1));
-        end
+        end--]]
         if result ~= nil and result.Amount > 0 then
             local NetworkInfo = TerminalUI.GetNetworkInfo();
             for _,conduit in ipairs(result.DirectConduits) do

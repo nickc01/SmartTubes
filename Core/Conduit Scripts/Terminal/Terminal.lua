@@ -106,9 +106,9 @@ UpdateNetwork = function()
 		end
 		UpdatingNetwork = true;
 		local Injection = Server.AddCoroutineInjection(function() UpdatingNetwork = false; end);
-		sb.logInfo("Network changed = " .. sb.print(ConduitCore.NetworkHasChanged("TerminalFindings")));
-		sb.logInfo("Force CHange = " .. sb.print(ForceUpdate));
-		sb.logInfo("Updating Network");
+		--sb.logInfo("Network changed = " .. sb.print(ConduitCore.NetworkHasChanged("TerminalFindings")));
+		--sb.logInfo("Force CHange = " .. sb.print(ForceUpdate));
+		--sb.logInfo("Updating Network");
 		local Network = ConduitCore.GetNetwork("TerminalFindings");
 		local Containers = {};
 		ForceUpdate = false;
@@ -165,7 +165,7 @@ UpdateNetwork = function()
 				end
 			end
 		end
-		sb.logInfo("FULL CONTAINER CONNECTIONS = " .. sb.print(ContainerConnections));
+		--sb.logInfo("FULL CONTAINER CONNECTIONS = " .. sb.print(ContainerConnections));
 		local ConduitInfo = {};
 		for index,conduit in ipairs(Network) do
 			--if world.entityExists(conduit) then
@@ -189,7 +189,7 @@ UpdateNetwork = function()
 				Info.Position = world.entityPosition(conduit);
 				Info.TerminalData = world.callScriptedEntity(conduit,"ConduitCore.GetTerminalData");
 				Info.ObjectName = world.entityName(conduit);
-				sb.logInfo("Index = " .. sb.print(index));
+				--sb.logInfo("Index = " .. sb.print(index));
 				Info.ConduitType = world.getObjectParameter(conduit,"conduitType");
 				if Info.ConduitType == "extraction" or Info.ConduitType == "io" then
 					--Check if the Conduit hs extractable from the terminal
@@ -409,10 +409,10 @@ function ExtractFromNetwork(item,count,plusSend)
 							world.containerConsume(container,{name = item.name,count = Available,parameters = item.parameters});
 							if plusSend == true then
 								--Send the Item to the terminal
-								sb.logInfo("Now Send");
-								sb.logInfo("Available = " .. sb.print(Available));
+								--sb.logInfo("Now Send");
+								--sb.logInfo("Available = " .. sb.print(Available));
 								for number in SplitIter(Available,1000) do
-									sb.logInfo("Sending = " .. sb.print(number));
+									--sb.logInfo("Sending = " .. sb.print(number));
 									PostExtract(world.callScriptedEntity(conduit,"__Extraction__.GetExtraction"),{name = item.name,count = number,parameters = item.parameters},nil,container);
 								end
 							end
@@ -432,7 +432,7 @@ function ExtractFromNetwork(item,count,plusSend)
 					Return.Amount = Return.Amount + ConduitInfo.Amount;
 					ConduitInfo.UUID = sb.makeUuid();
 					for _,container in ipairs(AffectedContainers) do
-						sb.logInfo("Container Connections = " .. sb.print(ContainerConnections));
+						--sb.logInfo("Container Connections = " .. sb.print(ContainerConnections));
 						local LocalConnections = ContainerConnections[tostring(container)];
 						for _,extraction in ipairs(LocalConnections.Extraction) do
 							if extraction == conduit then

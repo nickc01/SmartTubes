@@ -467,7 +467,7 @@ function __Insertion__.SetContainerCache(Contents,UUID)
 	if __Extraction__ ~= nil then
 		return __Extraction__.SetContainerCache(Contents,UUID);
 	else
-		sb.logInfo("Replacing Insertion for " .. sb.print(SourceID) .. " from " .. sb.print(ContainerQueryUUID) .. " to = " .. sb.print(UUID));
+		--sb.logInfo("Replacing Insertion for " .. sb.print(SourceID) .. " from " .. sb.print(ContainerQueryUUID) .. " to = " .. sb.print(UUID));
 		AllContainerItems = Contents;
 		ContainerQueryUUID = UUID;
 	end

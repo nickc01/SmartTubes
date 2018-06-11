@@ -94,7 +94,7 @@ end
 
 Debug = function(str)
 	if Debugging == true then
-		sb.logInfo(str);
+		--sb.logInfo(str);
 	end
 end
 

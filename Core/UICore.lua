@@ -162,7 +162,7 @@ function UICore.LoopCallContinuously(ID,func,Message,ParamFunc)
 					CallFunc = Result;
 				end
 				if CallFunc == true then
-					sb.logInfo("CallFuncParameters = " .. sb.print(CallFuncParameters));
+					--sb.logInfo("CallFuncParameters = " .. sb.print(CallFuncParameters));
 					func(table.unpack(CallFuncParameters));
 				end
 			end
