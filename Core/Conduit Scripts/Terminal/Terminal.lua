@@ -1,5 +1,6 @@
 require("/Core/ConduitCore.lua");
 require("/Core/ServerCore.lua");
+require("/Core/Conduit Scripts/Terminal/SafeCommunicateServer.lua");
 
 --Declaration
 
@@ -61,6 +62,7 @@ function Terminal.Initialize()
 	ConduitCore.AddPostInitFunction(PostInit);
 	ConduitCore.SetConnectionPoints({{0,-1},{-1,0},{-1,1},{-1,2},{0,3},{1,3},{2,3},{3,2},{3,1},{3,0},{2,-1},{1,-1}});
 	ConduitCore.Initialize();
+	SafeCommunicate.Initialize();
 	SetMessages();
 end
 
@@ -93,6 +95,17 @@ Update = function(dt)
 		end);
 		--UpdateNetwork();
 	end
+	if Data.GetNetwork ~= nil then
+		local Network = Data.GetNetwork();
+		if Network ~= nil then
+			for _,conduit in ipairs(Network) do
+				local Position = world.entityPosition(conduit);
+				if Position ~= nil then
+					world.loadRegion({Position[1] - 5,Position[2] - 5,Position[1] + 5,Position[2] + 5});
+				end
+			end
+		end
+	end
 	--UpdateNetwork();
 end
 
@@ -101,15 +114,18 @@ UpdateNetwork = function()
 	if ForceUpdate == true or ConduitCore.NetworkHasChanged("TerminalFindings") and Data.SetNetwork ~= nil then
 		if UpdatingNetwork == true then
 			while(UpdatingNetwork == true) do
+				--sb.logInfo("Yield");
 				coroutine.yield();
 			end
 		end
 		UpdatingNetwork = true;
+		--sb.logInfo("UPDATING NETWORK");
 		local Injection = Server.AddCoroutineInjection(function() UpdatingNetwork = false; end);
 		--sb.logInfo("Network changed = " .. sb.print(ConduitCore.NetworkHasChanged("TerminalFindings")));
 		--sb.logInfo("Force CHange = " .. sb.print(ForceUpdate));
 		--sb.logInfo("Updating Network");
 		local Network = ConduitCore.GetNetwork("TerminalFindings");
+		--sb.logInfo("Network Size = " .. sb.print(#Network));
 		local Containers = {};
 		ForceUpdate = false;
 		ContainerConnections = {};
@@ -118,6 +134,7 @@ UpdateNetwork = function()
 				local Pos = world.entityPosition(conduit);
 				if world.callScriptedEntity(conduit,"ConduitCore.FullyLoaded") ~= true then
 					ForceUpdate = true;
+					--sb.logInfo("Not Fully Loaded Yet");
 					UpdatingNetwork = false;
 					return nil;
 				end
@@ -166,11 +183,13 @@ UpdateNetwork = function()
 			end
 		end
 		--sb.logInfo("FULL CONTAINER CONNECTIONS = " .. sb.print(ContainerConnections));
+		coroutine.yield();
 		local ConduitInfo = {};
 		for index,conduit in ipairs(Network) do
 			--if world.entityExists(conduit) then
 				--sb.logInfo("Conduit = " .. sb.print(conduit));
 				--sb.logInfo("Exists = " .. sb.print(world.entityExists(conduit)));
+				if not world.entityExists(conduit) then goto Continue end;
 				local Info = {};
 				ConduitInfo[tostring(conduit)] = Info;
 				--Conduit Info Here
@@ -200,7 +219,15 @@ UpdateNetwork = function()
 					end
 					coroutine.yield();
 				end
+				if Info.ConduitType == "sender" then
+					Info.Wireless = true;
+					Info.WirelessConnections = world.callScriptedEntity(conduit,"GetReceivingConnections");
+				elseif Info.ConduitType == "receiver" then
+					Info.Wireless = true;
+					Info.WirelessConnections = world.callScriptedEntity(conduit,"GetSendingConnections");
+				end
 			--end
+			::Continue::
 		end
 		--sb.logInfo("ALL NETWORK CONTAINERS = " .. sb.printJson(Containers,1));
 		Data.SetNetworkContainers(Containers);

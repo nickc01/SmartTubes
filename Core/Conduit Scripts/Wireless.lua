@@ -13,18 +13,29 @@ local NodeChangeFunctions;
 
 --Functions
 local UniIter;
+local TblEqual;
 
 --Returns all the input connection for this 
 function Wireless.GetInputConnections()
 	if object.isInputNodeConnected(0) then
-		if InputCache == nil then
+		--if InputCache == nil then
 			local Nodes = object.getInputNodeIds(0);
 			local Final = {};
 			for i,_ in UniIter(Nodes) do
 				Final[#Final + 1] = tonumber(i);
 			end
-			InputCache = Final;
-		end
+			if InputCache ~= nil and not TblEqual(InputCache,Final) then
+				--sb.logInfo("Updated = " .. sb.print(entity.id()));
+				--sb.logInfo("Input Cache = " .. sb.print(InputCache));
+				--sb.logInfo("Final = " .. sb.print(Final));
+				--sb.logInfo("Equal = " .. sb.print(TblEqual(InputCache,Final)));
+				InputCache = Final;
+				onNodeConnectionChange();
+			else
+				InputCache = Final;
+			end
+			--InputCache = Final;
+		--end
 		return InputCache;
 	end
 end
@@ -32,14 +43,24 @@ end
 --Returns all the output connection for this 
 function Wireless.GetOutputConnections()
 	if object.isOutputNodeConnected(0) then
-		if OutputCache == nil then
+		--if OutputCache == nil then
 			local Nodes = object.getOutputNodeIds(0);
 			local Final = {};
 			for i,_ in UniIter(Nodes) do
 				Final[#Final + 1] = tonumber(i);
 			end
-			OutputCache = Final;
-		end
+			if OutputCache ~= nil and not TblEqual(OutputCache,Final) then
+				--sb.logInfo("Updated = " .. sb.print(entity.id()));
+				--sb.logInfo("Output Cache = " .. sb.print(OutputCache));
+				--sb.logInfo("Final = " .. sb.print(Final));
+				--sb.logInfo("Equal = " .. sb.print(TblEqual(OutputCache,Final)));
+				OutputCache = Final;
+				onNodeConnectionChange();
+			else
+				OutputCache = Final;
+			end
+			--OutputCache = Final;
+		--end
 		return OutputCache;
 	end
 end
@@ -93,12 +114,33 @@ function onNodeConnectionChange()
 	OutputCache = nil;
 	if ConduitCore ~= nil then
 		ConduitCore.TriggerNetworkUpdate("Conduits");
+		ConduitCore.TriggerNetworkUpdate("TerminalFindings");
 	end
 	
 	if NodeChangeFunctions ~= nil then
 		for _,func in ipairs(NodeChangeFunctions) do
 			func();
 		end
+	end
+end
+
+--Returns true if the tables are equal and false otherwise
+TblEqual = function(a,b)
+	if jsize(a) ~= jsize(b) then
+		--sb.logInfo("A");
+		return false;
+	else
+		for i=1,#a do
+			--[[for j=1,#b do
+				if a[i] ~= b[j] then
+					return false;
+				end
+			end--]]
+			if a[i] ~= b[i] then
+				return false;
+			end
+		end
+		return true;
 	end
 end
 

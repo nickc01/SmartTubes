@@ -1,5 +1,6 @@
 if ContainerArea ~= nil then return nil end;
 require("/Core/Conduit Scripts/Terminal/ViewWindow.lua");
+require("/Core/Conduit Scripts/Terminal/SafeCommunicate.lua");
 
 --Declaration
 ContainerArea = {};
@@ -31,6 +32,8 @@ local ContainerUpdateRate = 0.3;
 local ContainerUpdateTimer = 0;
 local SourceID;
 local ItemConfigCache = {};
+local SetContainerRoutine;
+local UpdateContainerRoutine;
 
 --Functions
 local Update;
@@ -50,6 +53,8 @@ function ContainerArea.Initialize()
 	SourceID = config.getParameter("MainObject") or pane.sourceEntity();
 	widget.registerMemberCallback(ContainerItemList,"__SlotClick__",__SlotClick__);
 	widget.registerMemberCallback(ContainerItemList,"__SlotRightClick__",__SlotRightClick__);
+	SetContainerRoutine = sb.makeUuid();
+	UpdateContainerRoutine = sb.makeUuid();
 	local OldUpdate = update;
 	update = function(dt)
 		if OldUpdate ~= nil then
@@ -62,24 +67,33 @@ end
 --The Update Loop for the Container Area
 Update = function(dt)
 	if Container ~= nil then
-		if not world.entityExists(Container) then
-			ContainerArea.Disable();
-		else
+		--if not world.entityExists(Container) then
+		--	ContainerArea.Disable();
+		--else
 			ContainerUpdateTimer = ContainerUpdateTimer + dt;
 			if ContainerUpdateTimer > ContainerUpdateRate then
 				ContainerUpdateTimer = 0;
-				for i=1,ContainerSize do
-					UpdateContainerSlot(i);
-				end
+				UICore.QuickAsync(UpdateContainerRoutine,function()
+					local Items = SafeCommunicate.GetContainerItemsAsync(Container);
+					--sb.logInfo("Items Update = " .. sb.print(Items));
+					ContainerItems = Items;
+					if Items == nil then
+						ContainerArea.Disable();
+						return nil;
+					end
+					for i=1,ContainerSize do
+						UpdateContainerSlot(i,Items[i]);
+					end
+				end);
 			end
-		end
+		--end
 	end
 end
 
 --Updates a specific Slot
-UpdateContainerSlot = function(slot)
+UpdateContainerSlot = function(slot,item)
 	if Container ~= nil then
-		local Item = world.containerItemAt(Container,slot - 1);
+		local Item = item or world.containerItemAt(Container,slot - 1);
 		SlotTable[slot].Set(Item);
 	end
 end
@@ -94,7 +108,9 @@ function ContainerArea.Enable(bool)
 		end
 		if Enabled == false then
 			--Container = nil;
-			ContainerArea.SetContainer(nil);
+			--ContainerArea.SetContainer(nil);
+			UICore.CancelCoroutine(SetContainerRoutine);
+			Container = nil;
 		end
 	end
 end
@@ -108,68 +124,96 @@ end
 --Set "extraction" parameter to true if this container has a connected extraction conduit
 --Set "insertion" parameter to true if this container has a connected insertion conduit
 function ContainerArea.SetContainer(container,extraction,insertion)
-	if Container ~= container then
-		Container = container;
-		if Container == nil then
-			ContainerArea.Disable();
-		else
-			ContainerArea.Enable();
-			widget.setText(ContainerName,world.getObjectParameter(Container,"shortdescription") or world.entityName(Container));
-			widget.clearListItems(ContainerItemList);
-			local Size = world.containerSize(Container);
-			ContainerSize = Size;
-			widget.setItemSlotItem(ContainerBox,{name = world.entityName(Container),count = 1});
-			local CurrentListItem = ContainerItemList .. "." .. widget.addListItem(ContainerItemList);
-			local H = 1;
-			if extraction == true then
-				ContainerExtraction = true;
-				widget.setVisible(ExtractButton,true);
-				widget.setVisible(SendHereButton,true);
+	UICore.QuickAsync(SetContainerRoutine,function()
+		if Container ~= container then
+			if container == nil then
+				ContainerArea.Disable();
 			else
-				ContainerExtraction = false;
-				widget.setVisible(ExtractButton,false);
-				widget.setVisible(SendHereButton,false);
+				SelectedSlot = nil;
+				local SizePromise = SafeCommunicate.GetContainerSize(container);
+				local ItemsPromise = SafeCommunicate.GetContainerItems(container);
+				local DescriptionPromise = SafeCommunicate.GetObjectParameter(container,"shortdescription");
+				local NamePromise = SafeCommunicate.GetObjectName(container);
+				local Size,Items,Description,Name = SafeCommunicate.AwaitAll(SizePromise,ItemsPromise,DescriptionPromise,NamePromise);
+				--sb.logInfo("Size = " .. sb.print(Size));
+				--sb.logInfo("Items = " .. sb.print(Items));
+				--sb.logInfo("Description = " .. sb.print(Description));
+				--sb.logInfo("Name = " .. sb.print(Name));
+				--sb.logInfo("EXTRACTION = " .. sb.print(extraction));
+				--sb.logInfo("INSERTIOn = " .. sb.print(insertion));
+				if Items == nil then return nil end;
+				ContainerArea.Enable();
+				Description = Description or Name;
+				widget.setText(ContainerName,Description);
+				widget.clearListItems(ContainerItemList);
+				--local Size = world.containerSize(container);
+				ContainerSize = Size;
+				ContainerItems = Items;
+				widget.setItemSlotItem(ContainerBox,{name = Name,count = 1});
+				local CurrentListItem = ContainerItemList .. "." .. widget.addListItem(ContainerItemList);
+				local H = 1;
+				if extraction == true then
+					ContainerExtraction = true;
+					--sb.logInfo("Extractable");
+					widget.setVisible(ExtractButton,true);
+					widget.setVisible(SendHereButton,true);
+				else
+					ContainerExtraction = false;
+					--sb.logInfo("Not Extractable");
+					widget.setVisible(ExtractButton,false);
+					widget.setVisible(SendHereButton,false);
+				end
+				if insertion == true then
+					ContainerInsertion = true;
+					widget.setVisible(InsertButton,true);
+				else
+					ContainerInsertion = false;
+					widget.setVisible(InsertButton,false);
+				end
+				for i=1,Size do
+					SlotTable[i] = {};
+					if H > 12 then
+						CurrentListItem = ContainerItemList .. "." .. widget.addListItem(ContainerItemList);
+						H = 1;
+					end
+					--local Item = world.containerItemAt(container,i - 1);
+					local Item = Items[i];
+					local SlotName = CurrentListItem .. ".slot" .. H;
+					widget.setItemSlotItem(SlotName,Item);
+					SlotTable[i].Set = function(newItem)
+						widget.setItemSlotItem(SlotName,newItem);
+					end
+					SlotTable[i].Get = function()
+						return widget.itemSlotItem(SlotName);
+					end
+					SlotTable[i].GetWidget = function()
+						return SlotName;
+					end
+					widget.setData(SlotName,tostring(i));
+					widget.setVisible(SlotName,true);
+					widget.setVisible(SlotName .. "background",true);
+					H = H + 1;
+				end
+				widget.setButtonEnabled(SendHereButton,false);
+				--sb.logInfo("Extract False");
+				widget.setButtonEnabled(ExtractButton,false);
+				widget.setButtonEnabled(InsertButton,false);
 			end
-			if insertion == true then
-				ContainerInsertion = true;
-				widget.setVisible(InsertButton,true);
-			else
-				ContainerExtraction = false;
-				widget.setVisible(InsertButton,false);
-			end
-			for i=1,Size do
-				SlotTable[i] = {};
-				if H > 12 then
-					CurrentListItem = ContainerItemList .. "." .. widget.addListItem(ContainerItemList);
-					H = 1;
-				end
-				local Item = world.containerItemAt(Container,i - 1);
-				local SlotName = CurrentListItem .. ".slot" .. H;
-				widget.setItemSlotItem(SlotName,Item);
-				SlotTable[i].Set = function(newItem)
-					widget.setItemSlotItem(SlotName,newItem);
-				end
-				SlotTable[i].Get = function()
-					return widget.itemSlotItem(SlotName);
-				end
-				SlotTable[i].GetWidget = function()
-					return SlotName;
-				end
-				widget.setData(SlotName,tostring(i));
-				widget.setVisible(SlotName,true);
-				widget.setVisible(SlotName .. "background",true);
-				H = H + 1;
-			end
-			widget.setButtonEnabled(SendHereButton,false);
-			widget.setButtonEnabled(ExtractButton,false);
-			widget.setButtonEnabled(InsertButton,false);
+			Container = container;
 		end
-	end
+	end);
+end
+
+function ContainerArea.GetContainer()
+	return Container;
 end
 
 function ContainerArea.__ContainerBoxClicked__()
 	if Container ~= nil then
-		ViewWindow.SetPosition(world.entityPosition(Container));
+		UICore.AddAsyncCoroutine(function()
+			ViewWindow.SetPosition(SafeCommunicate.GetObjectPositionAsync(Container));
+		end);
+		--ViewWindow.SetPosition(world.entityPosition(Container));
 	end
 end
 
@@ -222,7 +266,8 @@ end
 
 --Puts an item in a Container, returns true if successful and returns the amount sent over
 PutItemInContainer = function(Item,Slot,Container)
-	local SlotItem = world.containerItemAt(Container,Slot - 1);
+	--local SlotItem = world.containerItemAt(Container,Slot - 1);
+	local SlotItem = ContainerItems[Slot];
 	if SlotItem == nil then
 		world.sendEntityMessage(SourceID,"PutItemInContainer",Item,Container,Slot);
 		return true,Item.count;
@@ -294,13 +339,16 @@ SetSelectedSlot = function(slot)
 			SelectedSlot = slot;
 			if SelectedSlot == nil then
 				widget.setButtonEnabled(SendHereButton,false);
+				--sb.logInfo("Extract False 2");				
 				widget.setButtonEnabled(ExtractButton,false);
 				widget.setButtonEnabled(InsertButton,false);
 				widget.setText("amountBox","");
 			else
 				HighlightSlot(SelectedSlot,true);
 				local SlotItem = SlotTable[SelectedSlot].Get();
+				--sb.logInfo("IS EXTRACTABLE = " .. sb.print(ContainerExtraction));
 				if ContainerExtraction == true then
+					--sb.logInfo("Extract True");
 					widget.setButtonEnabled(SendHereButton,true);
 					widget.setButtonEnabled(ExtractButton,true);
 					if SlotItem ~= nil then
@@ -310,6 +358,7 @@ SetSelectedSlot = function(slot)
 					end
 				else
 					widget.setButtonEnabled(SendHereButton,false);
+					--sb.logInfo("Extract False 3");					
 					widget.setButtonEnabled(ExtractButton,false);
 				end
 				if ContainerInsertion == true then
@@ -343,7 +392,7 @@ GetItemConfig = function(itemName)
 end
 
 --Called when the Extract Button is Clicked
-function Extract()
+function __Extract()
 	if Container ~= nil and ContainerExtraction == true and SelectedSlot ~= nil then
 		--TODO, set up the amount area
 		local AmountText = widget.getText("amountBox");

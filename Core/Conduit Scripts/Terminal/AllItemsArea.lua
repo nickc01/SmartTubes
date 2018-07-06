@@ -844,7 +844,7 @@ ApplySearch = function(tbl)
 end
 
 --Called when the all Items Area Search Box is updated
-allItemsSearchBoxUpdated = function()
+__allItemsSearchBoxUpdated = function()
     --[[if Loading then
         widget.setText("allItemsSearchBox","");
     else
@@ -867,6 +867,7 @@ StartUpAllItemsArea = function()
         --Go through all the conduits in the network
         for _,conduit in ipairs(Network) do
             local ConduitInfo = NetworkInfo[tostring(conduit)];
+            if ConduitInfo == nil then goto Continue end;
             --Get the contents of the conduit
             --local Contents = GetConduitContentsAsync(conduit,true);
             local Contents = GetConduitContentsBatch(conduit,true);
@@ -884,6 +885,7 @@ StartUpAllItemsArea = function()
                     Buffer.AddContainerToBuffers(tonumber(stringContainer),ContainerItems,conduit,ConduitInfo);
                 end
             end
+            ::Continue::
         end
         --TODO -- TODO -- TODO Convert the buffer to a numerical table and display the table
         InventoryItemsRefreshable = true;
@@ -913,6 +915,9 @@ StartUpAllItemsArea = function()
                 local Added,Removed = GetTableChanges(NewNetwork,Network);
                 --Loop through all the Removed conduits and their contents
                 for _,conduit in ipairs(Removed) do
+                    if NetworkInfo[tostring(conduit)] == nil then
+                        goto Continue;
+                    end
                     local Contents = GetConduitContentsCached(conduit);
                     if Contents ~= nil then
                         for stringContainer,ContainerItems in pairs(Contents) do
@@ -920,22 +925,30 @@ StartUpAllItemsArea = function()
                         end
                     end
                     EraseConduitContentsCache(conduit);
+                    ::Continue::
                 end
                 --Loop through all the Added Conduits and their contents
                 local NewNetworkInfo = TerminalUI.GetNetworkInfo();
                 for _,conduit in ipairs(Added) do
+                    if NewNetworkInfo[tostring(conduit)] == nil then
+                        goto Continue;
+                    end
                     local Contents = GetConduitContentsAsync(conduit,nil,NewNetworkInfo);
                     if Contents ~= nil then
                         for stringContainer,ContainerItems in pairs(Contents) do
                             Buffer.AddContainerToBuffers(tonumber(stringContainer),ContainerItems,conduit,NewNetworkInfo[tostring(conduit)]);
                         end
                     end
+                    ::Continue::
                 end
                 Network = NewNetwork;
                 NetworkInfo = NewNetworkInfo;
             end
             --Loop through all the conduits in the current network to keep the system up to date
             for _,conduit in ipairs(Network) do
+                if NetworkInfo[tostring(conduit)] == nil then
+                    goto Continue;
+                end
                 local PreviousContents = GetConduitContentsCached(conduit);
                 local Contents = GetConduitContentsAsync(conduit);
                 if Contents ~= nil and Contents ~= false then
@@ -953,6 +966,7 @@ StartUpAllItemsArea = function()
                         Buffer.AddContainerToBuffers(tonumber(stringContainer),ContainerItems,conduit,NetworkInfo[tostring(conduit)]);
                     end
                 end
+                ::Continue::
             end
             RefreshDone = false;
             if UniversalRefreshRoutine ~= nil then
@@ -979,13 +993,13 @@ StartUpAllItemsArea = function()
 end
 
 --Called when the arrow is clicked
-function allItemsArrowClicked()
+function __allItemsArrowClicked()
     --TODO
     AllItems.Enable(not Enabled);
 end
 
 --Called when the extract button in the all items pane is clicked
-function AllItemsExtract()
+function __AllItemsExtract()
     --sb.logInfo("EXTRACTING");
     --TODO Extract the selected Item
     local Item = widget.itemSlotItem("allItemsSelectedItemSlot");
@@ -1056,7 +1070,7 @@ function AllItemsExtract()
 end
 
 --Called when the Extractable checkbox is clicked
-function ExtractableUpdate()
+function __ExtractableUpdate()
     if widget.getChecked("allItemsExtractableCheckbox") == true then
         Buffer.SetCurrentBuffer("DefaultExtractable");
     else

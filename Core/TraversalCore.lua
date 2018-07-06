@@ -65,16 +65,19 @@ UpdateMovement = function()
 	local StartPosition = world.entityPosition(Path[PathIndex]);
 	--Check if traversal is over a conduit
 	if StartPosition == nil--[[ or world.callScriptedEntity(Path[PathIndex],"IsConnectingTo",ConnectionType) ~= true--]] then
+		--sb.logInfo("Start Position Nil");
 		return Traversal.Drop();
 	end
 	local NextConduit = Path[PathIndex + 1];
 	if not world.entityExists(NextConduit) then
 		UpdatePath(Path[PathIndex]);
 		if Path == nil then
+		--sb.logInfo("Cannot Find a path");			
 			return Traversal.Drop();
 		end
 		NextConduit = Path[PathIndex + 1];
 		if not world.entityExists(NextConduit) then
+			--sb.logInfo("Next conduit doesn't exist");
 			return Traversal.Drop();
 		end
 	end
@@ -83,14 +86,17 @@ UpdateMovement = function()
 		--If there is no Traversal Function for the object then try to reroute, otherwise, just drop
 		UpdatePath(Path[PathIndex]);
 		if Path == nil then
+			--sb.logInfo("Can't find new path");
 			return Traversal.Drop();
 		end
 		NextConduit = Path[PathIndex + 1];
 		if NextConduit == nil or not world.entityExists(NextConduit) then
+			--sb.logInfo("Next conduit in new path doesn't exist");
 			return Traversal.Drop();
 		else
 			TraversalFunc = world.callScriptedEntity(NextConduit,"__ConduitCore__.GetTraversalPath",SourceID,StartPosition,Path[PathIndex],Speed);
 			if TraversalFunc == nil then
+				--sb.logInfo("TraversalFunc is nil");
 				return Traversal.Drop();
 			end
 		end
@@ -98,6 +104,7 @@ UpdateMovement = function()
 	
 	MovementFunction = function(dt)
 		if not world.entityExists(NextConduit) then
+			--sb.logInfo("Movement for next conduit is nil");
 			return Traversal.Drop();
 		end
 		local Pos,Rot,Stop = TraversalFunc(dt);
@@ -132,6 +139,7 @@ end
 InitializeMovement = function()
 	UpdatePath(world.objectAt(entity.position()));
 	if Path == nil then
+		--sb.logInfo("No Path to start with");
 		return Traversal.Drop();
 	end
 	UpdateMovement();
@@ -215,6 +223,7 @@ function Traversal.Finish()
 	if Insertion ~= nil--[[ and world.entityExists(Insertion.GetID())--]] then
 		world.callScriptedEntity(Insertion.GetID(),"__Insertion__.InsertTraversalItems",SourceID);
 	else
+		--sb.logInfo("Cannot insert items");
 		Traversal.Drop();
 	end
 	projectile.die();

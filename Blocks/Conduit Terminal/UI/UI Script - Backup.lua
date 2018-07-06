@@ -355,7 +355,7 @@ local function SetColor()
 	UpdateColors();
 end
 
-function HueSlider()
+function __HueSlider()
 	--DPrint("Hue Change!");
 	if Initialized then
 		Hue = widget.getSliderValue("hueSlider");
@@ -363,7 +363,7 @@ function HueSlider()
 	end
 end
 
-function SatSlider()
+function __SatSlider()
 	--DPrint("Sat Change!");
 	if Initialized then
 		Sat = widget.getSliderValue("satSlider");

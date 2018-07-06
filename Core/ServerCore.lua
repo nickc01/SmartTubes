@@ -182,6 +182,7 @@ function Server.DefineSyncedValues(GroupName,...)
 					end
 				end
 				NewSyncedValues.UUID = newUUID or sb.makeUuid();
+				--sb.logInfo("NewSynced Values = " .. sb.printJson(NewSyncedValues,1));
 				if object ~= nil then
 					object.setConfigParameter("__" .. GroupName .. "SaveUUID",NewSyncedValues.UUID);
 					object.setConfigParameter("__" .. GroupName .. "Save",NewSyncedValues.Values);

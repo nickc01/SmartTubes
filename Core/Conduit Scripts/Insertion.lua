@@ -91,6 +91,9 @@ function Insertion.Initialize()
 		object.setConfigParameter("InsertUUID",InsertUUID);
 	end
 	ConduitCore.AddConnectionType("Containers",function(ID) return ContainerHelper.IsContainer(ID) end);
+	ConduitCore.AddConnectionUpdateFunction(function()
+		ConduitCore.TriggerNetworkUpdate("TerminalFindings");
+	end);
 	--Groups.OnUpdateFunction(GroupUpdate);
 	ConduitCore.AddPostInitFunction(PostInit);
 	ConduitCore.Initialize();
@@ -143,17 +146,33 @@ PostInit = function()
 			for _,prediction in ipairs(predictions) do
 				local Leftover = ContainerHelper.PutItemsAt(container,prediction.Item,prediction.Slot - 1);
 				if Leftover ~= nil then
-					world.spawnItem(Leftover,SourcePosition);
+					--TEST ALL POSSIBLE SLOTS
+					for _,slot in ipairs(prediction.PossibleSlots) do
+						Leftover = ContainerHelper.PutItemsAt(container,Leftover,slot - 1);
+						if Leftover == nil then
+							break;
+						end
+					end
+					if Leftover ~= nil then
+						--sb.logInfo("LeftOver = " .. sb.print(Leftover));
+						world.spawnItem(Leftover,SourcePosition);
+					end
+					--[[sb.logInfo("LeftOver = " .. sb.print(Leftover));
+					sb.logInfo("LeftOver Slot = " .. sb.print(prediction.Slot));
+					world.spawnItem(Leftover,SourcePosition);--]]
 				end
 			end
 		else
 			for _,prediction in ipairs(predictions) do
+				--sb.logInfo("Container Doesn't Exist");
+				--sb.logInfo("Dropping = " .. sb.print(prediction.Item));
 				world.spawnItem(prediction.Item,SourcePosition);
 			end
 		end
 	end
 	for _,predictions in pairs(LoadedPredictionsForTossing) do
 		for _,prediction in ipairs(predictions) do
+			--sb.logInfo("Tossing = " .. sb.print(prediction.Item));
 			world.spawnItem(prediction.Item,SourcePosition);
 		end
 	end

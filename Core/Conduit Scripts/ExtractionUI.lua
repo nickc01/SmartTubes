@@ -89,7 +89,9 @@ function ExtractionUI.Initialize()
 	if InsertionUI ~= nil then
 		ConduitNameDefault = "IO Conduit";
 	end
-	widget.setText("conduitNameBox",world.getObjectParameter(SourceID,"UISaveName",ConduitNameDefault));
+	local Result = world.getObjectParameter(SourceID,"UISaveName",ConduitNameDefault);
+	sb.logInfo("Received Result = " .. sb.print(Result));
+	widget.setText("conduitNameBox",Result);
 	UICore.Initialize();
 	--UICore.SetDefinitionTable(Data);
 	--UICore.SetAsSyncedValues("ExtractionName",SourceID,"ConduitName","");
@@ -123,6 +125,11 @@ function ExtractionUI.Initialize()
 	GetSettingsCallIndex = UICore.LoopCallContinuously(SourceID,SettingsUpdated,"__UIGetSettings__",function() return SettingsUUID end);
 	CopyBufferCallIndex = UICore.SimpleLoopCall(player.id(),"BufferIsSet",CopyBufferChange);
 end
+
+--TEST TEST TEST
+--function update(dt)
+	--sb.logInfo("Should come after");
+--end
 
 
 --Called when the config is updated
@@ -449,6 +456,7 @@ end
 
 --Increments to selected color to the next one, and returns true if successful
 function ExtractionUI.IncrementColor()
+	if Color == nil then return nil end;
 	local Index;
 	for k,color in ipairs(Colors) do
 		if Color == color then
@@ -470,6 +478,7 @@ end
 
 --Decrements to selected color to the previous one, and returns true if successful
 function ExtractionUI.DecrementColor()
+	if Color == nil then return nil end;
 	local Index;
 	for k,color in ipairs(Colors) do
 		if Color == color then

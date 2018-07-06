@@ -19,7 +19,11 @@ local Initialized = false;
 local ViewChanged = false;
 local Canvas;
 local Position;
-local Scale;
+local Scale = 1;
+local ScaleDest = Scale;
+local ScaleSpeed = 7;
+local ScaleMin = 0.125;
+local ScaleMax = 2;
 local Size;
 local PlayerID;
 local SourceID;
@@ -113,7 +117,6 @@ function ViewWindow.Initialize(canvasName)
 	Size = Canvas:size();
 	Position = {Size[1] / 2,Size[2] / 2};
 	SmoothDestination = Position;
-	Scale = 1;
 	local OldUpdate = update;
 	update = function(dt)
 		if OldUpdate ~= nil then
@@ -143,15 +146,32 @@ Update = function(dt)
 		ViewChanged = true;
 		SetPositionRaw({MousePos[1] - MouseDifference[1],MousePos[2] - MouseDifference[2]});
 	end
+	local ScaleMoved = false;
 	if SmoothSetPosition then
 		if math.abs(SmoothDestination[1] - Position[1]) > 0.01 or math.abs(SmoothDestination[2] - Position[2]) > 0.01 then
 			ViewChanged = true;
+			ScaleMoved = true;
+			--sb.logInfo("Moving To = " .. sb.print({(SmoothDestination[1] - Position[1]) * dt * SmoothSteps + Position[1],(SmoothDestination[2] - Position[2]) * dt * SmoothSteps + Position[2]}));
 		end
+		Scale = ((ScaleDest - Scale) * dt * ScaleSpeed) + Scale;
 		Position = {(SmoothDestination[1] - Position[1]) * dt * SmoothSteps + Position[1],(SmoothDestination[2] - Position[2]) * dt * SmoothSteps + Position[2]};
 	end
 	for _,func in pairs(UpdateFunctions) do
 		func(dt);
 	end
+	--sb.logInfo("Diff = " .. sb.print(ScaleDest - Scale));
+	if ScaleMoved == false and math.abs(ScaleDest - Scale) > 0.00001 then
+		ScaleMoved = true;
+		ViewChanged = true;
+		Scale = ((ScaleDest - Scale) * dt * ScaleSpeed) + Scale;
+	end
+	--if math.abs(ScaleDest - Scale) > 0.01 then
+		--sb.logInfo("Scaling To = " .. sb.print(((ScaleDest - Scale) * dt * ScaleSpeed) + Scale));
+		--Scale = ((ScaleDest - Scale) * dt * ScaleSpeed) + Scale;
+		--SmoothDestination = {SmoothDestination[1] + (ScaleDest - Scale) * SmoothDestination[1],SmoothDestination[2] + (ScaleDest - Scale) * SmoothDestination[2]};
+		--Position = {Position[1] - (ScaleDest - Scale) * Position[1],Position[2] - (ScaleDest - Scale) * Position[2]};
+	--	ViewChanged = true;
+	--end
 	for _,renderer in pairs(AddedRenderers) do
 		--Check for hovering
 		if renderer.OnHover ~= nil then
@@ -188,7 +208,7 @@ end
 
 --Draws the background image to the Canvas
 DrawBackground = function()
-	Canvas:drawTiledImage(BackgroundImage,{Position[1] * 0.7,Position[2] * 0.7},BackgroundImageSize,0.1);
+	Canvas:drawTiledImage(BackgroundImage,{Position[1] * 0.7 / Scale,Position[2] * 0.7 / Scale},BackgroundImageSize,0.1);
 end
 
 --Removes all the objects that are being rendered
@@ -201,9 +221,9 @@ end
 function ViewWindow.SetPosition(position)
 	ViewChanged = true;
 	if SmoothSetPosition then
-		SmoothDestination = {-(position[1] - SourcePosition[1]) * 8 * Scale + Size[1] / 2,-(position[2] - SourcePosition[2]) * 8 * Scale + Size[2] / 2};
+		SmoothDestination = {-(position[1] - SourcePosition[1]) * 8 * ScaleDest + Size[1] / 2,-(position[2] - SourcePosition[2]) * 8 * ScaleDest + Size[2] / 2};
 	else
-		Position = {-(position[1] - SourcePosition[1]) * 8 * Scale + Size[1] / 2,-(position[2] - SourcePosition[2]) * 8 * Scale + Size[2] / 2};
+		Position = {-(position[1] - SourcePosition[1]) * 8 * ScaleDest + Size[1] / 2,-(position[2] - SourcePosition[2]) * 8 * ScaleDest + Size[2] / 2};
 	end
 end
 
@@ -1068,9 +1088,9 @@ function ViewWindow.SetSelectedObject(Controller,...)
 			local Rect;
 			local ClickFunction = function(clicking)
 				if clicking == true then
-					if not world.entityExists(Controller.ObjectID()) then
+					--[[if not world.entityExists(Controller.ObjectID()) then
 						return nil;
-					end
+					end--]]
 					if func ~= nil then
 						func();
 					end
@@ -1147,4 +1167,29 @@ end
 --Removes an update function
 RemoveUpdateFunction = function(ID)
 	UpdateFunctions[ID] = nil;
+end
+
+--Clicked when the "Zoom In" Button is clicked
+function __ViewWindowZoomIn()
+	local V = 2;
+	if ScaleDest * V > ScaleMax then
+		V = ScaleMax / ScaleDest;
+	end
+	ScaleDest = ScaleDest * V;
+	SmoothDestination = {SmoothDestination[1] * V,SmoothDestination[2] * V};
+	SmoothDestination = {SmoothDestination[1] - (((V - 1) * Size[1]) / 2),SmoothDestination[2] - (((V - 1) * Size[2]) / 2)};
+end
+
+--Clicked when the "Zoom Out" Button is clicked
+function __ViewWindowZoomOut()
+	local V = 2;
+	if ScaleDest / V < ScaleMin then
+		V = ScaleDest / ScaleMin;
+	end
+	ScaleDest = ScaleDest / V;
+	--sb.logInfo("Dest = " .. sb.print(SmoothDestination));
+	SmoothDestination = {SmoothDestination[1] + (((V - 1) * Size[1]) / 2),SmoothDestination[2] + (((V - 1) * Size[2]) / 2)};
+	--SmoothDestination = {SmoothDestination[1] + (Size[1] / 1.4),SmoothDestination[2] + (Size[2] / 1.4)};
+	--SmoothDestination = {SmoothDestination[1] / 1.4,SmoothDestination[2] / 1.4};
+	SmoothDestination = {SmoothDestination[1] / V,SmoothDestination[2] / V};
 end

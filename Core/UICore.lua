@@ -27,6 +27,7 @@ function UICore.Initialize()
 		Initialized = true;
 		local OldUpdate = update;
 		update = function(dt)
+			--sb.logInfo("Should come After 2");
 			if OldUpdate ~= nil then
 				OldUpdate(dt);
 			end
@@ -54,12 +55,32 @@ function UICore.Initialize()
 	end
 end
 
---Adds a coroutine function to be called asycronously each frame
-function UICore.AddAsyncCoroutine(Coroutine,onCancel)
+function UICore.QuickAsync(ID,Coroutine,onCancel)
 	if Initialized == false then
 		UICore.Initialize();
 	end
-	local ID = sb.makeUuid();
+	if CoroutineCalls[ID] ~= nil then
+		UICore.CancelCoroutine(ID);
+	end
+	UICore.AddAsyncCoroutine(Coroutine,onCancel,ID);
+end
+
+--Returns true if the async function is done
+function UICore.AsyncDone(ID)
+	if CoroutineCalls[ID] == nil then
+		return true;
+	else
+		return false;
+	end
+end
+
+--Adds a coroutine function to be called asycronously each frame
+--If an ID is passed, it must be unique
+function UICore.AddAsyncCoroutine(Coroutine,onCancel,id)
+	if Initialized == false then
+		UICore.Initialize();
+	end
+	local ID = id or sb.makeUuid();
 	local Coroutine = coroutine.create(function()
 		ThreadToID[coroutine.running()] = ID;
 		Coroutine();
@@ -80,13 +101,7 @@ function UICore.AddAsyncCoroutine(Coroutine,onCancel)
 	CoroutineCalls[ID] = Table;
 	local Value,Error = coroutine.resume(Coroutine,0);
 	if Value == false then
-		if pcall(function()
-			sb.logError(Error or "");
-		end) then
-
-		else
-			error(Error);
-		end
+		error(Error or "");
 	elseif Value ~= nil then
 		local Type = type(Value);
 		if Type == "string" then

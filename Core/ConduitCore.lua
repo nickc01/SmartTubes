@@ -18,11 +18,13 @@ local Connections = {};
 local ConnectionTypes = {
 	Conduits = {
 		Condition = function(ID) return world.getObjectParameter(ID,"conduitType") ~= nil end,
-		Connections = {};
+		Connections = {},
+		Enabled = true;
 	},
 	TerminalFindings = {
 		Condition = function(ID) return world.getObjectParameter(ID,"conduitType") ~= nil end,
-		Connections = {}
+		Connections = {},
+		Enabled = true;
 	}
 };
 local NumOfConnections = 4;
@@ -343,38 +345,40 @@ function ConduitCore.UpdateSelf()
 		else
 			local Added = false;
 			for ConnectionType,ConnectionData in pairs(ConnectionTypes) do
-				if world.entityExists(Object) and ConnectionData.Condition(Object) == true and (world.callScriptedEntity(Object,"ConduitCore.IsConduit") ~= true or world.callScriptedEntity(Object,"ConduitCore.FitsInConnectionPoints",ConduitCore.GetAllSpaces(SourceID)) == true) then
-					if Added == false then
-						Added = true;
-						if Connections[i] ~= Object then
-							Connections[i] = Object;
-							ConnectionsAreChanged = true;
-						end
-					end
-					--Set the Value to the object and update the network if needed
-					if ConnectionData.Connections[i] ~= Object then
-						if ConnectionTypesAreChanged[ConnectionType] == nil then
-							ConnectionTypesAreChanged[ConnectionType] = true;
-							if UsingNetworkForType[ConnectionType] == true then
-								PostFuncs[#PostFuncs + 1] = function() NetworkChange(ConnectionType) end;
+				--if ConnectionData.Enabled == true then
+					if world.entityExists(Object) and ConnectionData.Condition(Object) == true and (world.callScriptedEntity(Object,"ConduitCore.IsConduit") ~= true or world.callScriptedEntity(Object,"ConduitCore.FitsInConnectionPoints",ConduitCore.GetAllSpaces(SourceID)) == true) then
+						if Added == false then
+							Added = true;
+							if Connections[i] ~= Object then
+								Connections[i] = Object;
+								ConnectionsAreChanged = true;
 							end
-							PostFuncs[#PostFuncs + 1] = function() __ConduitCore__.CallNetworkChangeFunctions(ConnectionType) end;
 						end
-						ConnectionData.Connections[i] = Object;
-					end
-				else
-					--Set the Value to 0 and update the network if needed
-					if ConnectionData.Connections[i] ~= 0 then
-						if ConnectionTypesAreChanged[ConnectionType] == nil then
-							ConnectionTypesAreChanged[ConnectionType] = true;
-							if UsingNetworkForType[ConnectionType] == true then
-								PostFuncs[#PostFuncs + 1] = function() NetworkChange(ConnectionType) end;
+						--Set the Value to the object and update the network if needed
+						if ConnectionData.Connections[i] ~= Object then
+							if ConnectionTypesAreChanged[ConnectionType] == nil then
+								ConnectionTypesAreChanged[ConnectionType] = true;
+								if UsingNetworkForType[ConnectionType] == true then
+									PostFuncs[#PostFuncs + 1] = function() NetworkChange(ConnectionType) end;
+								end
+								PostFuncs[#PostFuncs + 1] = function() __ConduitCore__.CallNetworkChangeFunctions(ConnectionType) end;
 							end
-							PostFuncs[#PostFuncs + 1] = function() __ConduitCore__.CallNetworkChangeFunctions(ConnectionType) end;
+							ConnectionData.Connections[i] = Object;
 						end
-						ConnectionData.Connections[i] = 0;
+					else
+						--Set the Value to 0 and update the network if needed
+						if ConnectionData.Connections[i] ~= 0 then
+							if ConnectionTypesAreChanged[ConnectionType] == nil then
+								ConnectionTypesAreChanged[ConnectionType] = true;
+								if UsingNetworkForType[ConnectionType] == true then
+									PostFuncs[#PostFuncs + 1] = function() NetworkChange(ConnectionType) end;
+								end
+								PostFuncs[#PostFuncs + 1] = function() __ConduitCore__.CallNetworkChangeFunctions(ConnectionType) end;
+							end
+							ConnectionData.Connections[i] = 0;
+						end
 					end
-				end
+				--end
 			end
 			if Added == false then
 				if Connections[i] ~= 0 then
@@ -386,6 +390,7 @@ function ConduitCore.UpdateSelf()
 	end
 	if FirstUpdateComplete == false then
 		FirstUpdateComplete = true;
+		--sb.logInfo(sb.print(entity.id()) .. " first update completed");
 	end
 	if #PostFuncs > 0 then
 		--sb.logInfo("CALLING POST FUNCS From = " .. sb.print(SourceID));
@@ -412,6 +417,17 @@ end
 --Forcefully triggers a Connection change
 function ConduitCore.TriggerConnectionUpdate(connectionType)
 	ConnectionUpdate(connectionType);
+end
+
+function ConduitCore.EnableConnection(connectionType,bool)
+	if ConnectionTypes[connectionType] ~= nil then
+		ConnectionTypes[connectionType].Enabled = bool == true;
+		ConduitCore.TriggerConnectionUpdate(connectionType);
+		ConduitCore.TriggerNetworkUpdate(connectionType);
+		--[[if bool == true then
+			ConduitCore.UpdateSelf();
+		end--]]
+	end
 end
 
 --Called whenever the network changes
@@ -613,7 +629,7 @@ function ConduitCore.GetNetwork(ConnectionType)
 			else
 				goto ContinueWithoutAddition;
 			end
-			if Connections == nil or Connections == false then goto Continue end;
+			if Connections == nil or Connections == false then sb.logInfo("Not ready for connections yet = " .. sb.print(Next[i].ID)); goto Continue end;
 			for _,connection in ipairs(Connections) do
 				if connection ~= 0 then
 					if IsInTable(Findings,connection) then
@@ -670,7 +686,7 @@ end
 --Gets the Current Connections for the Passed In Connection Type, returns false if the First Update Hasn't been completed
 function ConduitCore.GetConnections(ConnectionType)
 	--sb.logInfo("FIRST UPDATE = " .. sb.print(FirstUpdateComplete));
-	if FirstUpdateComplete and ConnectionTypes[ConnectionType] ~= nil then
+	if FirstUpdateComplete and ConnectionTypes[ConnectionType] ~= nil and ConnectionTypes[ConnectionType].Enabled == true then
 		return ConnectionTypes[ConnectionType].Connections;
 	end
 	if FirstUpdateComplete == false then
@@ -762,7 +778,7 @@ function ConduitCore.GetSpriteState()
 end
 
 --Called when the Connections have changed
-ConnectionUpdate = function()
+ConnectionUpdate = function(connectionType)
 	UpdateSprite();
 	for i=1,#ConnectionUpdateFunctions do
 		ConnectionUpdateFunctions[i]();
@@ -824,7 +840,8 @@ function ConduitCore.AddConnectionType(ConnectionType,ConditionFunction)
 	if ConnectionTypes[ConnectionType] == nil then
 		ConnectionTypes[ConnectionType] = {
 			Condition = ConditionFunction,
-			Connections = {}
+			Connections = {},
+			Enabled = true
 		};
 		ConduitCore.Update();
 	end

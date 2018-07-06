@@ -93,6 +93,7 @@ end
 
 --The Update Loop for the Terminal UI
 Update = function(dt)
+	--sb.logInfo("Player Exists = " .. sb.print(world.entityPosition(player.id())));
 	--local PreviousPosition = widget.getPosition("allItemsCanvas");
 	--widget.setPosition("allItemsCanvas",{PreviousPosition[1] - 1,PreviousPosition[2]});
 end
@@ -105,7 +106,18 @@ end
 
 --Called when the network has changed
 NetworkChange = function()
-	ContainerArea.SetContainer(nil);
+	--ContainerArea.SetContainer(nil);
+	local SelectedObject = ViewWindow.GetSelectedObject();
+	if SelectedObject ~= nil then
+		SelectedObject = SelectedObject.ObjectID();
+	end
+	local SelectedContainer = ContainerArea.GetContainer();
+	--sb.logInfo("Selected Container = " .. sb.print(SelectedContainer));
+	local ContainerFound = false;
+	if SelectedContainer == nil then
+		ContainerFound = true;
+		ContainerArea.SetContainer(nil);
+	end
 	ViewWindow.SetSelectedObject(nil);
 	local StartTime = TerminalUI.GetTime();
 	ViewWindow.Clear();
@@ -123,20 +135,22 @@ NetworkChange = function()
 			local Conduit;
 			local ID = Network[i];
 			local Info = ConduitInfo[tostring(ID)];
+			if Info == nil then goto NextConduit end;
 			local OnHover;
 			local OnClick;
+			local ChangeViewPosition = true;
 			if Info.HasMenuData == true and Info.ObjectName ~= "conduitterminal" then
 				OnHover = function(hovering)
 					DefaultHover(Conduit,hovering);
 				end
 				OnClick = function(clicking)
 					if clicking == true then
-						if not world.entityExists(ID) then
+						--[[if not world.entityExists(ID) then
 							Conduit.SetColor({150,150,150});
 							return nil;
 						else
 							Conduit.SetColor(nil);
-						end
+						end--]]
 						local ConduitPos = Conduit.GetPosition();
 						local MenuItems = {};
 						if Info.UI ~= nil then
@@ -149,7 +163,10 @@ NetworkChange = function()
 								Data.IsModified = true;
 								Data.SourcePlayer = PlayerID;
 								Data.MainObject = ID;
+								Data.TerminalID = SourceID;
 								Data.scripts[#Data.scripts + 1] = "/Core/Conduit Scripts/Terminal/TerminalGUIController.lua";
+								Data.scripts[#Data.scripts + 1] = "/Core/Conduit Scripts/Terminal/SafeCommunicateOverride.lua";
+								Data.scripts[#Data.scripts + 1] = "/Core/Conduit Scripts/Terminal/SafeCommunicateInjection.lua";
 							end
 							MenuItems[#MenuItems + 1] = "Open UI";
 							MenuItems[#MenuItems + 1] = function()
@@ -160,29 +177,40 @@ NetworkChange = function()
 					end
 				end
 			end
-			local Color;
-			if not world.entityExists(Network[i]) then
+			--local Color;
+			--[[if not world.entityExists(Network[i]) then
 				Color = {150,150,150};
+			end--]]
+			Conduit = ViewWindow.AddConduit(Network[i],Info.Position,nil,OnClick,OnHover,nil,Info.TerminalData,Info.ObjectName);
+			if Info.Wireless == true then
+				for _,connection in ipairs(Info.WirelessConnections) do
+					local connectionInfo = ConduitInfo[tostring(connection)];
+					if connectionInfo ~= nil then
+						local DestPosition = connectionInfo.Position;
+						local Line = ViewWindow.AddLine({DestPosition[1] + 0.5,DestPosition[2] + 0.5},{Info.Position[1] + 0.5,Info.Position[2] + 0.5},{255,0,0},5);
+						Line.MoveToBottom();
+					end
+				end
 			end
-			Conduit = ViewWindow.AddConduit(Network[i],Info.Position,Color,OnClick,OnHover,nil,Info.TerminalData,Info.ObjectName);
+			if SelectedObject == Network[i] then
+				OnClick(true);
+			end
+			::NextConduit::
 		end
 
 		--Render all the containers in the network
-		--sb.logInfo("OBJECTS");
 		local NetworkContainers = Data.GetNetworkContainers();
-		--sb.logInfo("NETWORK CONTAINERS = " .. sb.print(NetworkContainers));
 		for StringObject,data in pairs(NetworkContainers) do
-			--for _,object in ipairs(data) do
 			local object = tonumber(StringObject);
 			local Controller;
 			local OnClick = function(clicking)
 				if clicking == true then
-					if not world.entityExists(object) then
+					--[[if not world.entityExists(object) then
 						Controller.SetColor({150,150,150});
 						return nil;
 					else
 						Controller.SetColor(nil);
-					end
+					end--]]
 					local MenuItems = {};
 					MenuItems[#MenuItems + 1] = "View Contents";
 					MenuItems[#MenuItems + 1] = function()
@@ -196,17 +224,26 @@ NetworkChange = function()
 			local OnHover = function(hovering)
 				DefaultHover(Controller,hovering);
 			end
-			local Color;
-			if not world.entityExists(object) then
+			--local Color;
+			--[[if not world.entityExists(object) then
 				Color = {150,150,150};
+			end--]]
+			Controller = ViewWindow.AddObject(object,data.Position,nil,OnClick,OnHover,nil,data.Name);
+			if SelectedContainer == object then
+				--sb.logInfo("Found Container");
+				ContainerFound = true;
 			end
-			Controller = ViewWindow.AddObject(object,data.Position,Color,OnClick,OnHover,nil,data.Name);
 			Controller.MoveToBottom();
-			--end
+			if SelectedObject == object then
+				OnClick(true);
+			end
 		end
 	
 	--end);
 	local endTime = TerminalUI.GetTime();
+	if ContainerFound == false then
+		ContainerArea.SetContainer(nil);
+	end
 	--sb.logInfo("end Time = " .. sb.print(endTime));
 	--sb.logInfo("Difference = " .. sb.print(endTime - StartTime));
 end
@@ -304,7 +341,7 @@ DefaultHover = function(Controller,hovering)
 end
 
 --Called when the "Add Speed Upgrade" button is clicked
-function SpeedAdd()
+function __SpeedAdd()
 	--sb.logInfo("Add");
 	if Data.GetSpeed() < 20 and player.consumeItem({name = "speedupgrade",count = 1}) ~= nil then
 		Data.SetSpeed(Data.GetSpeed() + 1);
@@ -312,7 +349,7 @@ function SpeedAdd()
 end
 
 --Called when the "Remove Speed Upgrade" button is clicked
-function SpeedRemove()
+function __SpeedRemove()
 	--sb.logInfo("Remove");
 	if Data.GetSpeed() > 0 then
 		player.giveItem({name = "speedupgrade",count = 1});
@@ -321,7 +358,7 @@ function SpeedRemove()
 end
 
 --Called when the "Color Increment" button is clicked
-function ColorIncrement()
+function __ColorIncrement()
 	ColorIndex = ColorIndex + 1;
 	if ColorIndex > #Colors then
 		ColorIndex = 1;
@@ -330,7 +367,7 @@ function ColorIncrement()
 end
 
 --Called when the "Color Decrement" button is clicked
-function ColorDecrement()
+function __ColorDecrement()
 	ColorIndex = ColorIndex - 1;
 	if ColorIndex < 1 then
 		ColorIndex = #Colors;

@@ -19,7 +19,7 @@ end
 
 --Called when the network path is needed
 ExtraPathFunction = function()
-	if ConnectedConnections == nil then
+	--if ConnectedConnections == nil then
 		local Connections = Wireless.GetOutputConnections();
 		ConnectedConnections = {};
 		if Connections ~= nil then
@@ -29,11 +29,16 @@ ExtraPathFunction = function()
 				end
 			end
 		end
-	end
+	--end
 	return ConnectedConnections;
+end
+
+function GetReceivingConnections()
+	return ExtraPathFunction();
 end
 
 --Called when the Wireless Connections are changed
 OnNodeChangeFunction = function()
 	ConnectedConnections = nil;
+	sb.logInfo("Nodes Changed = " .. sb.print(entity.id()));
 end
