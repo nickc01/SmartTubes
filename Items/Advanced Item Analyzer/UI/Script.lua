@@ -48,7 +48,7 @@ function itemBox()
 end
 
 CopyableUpdated = function(copyable)
-	sb.logInfo("Copyable Updated = " .. sb.print(copyable));
+	--sb.logInfo("Copyable Updated = " .. sb.print(copyable));
 	widget.setVisible("copyDisplayText",copyable);
 end
 
@@ -60,11 +60,11 @@ end
 SetCopyText = function(text)
 	if type(text) == "table" then
 		CopyText = sb.printJson(text);
-		sb.logInfo("CopyText = " .. sb.print(CopyText));
+		--sb.logInfo("CopyText = " .. sb.print(CopyText));
 		widget.setText("textArea.dataArea",sb.printJson(text,1));
 	else
 		CopyText = text;
-		sb.logInfo("CopyText = " .. sb.print(CopyText));
+		--sb.logInfo("CopyText = " .. sb.print(CopyText));
 		widget.setText("textArea.dataArea",text);
 	end
 	__copybox__();
@@ -75,11 +75,11 @@ function __copybox__()
 		widget.blur("copybox");
 	end
 	widget.setText("copybox",CopyText);
-	sb.logInfo("CopyBox = " .. sb.print(widget.getText("copybox")));
+	--sb.logInfo("CopyBox = " .. sb.print(widget.getText("copybox")));
 end
 
 --Called when the copy button is clicked on
 function copyButton()
-	sb.logInfo("Copy Button");
+	--sb.logInfo("Copy Button");
 	widget.focus("copybox");
 end

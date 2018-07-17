@@ -1,17 +1,17 @@
 {
-  "itemName" : "advanceditemanalyzer",
+  "itemName" : "inventoryitemanalyzer",
   "price" : 0,
   "level" : 1,
   "maxStack" : 1,
   "rarity" : "Common",
   "category" : "tool",
-  "description" : "Allows you to see all the information about an item. Right click to open UI",
-  "shortdescription" : "Advanced Item Analyzer",
+  "description" : "Click on any container to view the info about all the items in it",
+  "shortdescription" : "Inventory Item Analyzer",
   "twoHanded" : true,
 
   "inventoryIcon" : "Icon.png",
-  "scripts" : ["Advanced Item Analyzer.lua"],
-  "animation" : "Advanced Item Analyzer.animation",
+  "scripts" : ["Inventory Item Analyzer.lua"],
+  "animation" : "Inventory Item Analyzer.animation",
   "animationParts" : {
     "itemanalyzer" : "Icon.png"
   },

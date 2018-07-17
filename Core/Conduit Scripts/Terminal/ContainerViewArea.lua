@@ -34,6 +34,8 @@ local SourceID;
 local ItemConfigCache = {};
 local SetContainerRoutine;
 local UpdateContainerRoutine;
+local DoubleClickClock = 0;
+local DoubleClickThreshold = 0.5;
 
 --Functions
 local Update;
@@ -333,6 +335,7 @@ end
 SetSelectedSlot = function(slot)
 	if Container ~= nil then
 		if SelectedSlot ~= slot then
+			DoubleClickClock = os.clock();
 			if SelectedSlot ~= nil then
 				HighlightSlot(SelectedSlot,false);
 			end
@@ -366,6 +369,17 @@ SetSelectedSlot = function(slot)
 				else
 					widget.setButtonEnabled(InsertButton,false);
 				end
+			end
+		else
+			local Clock = os.clock();
+			if Clock - DoubleClickClock <= DoubleClickThreshold then
+				--Extract one item
+				DoubleClickClock = 0;
+				if Container ~= nil and ContainerExtraction == true and SelectedSlot ~= nil then
+					ExtractFromContainer(Container,SelectedSlot,1);
+				end
+			else
+				DoubleClickClock = Clock;
 			end
 		end
 	end
@@ -402,11 +416,35 @@ function __Extract()
 			AmountText = tonumber(AmountText);
 		end
 		--sb.logInfo("Amount Text = " .. sb.print(AmountText));
+		local Item = SlotTable[SelectedSlot].Get();
+		if Item ~= nil then
+			Item = {name = Item.name,count = Item.count,parameters = Item.parameters};
+		end
 		UICore.CallMessageOnce(SourceID,"ExtractFromContainer",function(success)
 			if success == true then
-				UpdateContainerSlot(SelectedSlot);
+				Item.count = Item.count - AmountText;
+				if Item.count == 0 then
+					Item = nil;
+				end
+				UpdateContainerSlot(SelectedSlot,Item);
 			end
 		end,Container,SelectedSlot,AmountText);
 		--world.sendEntityMessage(SourceID,"ExtractFromContainer",Container,SelectedSlot,AmountText);
 	end
+end
+
+function ExtractFromContainer(Container,Slot,Amount)
+	local Item = SlotTable[SelectedSlot].Get();
+	if Item ~= nil then
+		Item = {name = Item.name,count = Item.count,parameters = Item.parameters};
+	end
+	UICore.CallMessageOnce(SourceID,"ExtractFromContainer",function(success)
+		if success == true then
+			Item.count = Item.count - Amount;
+			if Item.count == 0 then
+				Item = nil;
+			end
+			UpdateContainerSlot(Slot,Item);
+		end
+	end,Container,Slot,Amount);
 end
