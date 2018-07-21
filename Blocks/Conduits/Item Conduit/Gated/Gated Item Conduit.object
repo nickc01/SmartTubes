@@ -6,7 +6,7 @@
   "description": "An item conduit that will only allow items through with a wired signal",
   "shortdescription": "Gated Item Conduit",
   "race": "generic",
-  "category": "transport",
+  "category": "storagetransport",
   "price": 45,
   "inventoryIcon": "Icon/Icon.png",
   "health": 3.0,

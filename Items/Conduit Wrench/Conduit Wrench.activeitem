@@ -4,7 +4,7 @@
   "level" : 1,
   "maxStack" : 1,
   "rarity" : "Common",
-  "category" : "tool",
+  "category" : "storagetransport",
   "description" : "Used for placing Conduits Quickly",
   "shortdescription" : "Conduit Wrench",
   "twoHanded" : true,

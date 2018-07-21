@@ -1,0 +1,47 @@
+{
+  "objectName": "craftingterminal",
+  "colonyTags": [],
+  "printable": false,
+  "rarity": "Common",
+  "description": "Allows auto-crafting of items",
+  "shortdescription": "Crafting Terminal",
+  "race": "generic",
+  "category": "station",
+  "price": 45,
+  "inventoryIcon": "Icon/Icon.png",
+  "health": 3.0,
+  "orientations": [
+    {
+      "imageLayers": [ { "image": "Terminal.png:default" } ],
+      "imagePosition": [ 0, 0 ],
+      "animationPosition": [ 0, 0 ],
+      "spaces": [
+        [ 0, 0 ],
+        [ 0, 1 ],
+        [ 0, 2 ],
+        [ 1, 0 ],
+        [ 1, 1 ],
+        [ 1, 2 ],
+        [ 2, 0 ],
+        [ 2, 1 ],
+        [ 2, 2 ]
+      ],
+      "frames": 1,
+      "spaceScan": 0.1,
+      "animationCycle": 1.0,
+      "direction": "right"
+
+    }
+  ],
+  "interactAction": "ScriptPane",
+  "interactData": "/Blocks/Crafting Terminal/UI/UI Config.config",
+  "conduitType": "terminal",
+  "animation": "/Animations/Conduit Terminal.animation",
+  "animationParts": {
+    "terminalspritebg": "Terminal.png",
+    "terminalspritefg": "TerminalLit.png"
+  },
+  "scriptDelta": 1,
+  "scripts": [ "Script.lua" ]
+
+}

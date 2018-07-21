@@ -6,7 +6,7 @@
   "description": "Extracts items from and inserts into containers",
   "shortdescription": "IO Conduit",
   "race": "generic",
-  "category": "transport",
+  "category": "storagetransport",
   "price": 45,
   "inventoryIcon": "Icon/Icon.png",
   "health": 3.0,

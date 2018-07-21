@@ -6,7 +6,7 @@
   "description": "Imports and Exports fluids and behaves like a platform",
   "shortdescription": "Platform Fluid Conduit",
   "race": "generic",
-  "category": "transport",
+  "category": "storagetransport",
   "price": 45,
   "inventoryIcon": "Icon/Icon.png",
   "health": 3.0,

@@ -6,7 +6,7 @@
   "description": "Transfers Items",
   "shortdescription": "Item Conduit",
   "race": "generic",
-  "category": "transport",
+  "category": "storagetransport",
   "price": 45,
   "inventoryIcon": "/Blocks/Conduits/Item Conduit/Facade Version/Item/Icon.png",
   "smashOnBreak": true,

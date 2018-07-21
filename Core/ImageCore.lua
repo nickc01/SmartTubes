@@ -37,6 +37,14 @@ end
 
 --Attempts to get the frame file corresponding to an image
 function ImageCore.GetFrameOfImage(Image)
+	sb.logInfo("GetJSONTEST");
+	local Test = GetJson("/Blocks/Conduits/Extraction Conduit/test.object");
+	if Test ~= nil then
+		sb.logInfo("Test = " .. sb.printJson(Test,1));
+	else
+		sb.logInfo("Test = nil");
+	end
+	sb.logInfo("GETJSONTESTEND");
 	--sb.logInfo("FRAME IMAGE BEFORE = " .. sb.print(Image));
 	Image = string.gsub(Image,":.+$","");
 	Image = string.gsub(Image,"%?.+$","");

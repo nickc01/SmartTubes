@@ -2,7 +2,7 @@
   "itemName" : "wirelesssendingconduitfacade",
   "price" : 10,
   "rarity" : "Common",
-  "category" : "craftingMaterial",
+  "category" : "storagetransport",
   "inventoryIcon" : "Icon.png",
   "description" : "A Wireless Sending Conduit that can be embedded in the ground via Facade Wrench",
   "shortdescription" : "Wireless Sending Facade",

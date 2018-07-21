@@ -6,7 +6,7 @@
   "description": "An extraction conduit that will only extract with a wired signal",
   "shortdescription": "Wired Extraction Conduit",
   "race": "generic",
-  "category": "transport",
+  "category": "storagetransport",
   "price": 45,
   "inventoryIcon": "Icon/Icon.png",
   "health": 3.0,

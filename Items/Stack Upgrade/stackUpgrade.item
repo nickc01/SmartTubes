@@ -3,7 +3,7 @@
   "price" : 10,
   "rarity" : "Common",
   "maxStack" : 1000,
-  "category" : "craftingMaterial",
+  "category" : "storagetransport",
   "inventoryIcon" : "stackUpgrade.png",
   "description" : "Used in Extraction Conduit upgrade slot. Increases the amount you can send at once",
   "shortdescription" : "Stack Upgrade",

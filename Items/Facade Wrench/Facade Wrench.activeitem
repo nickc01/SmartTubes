@@ -4,7 +4,7 @@
   "level" : 1,
   "maxStack" : 1,
   "rarity" : "Common",
-  "category" : "tool",
+  "category" : "storagetransport",
   "description" : "Used to find and place Facade Conduits \n Hold to reveal nearby Facades",
   "shortdescription" : "Facade Wrench",
   "twoHanded" : true,

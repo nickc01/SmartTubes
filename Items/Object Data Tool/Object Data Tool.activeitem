@@ -4,7 +4,7 @@
   "level" : 1,
   "maxStack" : 1,
   "rarity" : "Common",
-  "category" : "tool",
+  "category" : "storagetransport",
   "description" : "Hold the tool, click a conduit and it will drop the conduit with its settings saved",
   "shortdescription" : "Conduit Saver",
   "twoHanded" : true,

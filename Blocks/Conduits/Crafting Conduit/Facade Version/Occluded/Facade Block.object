@@ -6,7 +6,7 @@
   "description": "Crafts Items",
   "shortdescription": "Crafting Conduit",
   "race": "generic",
-  "category": "transport",
+  "category": "storagetransport",
   "price": 45,
   "inventoryIcon": "/Blocks/Conduits/Crafting Conduit/Facade Version/Item/Icon.png",
   "smashOnBreak": true,

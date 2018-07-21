@@ -6,7 +6,7 @@
   "description" : "Transports Items",
   "shortdescription" : "Curved Conduit 2x2",
   "race" : "generic",
-  "category" : "transport",
+  "category" : "storagetransport",
   "price" : 45,
   "inventoryIcon" : "Curve.png:default.0",
   "health" : 3.0,

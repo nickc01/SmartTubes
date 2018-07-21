@@ -6,7 +6,7 @@
   "description": "Extracts items from containers",
   "shortdescription": "Extraction Conduit",
   "race": "generic",
-  "category": "transport",
+  "category": "storagetransport",
   "price": 45,
   "inventoryIcon": "/Blocks/Conduits/Extraction Conduit/Facade Version/Item/Icon.png",
   "smashOnBreak": true,

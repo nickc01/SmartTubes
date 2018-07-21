@@ -6,7 +6,7 @@
   "description": "Allows control of your Smart Tubes System",
   "shortdescription": "Conduit Terminal",
   "race": "generic",
-  "category": "transport",
+  "category": "storagetransport",
   "price": 45,
   "inventoryIcon": "Icon/Icon.png",
   "health": 3.0,

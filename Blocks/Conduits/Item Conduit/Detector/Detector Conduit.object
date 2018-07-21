@@ -6,7 +6,7 @@
   "description": "Emits a signal when an item travels over it",
   "shortdescription": "Detector Conduit",
   "race": "generic",
-  "category": "transport",
+  "category": "storagetransport",
   "price": 45,
   "inventoryIcon": "Icon/Icon.png",
   "health": 3.0,

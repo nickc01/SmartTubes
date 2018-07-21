@@ -4,7 +4,7 @@
   "level" : 1,
   "maxStack" : 1,
   "rarity" : "Common",
-  "category" : "tool",
+  "category" : "storagetransport",
   "description" : "Click on any container to view the info about all the items in it",
   "shortdescription" : "Inventory Item Analyzer",
   "twoHanded" : true,

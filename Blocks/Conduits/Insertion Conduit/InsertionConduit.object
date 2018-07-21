@@ -6,7 +6,7 @@
   "description": "Inserts items into containers",
   "shortdescription": "Insertion Conduit",
   "race": "generic",
-  "category": "transport",
+  "category": "storagetransport",
   "price": 45,
   "inventoryIcon": "Icon/Icon.png",
   "health": 3.0,

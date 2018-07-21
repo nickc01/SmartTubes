@@ -6,7 +6,7 @@
   "description": "Transports Items Wirelessly and behaves like a platform",
   "shortdescription": "Wireless Sending Platform",
   "race": "generic",
-  "category": "transport",
+  "category": "storagetransport",
   "price": 45,
   "inventoryIcon": "Icon/Icon.png",
   "health": 3.0,

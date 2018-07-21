@@ -6,7 +6,7 @@
   "description": "Extracts items from containers and behaves like a platform",
   "shortdescription": "Platform Extraction Conduit",
   "race": "generic",
-  "category": "transport",
+  "category": "storagetransport",
   "price": 45,
   "inventoryIcon": "Icon/Icon.png",
   "health": 3.0,

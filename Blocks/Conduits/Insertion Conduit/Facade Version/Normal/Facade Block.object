@@ -6,7 +6,7 @@
   "description": "Inserts Items Into Containers",
   "shortdescription": "Insertion Conduit",
   "race": "generic",
-  "category": "transport",
+  "category": "storagetransport",
   "price": 45,
   "inventoryIcon": "/Blocks/Conduits/Insertion Conduit/Facade Version/Item/Icon.png",
   "smashOnBreak": true,

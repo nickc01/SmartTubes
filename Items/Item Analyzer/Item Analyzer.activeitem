@@ -4,7 +4,7 @@
   "level" : 1,
   "maxStack" : 1,
   "rarity" : "Common",
-  "category" : "tool",
+  "category" : "storagetransport",
   "description" : "Allows you to see certain information about an item",
   "shortdescription" : "Item Analyzer",
   "twoHanded" : true,
