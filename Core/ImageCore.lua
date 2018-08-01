@@ -30,6 +30,13 @@ local TranslateImage;
 GetJson = function(File)
 	local Result = nil;
 	coroutine.resume(coroutine.create(function() Result = root.assetJson(File) end));
+	--[[sb.logInfo("File = " .. sb.print(File));
+	if Result == nil then
+		sb.logInfo("Result = nil");
+	else
+		sb.logInfo("Result = " .. sb.printJson(Result));
+	end--]]
+	--sb.logInfo("Result = " .. sb.printJson());
 	return Result;
 	--pcall(function() Result = root.assetJson(File) end);
 	--return Result;
@@ -37,14 +44,6 @@ end
 
 --Attempts to get the frame file corresponding to an image
 function ImageCore.GetFrameOfImage(Image)
-	sb.logInfo("GetJSONTEST");
-	local Test = GetJson("/Blocks/Conduits/Extraction Conduit/test.object");
-	if Test ~= nil then
-		sb.logInfo("Test = " .. sb.printJson(Test,1));
-	else
-		sb.logInfo("Test = nil");
-	end
-	sb.logInfo("GETJSONTESTEND");
 	--sb.logInfo("FRAME IMAGE BEFORE = " .. sb.print(Image));
 	Image = string.gsub(Image,":.+$","");
 	Image = string.gsub(Image,"%?.+$","");

@@ -1,21 +1,21 @@
 require("/Core/ConduitCore.lua");
 
 --Variables
-local Enabled = true;
+--local Enabled = true;
 
 --Functions
-local Enable;
+--local Enable;
 
 function init()
 	ConduitCore.Initialize();
-	local InputCount = object.inputNodeCount();
+	--[[local InputCount = object.inputNodeCount();
 	if InputCount > 0 then
 		ConduitCore.SetTraversalFunction(TraversalPathFunction);
 		onNodeConnectionChange();
-	end
+	end--]]
 end
 
-TraversalPathFunction = function(SourceTraversalID,StartPosition,PreviousID,Speed)
+--[[TraversalPathFunction = function(SourceTraversalID,StartPosition,PreviousID,Speed)
 	onNodeConnectionChange();
 	local EndPosition = entity.position();
 	local Time = 0;
@@ -29,13 +29,13 @@ TraversalPathFunction = function(SourceTraversalID,StartPosition,PreviousID,Spee
 			end
 		end
 	end
-end
+end--]]
 
-function onInputNodeChange(args)
+--[[function onInputNodeChange(args)
 	onNodeConnectionChange();
-end
+end--]]
 
-function onNodeConnectionChange()
+--[[function onNodeConnectionChange()
 	sb.logInfo("Node Change");
 	local InputCount = object.inputNodeCount();
 	sb.logInfo("InputCount = " .. sb.print(InputCount));
@@ -51,14 +51,14 @@ function onNodeConnectionChange()
 		end
 		Enable(false);
 	end
-end
+end--]]
 
-Enable = function(bool)
+--[[Enable = function(bool)
 	sb.logInfo("Enabled = " .. sb.print(bool));
 	if Enabled ~= bool then
 		Enabled = bool;
 		ConduitCore.EnableConnection("Conduits",bool);
 	end
-end
+end--]]
 
 

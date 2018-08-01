@@ -36,7 +36,7 @@ function Private.init()
 	--sb.logInfo("Should be On Top Init");
 	SafeCommunicate.Initialize();
 	local ScriptCallbacks = config.getParameter("scriptWidgetCallbacks");
-	sb.logInfo("Script Callbacks = " .. sb.print(ScriptCallbacks));
+	--sb.logInfo("Script Callbacks = " .. sb.print(ScriptCallbacks));
 	--StringToLuaLink("test1.t4.best.link.ever.tbl");
 	for _,callback in ipairs(ScriptCallbacks) do
 		--local Tbl,Link = StringToLuaLink(callback);

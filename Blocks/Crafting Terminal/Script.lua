@@ -1,10 +1,10 @@
-require("/Core/Conduit Scripts/Terminal/Terminal.lua");
+require("/Core/Conduit Scripts/Crafting Terminal/Crafting.lua");
 
 --Variables
 
 --Functions
 
---the init function for the conduit terminal
+--the init function for the crafting terminal
 function init()
-	Terminal.Initialize();
+	Crafting.Initialize();
 end

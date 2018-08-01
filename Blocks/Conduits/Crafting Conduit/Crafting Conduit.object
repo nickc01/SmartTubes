@@ -22,8 +22,6 @@
 
     }
   ],
-  "interactAction": "ScriptPane",
-  "interactData": "/Blocks/Conduits/Crafting Conduit/UI/UI Config.config",
   "animation": "/Animations/Cable.animation",
   "animationParts": {
     "cables": "Cable/Cable.png"

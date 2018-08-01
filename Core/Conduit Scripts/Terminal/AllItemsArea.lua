@@ -565,10 +565,6 @@ function InventoryItems.SetAllSlots(tbl,topDown,forceSyncronous)
     local SlotAtRow = ((MaxSlot - 1) % SlotsPerRow) + 1;
     if InternalInventoryItems ~= nil then
         if InternalInventorySize ~= #SortedTable then
-           -- sb.logInf(GlobalSlot > 200 or not Enabled)o("Size Change");
-           -- sb.logInf(GlobalSlot > 200 or not Enabled)o("RowNumber = " .. sb.print(RowNumber));
-           -- sb.logInf(GlobalSlot > 200 or not Enabled)o("Slot Rows = " .. sb.print(#SlotRows));
-            --Check the(GlobalSlot > 200 or not Enabled) rows
             if #SlotRows < RowNumber then
                 for i=#SlotRows,RowNumber do
                     local NewSlot = widget.addListItem(AllItemsList);

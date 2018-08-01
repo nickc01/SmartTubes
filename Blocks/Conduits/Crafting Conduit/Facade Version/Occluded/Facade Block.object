@@ -26,10 +26,8 @@
   "frameCooldown": 5,
   "autoCloseCooldown": 3600,
   "slotCount": 1,
-  "interactAction": "ScriptPane",
-  "interactData": "/Blocks/Conduits/Crafting Conduit/UI/UI Config.config",
   "conduitType": "crafting",
   "scriptDelta": 2,
-  "scripts": [ "/Core/ContainerCore.lua", "/Blocks/Conduits/Crafting Conduit/Script.lua", "/Core/CableCore.lua", "/Core/Facade/Facade.lua" ]
+  "scripts": [ "/Blocks/Conduits/Crafting Conduit/Script.lua","/Core/Facade/Facade.lua" ]
 
 }
