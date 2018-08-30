@@ -145,7 +145,7 @@ UpdateNetwork = function()
 				end--]]
 				if ConnectedContainers ~= false then
 					for _,container in ipairs(ConnectedContainers) do
-						if container ~= 0 then
+						if container ~= 0 and world.entityExists(container) then
 							local StringContainer = tostring(container);
 							if ContainerConnections[StringContainer] == nil then
 								ContainerConnections[StringContainer] = {

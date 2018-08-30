@@ -854,6 +854,7 @@ end
 StartUpAllItemsArea = function()
     MainLoadingRoutine = UICore.AddAsyncCoroutine(function()
         --Set the Values to thier default state
+        --sb.logInfo("Above ID is Main Loading Routine");
         InventoryItemsRefreshable = false;
         InventoryItems.EnableLoading();
         InventoryItems.Clear();
@@ -871,13 +872,6 @@ StartUpAllItemsArea = function()
             if Contents ~= nil then
                 --Loop through all the containers and their contents
                 for stringContainer,ContainerItems in pairs(Contents) do
-                    --If the container is already added, then increment the container counter and move to the next container
-                   --[[ if AddContainer(Container) == 1 then
-                        --Add the contents of the container to the Buffer
-                        for slot,item in ipairs(ContainerItems) do
-                            Buffer.AddToBuffers(item,conduit,ConduitInfo);
-                        end
-                    end--]]
                     Buffer.AddContainerToBuffers(tonumber(stringContainer),ContainerItems,conduit,ConduitInfo);
                 end
             end
@@ -889,21 +883,25 @@ StartUpAllItemsArea = function()
         UniversalRefreshRoutine = UICore.AddAsyncCoroutine(function()
             --sb.logInfo("Search Started");
             --sb.logInfo("Internal Inventory Items = " .. sb.print(InternalInventoryItems));
+           -- sb.logInfo("Refresh Started 2");
             InventoryItems.SetAllSlots(Buffer.GetBufferList(),true);
             UICore.CancelCoroutine(UniversalRefreshRoutine);
         end,function()
             --sb.logInfo("Search Canceled");
             --SettingInventoryItems = false;
+            --sb.logInfo("Refresh Done 2");
             RefreshDone = true;
             UniversalRefreshRoutine = nil;
         end);
         --InventoryItems.SetAllSlots(Buffer.GetBufferList(),true);
         InventoryItems.DisableLoading();
         while(RefreshDone == false) do
+            --sb.logInfo("Yield 2");
             coroutine.yield();
         end
         --Go Into passive mode, where you make sure the inventory items stay up to date
         while(true) do
+          --  sb.logInfo("D");
             local NewNetwork = TerminalUI.GetNetwork();
             --If the Network Has Changed
             if Network ~= NewNetwork then
@@ -940,27 +938,59 @@ StartUpAllItemsArea = function()
                 Network = NewNetwork;
                 NetworkInfo = NewNetworkInfo;
             end
+           -- sb.logInfo("C");
             --Loop through all the conduits in the current network to keep the system up to date
             for _,conduit in ipairs(Network) do
+                --sb.logInfo("B");
                 if NetworkInfo[tostring(conduit)] == nil then
                     goto Continue;
                 end
                 local PreviousContents = GetConduitContentsCached(conduit);
                 local Contents = GetConduitContentsAsync(conduit);
+                --sb.logInfo("A");
                 if Contents ~= nil and Contents ~= false then
-                   -- sb.logInfo("Contents Have changed");
-                    --The Contents have been updated
-                    --Remove the previous contents
+                    sb.logInfo("Contents Have changed for conduit of " .. sb.print(conduit));
+                    sb.logInfo("From = " .. sb.print(PreviousContents));
+                    sb.logInfo("To = " .. sb.print(Contents));
+
+                    --Update the contents
                     if PreviousContents ~= nil then
                         for stringContainer,ContainerItems in pairs(PreviousContents) do
-                            --sb.logInfo("Removing = " .. sb.print(stringContainer));
+                            --If container is in the new contents, then just do an update, rather than removing the container
+                            if Contents[stringContainer] ~= nil then
+                                sb.logInfo("Updating");
+                                Buffer.UpdateContainerInBuffers(tonumber(stringContainer),ContainerItems,Contents[stringContainer],conduit,NetworkInfo[tostring(conduit)])
+                            else
+                                --Otherwise, just remove the container
+                                sb.logInfo("Removing");
+                                Buffer.RemoveContainerFromBuffers(tonumber(stringContainer),ContainerItems,conduit,NetworkInfo[tostring(conduit)]);
+                            end
+                        end
+                    end
+                    for stringContainer,ContainerItems in pairs(Contents) do
+                        --If the container is in the previous contents, then don't do anything, since it's already updated from the previous step
+                        if PreviousContents[stringContainer] ~= nil then
+                            goto Continue;
+                        end
+                        --Otherwise, just add the container
+                        sb.logInfo("Adding");
+                        Buffer.AddContainerToBuffers(tonumber(stringContainer),ContainerItems,conduit,NetworkInfo[tostring(conduit)]);
+                        ::Continue::
+                    end
+                    --Buffer.UpdateContainerInBuffers(tonumber(stringContainer),ContainerItems,conduit,NetworkInfo[tostring(conduit)])
+                    --The Contents have been updated
+                    --Remove the previous contents
+                   --[[ if PreviousContents ~= nil then
+                        for stringContainer,ContainerItems in pairs(PreviousContents) do
+                            sb.logInfo("Removing = " .. sb.print(stringContainer));
                             Buffer.RemoveContainerFromBuffers(tonumber(stringContainer),ContainerItems,conduit,NetworkInfo[tostring(conduit)]);
                         end
                     end
                     --Add the current contents
                     for stringContainer,ContainerItems in pairs(Contents) do
+                        sb.logInfo("Adding = " .. sb.print(stringContainer));
                         Buffer.AddContainerToBuffers(tonumber(stringContainer),ContainerItems,conduit,NetworkInfo[tostring(conduit)]);
-                    end
+                    end--]]
                 end
                 ::Continue::
             end
@@ -971,16 +1001,20 @@ StartUpAllItemsArea = function()
             UniversalRefreshRoutine = UICore.AddAsyncCoroutine(function()
                 --sb.logInfo("Search Started");
                 --sb.logInfo("Internal Inventory Items = " .. sb.print(InternalInventoryItems));
+                --sb.logInfo("Refresh Started 1, ID = " .. sb.print(UniversalRefreshRoutine));
                 InventoryItems.SetAllSlots(Buffer.GetBufferList(),true);
+                --sb.logInfo("Refresh Finishing 1");
                 UICore.CancelCoroutine(UniversalRefreshRoutine);
             end,function()
                 --sb.logInfo("Search Canceled");
                 --SettingInventoryItems = false;
+                --sb.logInfo("Refresh Done 1");
                 RefreshDone = true;
                 UniversalRefreshRoutine = nil;
             end);
             --InventoryItems.SetAllSlots(Buffer.GetBufferList());
             while(RefreshDone == false) do
+               -- sb.logInfo("Yield 1");
                 coroutine.yield();
             end
             --InventoryItems.Refresh();
@@ -1205,8 +1239,9 @@ end
 --Adds an entire container's contents to the buffers
 function Buffer.AddContainerToBuffers(container,contents,sourceID,sourceInfo)
     for mode,data in pairs(Buffer.Modes) do
-        if data.ContainerAlgorithm(container,sourceID,sourceInfo) == true and AddContainer(container,mode) == 1 then
+        if data.ContainerAlgorithm(container,sourceID,sourceInfo) == true and AddTrackedContainer(container,mode,sourceID) == 1 then
             --sb.logInfo("Adding = " .. sb.print(container));
+            sb.logInfo("Adding " .. sb.print(container) .. " to buffer " .. sb.print(mode) .. " with = " .. sb.print(sourceID) .. " and = " .. sb.print(sourceInfo.ConduitType));
             for slot,item in ipairs(contents) do
                 Buffer.AddToBuffers(item,sourceID,sourceInfo,mode);
             end
@@ -1217,10 +1252,29 @@ end
 --Removes an entire container's contents from the buffers
 function Buffer.RemoveContainerFromBuffers(container,contents,sourceID,sourceInfo)
     for mode,data in pairs(Buffer.Modes) do
-        if data.ContainerAlgorithm(container,sourceID,sourceInfo) == true and RemoveContainer(container,mode) == 0 then
+        sb.logInfo("Mode = " .. sb.print(mode));
+        if data.ContainerAlgorithm(container,sourceID,sourceInfo) == true and RemoveTrackedContainer(container,mode,sourceID) == 0 then
            -- sb.logInfo("Removing = " .. sb.print(container));
+           sb.logInfo("Removing " .. sb.print(container) .. " from buffer " .. sb.print(mode) .. " with = " .. sb.print(sourceID) .. " and = " .. sb.print(sourceInfo.ConduitType));
             for slot,item in ipairs(contents) do
                 Buffer.RemoveFromBuffers(item,sourceID,sourceInfo,mode);
+            end
+        end
+    end
+end
+
+--Updates the Contents of the buffers by removing the old content and adding the new content
+function Buffer.UpdateContainerInBuffers(container,OldContents,NewContents,sourceID,sourceInfo)
+    for mode,data in pairs(Buffer.Modes) do
+        sb.logInfo("sourceID = " .. sb.print(sourceID) .. " | PrimaryConduit = " .. sb.print(GetPrimaryContainerConduit(container,mode)))
+        if data.ContainerAlgorithm(container,sourceID,sourceInfo) == true and GetPrimaryContainerConduit(container,mode) == sourceID then
+            if OldContents ~= nil then
+                for slot,item in ipairs(OldContents) do
+                    Buffer.RemoveFromBuffers(item,sourceID,sourceInfo,mode);
+                end
+            end
+            for slot,item in ipairs(NewContents) do
+                Buffer.AddToBuffers(item,sourceID,sourceInfo,mode);
             end
         end
     end
@@ -1424,8 +1478,10 @@ end
 
 --Adds a container to the container Tracker
 AddContainer = function(container,bufferName)
+    sb.logInfo("AC");
     local container = tostring(container);
     local AddedContainers = Buffer.Modes[bufferName].AddedContainers;
+    sb.logInfo("Current Added Containers " .. sb.print(bufferName) .. " 1 = " .. sb.print(AddedContainers[container]));
     if AddedContainers[container] == nil then
         AddedContainers[container] = 1;
         --sb.logInfo("ADD COUNT = " .. sb.print(1));
@@ -1437,10 +1493,76 @@ AddContainer = function(container,bufferName)
     end
 end
 
---Removes a container from the Container Tracker
-RemoveContainer = function(container,bufferName)
+--Adds a container to track
+AddTrackedContainer = function(container,bufferName,sourceConduit)
+    sb.logInfo("AC2");
     local container = tostring(container);
     local AddedContainers = Buffer.Modes[bufferName].AddedContainers;
+    sb.logInfo("Current Added Containers " .. sb.print(bufferName) .. " 1 = " .. sb.print(AddedContainers[container]));
+    if AddedContainers[container] == nil then
+        AddedContainers[container] = {
+            Count = 1,
+            TrackedConduits = {sourceConduit},
+            PrimaryConduit = sourceConduit
+        };
+        --sb.logInfo("ADD COUNT = " .. sb.print(1));
+        return 1;
+    else
+        AddedContainers[container].Count = AddedContainers[container].Count + 1;
+        AddedContainers[container].TrackedConduits[#AddedContainers[container].TrackedConduits + 1] = sourceConduit;
+        --sb.logInfo("ADD COUNT = " .. sb.print(AddedContainers[container]));
+        return AddedContainers[container].Count;
+    end
+end
+
+RemoveTrackedContainer = function(container,bufferName,sourceConduit)
+    sb.logInfo("RC2");
+    local container = tostring(container);
+    local AddedContainers = Buffer.Modes[bufferName].AddedContainers;
+    sb.logInfo("Current Added Containers for " .. sb.print(bufferName) .. " 2 = " .. sb.print(AddedContainers[container]));
+    if AddedContainers[container] == nil then
+        --sb.logInfo("REMOVE COUNT = " .. sb.print(0));
+        return 0;
+    else
+        AddedContainers[container].Count = AddedContainers[container].Count - 1;
+        for index,conduit in ipairs(AddedContainers[container].TrackedConduits) do
+            if conduit == sourceConduit then
+                table.remove(AddedContainers[container].TrackedConduits,index);
+                if AddedContainers[container].PrimaryConduit == sourceConduit then
+                    AddedContainers[container].PrimaryConduit = nil;
+                    if #AddedContainers[container].TrackedConduits > 0 then
+                        AddedContainers[container].PrimaryConduit = AddedContainers[container].TrackedConduits[1];
+                    end
+                end
+                break;
+            end
+        end
+        if AddedContainers[container].Count == 0 then
+            AddedContainers[container] = nil;
+           -- sb.logInfo("REMOVE COUNT = " .. sb.print(0));
+            return 0;
+        else
+           -- sb.logInfo("REMOVE COUNT = " .. sb.print(AddedContainers[container]));
+            return AddedContainers[container].Count;
+        end
+    end
+end
+
+GetPrimaryContainerConduit = function(container,bufferName)
+    local container = tostring(container);
+    local AddedContainers = Buffer.Modes[bufferName].AddedContainers;
+    sb.logInfo("AddedContainers = " .. sb.print(AddedContainers))
+    if AddedContainers[container] ~= nil then
+        return AddedContainers[container].PrimaryConduit;
+    end
+end
+
+--Removes a container from the Container Tracker
+RemoveContainer = function(container,bufferName)
+    sb.logInfo("RC");
+    local container = tostring(container);
+    local AddedContainers = Buffer.Modes[bufferName].AddedContainers;
+    sb.logInfo("Current Added Containers for " .. sb.print(bufferName) .. " 2 = " .. sb.print(AddedContainers[container]));
     if AddedContainers[container] == nil then
         --sb.logInfo("REMOVE COUNT = " .. sb.print(0));
         return 0;

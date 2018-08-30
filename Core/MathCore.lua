@@ -68,3 +68,7 @@ end
 function RectCore.Intersect(A,B)
 	return not (A[1] > B[3] or A[2] > B[4] or A[3] < B[1] or A[4] < B[2]);
 end
+
+function RectCore.VectIntersect(Rect,Vect)
+	return not (Vect[1] > Rect[3] or Vect[1] < Rect[1] or Vect[2] > Rect[4] or Vect[2] < Rect[2]);
+end

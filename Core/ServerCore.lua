@@ -15,7 +15,7 @@ local ThreadToID = {};
 local DefinitionTable = Server;
 local Initialized = false;
 local Dying = false;
-
+local ExecutingCoroutine = nil;
 
 --Functions
 local Uninit;
@@ -51,7 +51,9 @@ function Server.Initialize()
 				CoroutineCalls[id] = nil;
 				return nil;
 			end
+			ExecutingCoroutine = id;
 			local Value,Error = coroutine.resume(Data.Coroutine,dt);
+			ExecutingCoroutine = nil;
 			if Value == false then
 				error(Error or "");
 			elseif Value ~= nil then
@@ -89,7 +91,7 @@ function Server.AddAsyncCoroutine(Coroutine,onCancel)
 		Injections = {}
 	}
 	CoroutineCalls[ID] = Table;
-	local Value,Error = coroutine.resume(Coroutine,0);
+	--[[local Value,Error = coroutine.resume(Coroutine,0);
 	if Value == false then
 		if pcall(function()
 			sb.logError(Error or "");
@@ -105,14 +107,18 @@ function Server.AddAsyncCoroutine(Coroutine,onCancel)
 		elseif Type == "function" then
 			Value();
 		end
-	end
+	end--]]
 	return ID;
+end
+
+function Server.RunningCoroutine()
+	return ExecutingCoroutine;
 end
 
 --Adds a coroutine injection
 function Server.AddCoroutineInjection(OnCancel)
-	local Running = coroutine.running();
-	local Coroutine = CoroutineCalls[ThreadToID[Running]];
+	local Running = ExecutingCoroutine;
+	local Coroutine = CoroutineCalls[Running];
 	if Coroutine ~= nil then
 		local ID = sb.makeUuid();
 		Coroutine.Injections[ID] = OnCancel;
@@ -122,8 +128,8 @@ end
 
 --Removes a coroutine injection
 function Server.RemoveCoroutineInjection(ID)
-	local Running = coroutine.running();
-	local Coroutine = CoroutineCalls[ThreadToID[Running]];
+	local Running = ExecutingCoroutine;
+	local Coroutine = CoroutineCalls[Running];
 	if Coroutine ~= nil and ID ~= nil then
 		Coroutine.Injections[ID] = nil;
 	end
@@ -174,7 +180,7 @@ function Server.DefineSyncedValues(GroupName,...)
 		local ChangeFunctions;
 
 		local SetFunction = function(newValue,newUUID)
-			if NewSyncedValues.Values[ValueName] ~= newValue then
+			if NewSyncedValues.Values[ValueName] ~= newValue or type(newValue) == "table" then
 				NewSyncedValues.Values[ValueName] = newValue;
 				if ChangeFunctions ~= nil then
 					for _,func in ipairs(ChangeFunctions) do

@@ -308,6 +308,57 @@ function Extraction.GetContainer()
 	end
 end
 
+--Finds as much of the item in the containers
+function Extraction.FindItemInContainers(item)
+	local CompareItem = {name = item.name,count = 1,parameters = item.parameters};
+	local Final = {Containers = {},Total = 0};
+	for _,container in ipairs(ConduitCore.GetConnections("Containers")) do
+		if container ~= 0 and container ~= nil then
+			local ContainerCount = world.containerAvailable(container,CompareItem);
+			Final.Total = Final.Total + ContainerCount;
+			Final.Containers[tostring(container)] = ContainerCount;
+			--[[if ContainerCount > 0 then
+				if ContainerCount >= CountRemaining then
+					Final.Total = Final.Total + CountRemaining;
+					Final.Containers[tostring(container)] = CountRemaining;
+					CountRemaining = 0;
+					break;
+				else
+					Final.Total = Final.Total + ContainerCount;
+					Final.Containers[tostring(container)] = ContainerCount;
+					CountRemaining = CountRemaining - ContainerCount;
+				end
+			end--]]
+		end
+	end
+	return Final;
+	--[[local CountRemaining = item.count;
+	local CompareItem = {name = item.name,count = 1,parameters = item.parameters};
+	local Final = {Containers = {},Total = 0};
+	for _,container in ipairs(ConduitCore.GetConnections("Containers")) do
+		if container ~= 0 and container ~= nil then
+			local ContainerCount = world.containerAvailable(container,CompareItem);
+			if ContainerCount > 0 then
+				if ContainerCount >= CountRemaining then
+					Final.Total = Final.Total + CountRemaining;
+					Final.Containers[tostring(container)] = CountRemaining;
+					CountRemaining = 0;
+					break;
+				else
+					Final.Total = Final.Total + ContainerCount;
+					Final.Containers[tostring(container)] = ContainerCount;
+					CountRemaining = CountRemaining - ContainerCount;
+				end
+			end
+		end
+	end
+	if CountRemaining == 0 then
+		return Final;
+	else
+		return nil;
+	end--]]
+end
+
 --Gets an item from the container based off of the config data
 function Extraction.GetItemFromContainer(container,debugging)
 	local Config = Extraction.GetConfig();
@@ -566,7 +617,7 @@ function Extraction.QueryContainers(uuid,asTable)
 	local Containers = ConduitCore.GetConnections("Containers");
 	if Containers == nil or Containers == false then return nil end;
 	for _,container in ipairs(Containers) do
-		if container ~= 0 then
+		if container ~= 0 and world.entityExists(container) then
 			local StringContainer = tostring(container);
 			if ContainerItems[StringContainer] == nil then
 				ContainerItems[StringContainer] = {};

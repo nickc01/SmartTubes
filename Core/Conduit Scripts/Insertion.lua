@@ -534,7 +534,7 @@ function Insertion.QueryContainers(uuid,asTable)
 	local Containers = ConduitCore.GetConnections("Containers");
 	if Containers == nil or Containers == false then return nil end;
 	for _,container in ipairs(Containers) do
-		if container ~= 0 then
+		if container ~= 0 and world.entityExists(container) then
 			local StringContainer = tostring(container);
 			if AllContainerItems[StringContainer] == nil then
 				AllContainerItems[StringContainer] = {};

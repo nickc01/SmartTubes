@@ -162,11 +162,13 @@ function ImageCore.MakePathAbsolute(Path,ObjectSource)
 	else
 		local DirectoryObject;
 		if type(ObjectSource) == "string" then
+			DirectoryObject = {name = ObjectSource,count = 1}
+		elseif type(ObjectSource) == "table" then
 			DirectoryObject = ObjectSource;
 		else
-			DirectoryObject = world.entityName(ObjectSource);
+			DirectoryObject = {name = world.entityName(ObjectSource),count = 1}
 		end
-		local Directory = root.itemConfig({name = DirectoryObject,count = 1}).directory;
+		local Directory = root.itemConfig(DirectoryObject).directory;
 		if string.find(Directory,"/$") == nil then
 			Directory = Directory .. "/";
 		end

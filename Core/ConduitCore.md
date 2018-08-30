@@ -76,7 +76,7 @@ Sets the Connection Points
 
 ---
 
-#### 'void' ConduitCore.UpdateContinously('bool' bool)
+#### 'void' ConduitCore.UpdateContinuously('bool' bool)
 
 Sets if the conduit should update continously or not
 

@@ -1,0 +1,11 @@
+{
+  "itemName" : "unknownCrafter",
+  "price" : 10,
+  "rarity" : "Common",
+  "maxStack" : 1000,
+  "category" : "unknown",
+  "inventoryIcon" : "unknownCrafter.png",
+  "description" : "Not known where this item is crafted at",
+  "shortdescription" : "Unknown Crafter",
+  "itemTags" : [ "reagent" ]
+}

@@ -30,7 +30,7 @@ local ConnectionTypes = {
 local NumOfConnections = 4;
 local SourceID;
 local SourcePosition;
-local UpdateContinously = false;
+local UpdateContinuously = false;
 local Dying = false;
 local NetworkCache = {};
 local NetworkUpdateFunctions = {};
@@ -148,7 +148,7 @@ function ConduitCore.Initialize()
 		end
 		PostInit();
 		update = function(dt)
-			if UpdateContinously == true then
+			if UpdateContinuously == true then
 				ConduitCore.Update();
 			end
 			if OldUpdate ~= nil then
@@ -798,7 +798,7 @@ end
 
 --Sets if the conduit should update continously or not
 function ConduitCore.UpdateContinuously(bool)
-	UpdateContinously = bool == true;
+	UpdateContinuously = bool == true;
 end
 
 --Sends an update Message to the Connections

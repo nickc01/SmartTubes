@@ -35,7 +35,7 @@
   ],
   "interactAction": "ScriptPane",
   "interactData": "/Blocks/Crafting Terminal/UI/UI Config.config",
-  "conduitType": "terminal",
+  "conduitType": "craftingterminal",
   "animation": "/Animations/Conduit Terminal.animation",
   "animationParts": {
     "terminalspritebg": "Terminal.png",

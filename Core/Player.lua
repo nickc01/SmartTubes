@@ -37,6 +37,9 @@ function init()
 	message.setHandler("SetUsingTerminal",function(_,_,bool)
 		UsingTerminal = bool == true;
 	end);
+	message.setHandler("ConsumeItem",function(_,_,item,consumePartial,exact)
+		return player.consumeItem(item,consumePartial,exact);
+	end);
 end
 
 --function TestFunction()

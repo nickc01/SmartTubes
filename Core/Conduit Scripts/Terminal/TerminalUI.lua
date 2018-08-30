@@ -112,11 +112,14 @@ NetworkChange = function()
 		SelectedObject = SelectedObject.ObjectID();
 	end
 	local SelectedContainer = ContainerArea.GetContainer();
+	local SelectedContainerModes = ContainerArea.GetContainerModes();
 	--sb.logInfo("Selected Container = " .. sb.print(SelectedContainer));
 	local ContainerFound = false;
 	if SelectedContainer == nil then
 		ContainerFound = true;
 		ContainerArea.SetContainer(nil);
+	else
+		local NetworkContainers = Data.GetNetworkContainers();
 	end
 	ViewWindow.SetSelectedObject(nil);
 	local StartTime = TerminalUI.GetTime();
@@ -228,10 +231,15 @@ NetworkChange = function()
 			--[[if not world.entityExists(object) then
 				Color = {150,150,150};
 			end--]]
+			sb.logInfo("Data = " .. sb.print(data));
 			Controller = ViewWindow.AddObject(object,data.Position,nil,OnClick,OnHover,nil,data.Name);
 			if SelectedContainer == object then
 				--sb.logInfo("Found Container");
 				ContainerFound = true;
+				local ExtractionMode,InsertionMode = ContainerArea.GetContainerModes();
+				if ExtractionMode ~= data.Extraction or InsertionMode ~= data.Insertion then
+					ContainerArea.SetContainer(object,data.Extraction,data.Insertion);
+				end
 			end
 			Controller.MoveToBottom();
 			if SelectedObject == object then

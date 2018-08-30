@@ -18,8 +18,10 @@ local ThreadToID = {};
 local SyncedValues = {};
 local DefinitionTable = UICore;
 local Initialized = false;
+local ExecutingCoroutine = nil;
 
 --Functions
+local SetRunningCoroutineID;
 
 --Initializes the UICore
 function UICore.Initialize()
@@ -36,10 +38,13 @@ function UICore.Initialize()
 			end
 			for id,Data in pairs(CoroutineCalls) do
 				if coroutine.status(Data.Coroutine) == "dead" then
+					--sb.logInfo("Removing Dead Coroutine of ID = " .. sb.print(id));
 					CoroutineCalls[id] = nil;
 					return nil;
 				end
+				SetRunningCoroutineID(id);
 				local Value,Error = coroutine.resume(Data.Coroutine,dt);
+				SetRunningCoroutineID(nil);
 				if Value == false then
 					error(Error or "");
 				elseif Value ~= nil then
@@ -53,6 +58,16 @@ function UICore.Initialize()
 			end
 		end
 	end
+end
+
+--Sets the currently executing Coroutine ID
+SetRunningCoroutineID = function(ID)
+	ExecutingCoroutine = ID;
+end
+
+--Gets the currently executing Coroutine ID
+function UICore.RunningCoroutine()
+	return ExecutingCoroutine;
 end
 
 function UICore.QuickAsync(ID,Coroutine,onCancel)
@@ -81,6 +96,7 @@ function UICore.AddAsyncCoroutine(Coroutine,onCancel,id)
 		UICore.Initialize();
 	end
 	local ID = id or sb.makeUuid();
+	--sb.logInfo("Creating new Coroutine of ID = " .. sb.print(ID));
 	local Coroutine = coroutine.create(function()
 		ThreadToID[coroutine.running()] = ID;
 		Coroutine();
@@ -99,7 +115,7 @@ function UICore.AddAsyncCoroutine(Coroutine,onCancel,id)
 		Injections = {}
 	}
 	CoroutineCalls[ID] = Table;
-	local Value,Error = coroutine.resume(Coroutine,0);
+	--[[local Value,Error = coroutine.resume(Coroutine,0);
 	if Value == false then
 		error(Error or "");
 	elseif Value ~= nil then
@@ -109,14 +125,15 @@ function UICore.AddAsyncCoroutine(Coroutine,onCancel,id)
 		elseif Type == "function" then
 			Value();
 		end
-	end
+	end--]]
+	--sb.logInfo("Returning ID = " .. sb.print(ID));
 	return ID;
 end
 
 --Adds a coroutine injection
 function UICore.AddCoroutineInjection(OnCancel)
-	local Running = coroutine.running();
-	local Coroutine = CoroutineCalls[ThreadToID[Running]];
+	local Running = UICore.RunningCoroutine();
+	local Coroutine = CoroutineCalls[Running];
 	if Coroutine ~= nil then
 		local ID = sb.makeUuid();
 		Coroutine.Injections[ID] = OnCancel;
@@ -126,8 +143,8 @@ end
 
 --Removes a coroutine injection
 function UICore.RemoveCoroutineInjection(ID)
-	local Running = coroutine.running();
-	local Coroutine = CoroutineCalls[ThreadToID[Running]];
+	local Running = UICore.RunningCoroutine();
+	local Coroutine = CoroutineCalls[Running];
 	if Coroutine ~= nil and ID ~= nil then
 		Coroutine.Injections[ID] = nil;
 	end
@@ -138,9 +155,12 @@ function UICore.CancelCoroutine(ID)
 	local Data = CoroutineCalls[ID];
 	if Data ~= nil then
 		if Data.OnCancel ~= nil then
+			--sb.logInfo("Y");
 			Data.OnCancel();
 		end
 		CoroutineCalls[ID] = nil;
+	--else
+		--sb.logInfo("Z");
 	end
 end
 

@@ -127,7 +127,7 @@ end
 --Set "insertion" parameter to true if this container has a connected insertion conduit
 function ContainerArea.SetContainer(container,extraction,insertion)
 	UICore.QuickAsync(SetContainerRoutine,function()
-		if Container ~= container then
+		if Container ~= container or extraction ~= ContainerExtraction or insertion ~= ContainerInsertion then
 			if container == nil then
 				ContainerArea.Disable();
 			else
@@ -208,6 +208,10 @@ end
 
 function ContainerArea.GetContainer()
 	return Container;
+end
+
+function ContainerArea.GetContainerModes()
+	return ContainerExtraction,ContainerInsertion;
 end
 
 function ContainerArea.__ContainerBoxClicked__()
