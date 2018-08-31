@@ -1,6 +1,7 @@
 require("/Core/UICore.lua");
 require("/Core/ImageCore.lua");
 require("/Core/MathCore.lua");
+require("/Core/ResizeableWindow.lua");
 
 --Declaration
 ProgressPane = {};
@@ -58,10 +59,12 @@ local MakeObjectFromData;
 
 --Initializes the Progress Pane
 function ProgressPane.Initialize()
+	--sb.logInfo("Test = " .. sb.print(config.getParameter("gui")));
 	SourceID = config.getParameter("MainObject");
 	if SourceID == nil then
 		SourceID = pane.sourceEntity();
 	end
+	RWindow.Initialize();
 	DisplaySettings.SlotImageSize = root.imageSize(DisplaySettings.SlotImage);
 	DisplaySettings.SlotImageRect = {0,0,DisplaySettings.SlotImageSize[1],DisplaySettings.SlotImageSize[2]};
 	PlayerID = pane.sourceEntity();

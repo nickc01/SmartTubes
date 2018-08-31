@@ -40,6 +40,9 @@ function init()
 	message.setHandler("ConsumeItem",function(_,_,item,consumePartial,exact)
 		return player.consumeItem(item,consumePartial,exact);
 	end);
+	message.setHandler("ConsumeCurrency",function(_,_,currencyName,amount)
+		return player.consumeCurrency(currencyName,amount);
+	end);
 end
 
 --function TestFunction()

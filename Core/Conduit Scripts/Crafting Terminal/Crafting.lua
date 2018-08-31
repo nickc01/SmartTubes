@@ -17,7 +17,8 @@ local ClientSize = 0;
 local CraftingList = {};
 local CraftListChanges = {};
 local CraftListBatch = {};
-local CurrencyList;
+local CurrencyToItemTbl = {};
+local ItemToCurrencyTbl = {};
 
 --Functions
 local PostInit;
@@ -36,7 +37,11 @@ local CurrencyToItem;
 
 --Initializes the Crafting Terminal
 function Crafting.Initialize()
-	CurrencyList = root.assetJson("/currencies.config");
+	local Currencies = root.assetJson("/currencies.config");
+	for currency,info in pairs(Currencies) do
+		CurrencyToItemTbl[currency] = info.representativeItem;
+		ItemToCurrencyTbl[info.representativeItem] = currency;
+	end
 	LearntItems = config.getParameter("LearntItems") or {};
 	LearntCrafters = config.getParameter("LearntCrafters") or {};
 	ConduitCore.SetConnectionPoints({{0,-1},{-1,0},{-1,1},{-1,2},{0,3},{1,3},{2,3},{3,2},{3,1},{3,0},{2,-1},{1,-1}});
@@ -241,9 +246,10 @@ end
 
 --Will Attempt to craft the item, and will return info about why or why not
 function Crafting.CraftItem(item,useFound,recipe,playerID,noCraft)
+	sb.logInfo("CRAFTING");
 	local Data = CheckForItem(item,useFound,recipe,playerID,noCraft);
 	--if Data.Valid == true then
-		sb.logInfo("CRAFTDATA = " .. sb.print(Data));
+		sb.logInfo("CRAFTDATA = " .. sb.printJson(Data,1));
 		--Data.ID = sb.makeUuid();
 		local CraftID = sb.makeUuid();
 		Data.FinalItem = item;
@@ -263,8 +269,9 @@ end
 
 --Attempts to craft the item and returns the amount crafted
 CraftItem = function(item,data,...)
+
 	--if data.Valid == false then
-		sb.logInfo("Complete Data BEFORE = " .. sb.printJson(data,1));
+--[[		sb.logInfo("Complete Data BEFORE = " .. sb.printJson(data,1));
 		local TotalToGet = item.count;
 		if data.FoundAmount ~= nil then
 			if data.FoundOnPlayer ~= nil then
@@ -288,11 +295,11 @@ CraftItem = function(item,data,...)
 				CraftItem(info.Item,info.Data,...,"Recipe","Ingredients","Data");
 			end
 		end
-		sb.logInfo("Complete Data = " .. sb.printJson(data,1));
+		sb.logInfo("Complete Data = " .. sb.printJson(data,1));--]]
 	--end
 end
 
-FullItemSearch = function(item,playerID,dontConsume)
+--[[FullItemSearch = function(item,playerID,dontConsume)
 	local TotalToFind = item.count;
 	local Found = {};
 	local Network = Data.GetConduitNetwork();
@@ -365,7 +372,7 @@ FullItemSearch = function(item,playerID,dontConsume)
 	end
 	--If TotalToFind is not zero then try to scan and pull any items out of the player
 	--If still not satisfied then return false
-end
+end--]]
 
 --Check if the item is craftable, and returns a table of some information as to why or why not
 function Crafting.CanCraftItem(item,useFound,recipe,playerID,noCraft)
@@ -382,8 +389,246 @@ function Crafting.GetCraftInfo(item,useFound,recipe,playerID,noCraft)
 	return CheckForItem(item,useFound,recipe,playerID,noCraft);
 end
 
-CheckForItem = function(item,useFound,usedRecipe,playerID,noCraft,totalMode)
+function FindAmountInNetwork(item)
+	local Amount = 0;
+	local Network = ConduitCore.GetConduitNetwork();
+	for i=1,#Network do
+		local Type = world.getObjectParameter(Network[i],"conduitType");
+		if Type == "extraction" or Type == "io" then
+			--sb.logInfo("Found Extraction = " .. sb.print(Network[i]));
+			local Findings = world.callScriptedEntity(Network[i],"Extraction.FindItemInContainers",item);
+			if Findings ~= nil then
+				Amount = Amount + Findings.Total;
+			end
+		end
+	end
+	return Amount;
+end
+
+function ConsumeOutOfNetwork(item,AmountToTake)
+	AmountToTake = AmountToTake or item.count;
+	local Network = ConduitCore.GetConduitNetwork();
+	for i=1,#Network do
+		local Type = world.getObjectParameter(Network[i],"conduitType");
+		if Type == "extraction" or Type == "io" then
+			--sb.logInfo("Found Extraction = " .. sb.print(Network[i]));
+			local Findings = world.callScriptedEntity(Network[i],"Extraction.FindItemInContainers",item);
+			if Findings ~= nil then
+				for stringContainer,amount in pairs(Findings.Containers) do
+					if amount >= AmountToTake then
+						world.containerConsume(tonumber(stringContainer),{name = item.name,count = AmountToTake,parameters = item.parameters});
+						AmountToTake = 0;
+						return true;
+					else
+						world.containerConsume(tonumber(stringContainer),{name = item.name,count = amount,parameters = item.parameters});
+						AmountToTake = AmountToTake - amount;
+					end
+				end
+			end
+		end
+	end
+	return false;
+end
+
+function FindOnPlayer(playerID,item)
+	local Count = world.entityHasCountOfItem(playerID,{name = item.name,count = 1,parameters = item.parameters},true) or 0;
+	if ItemToCurrencyTbl[item.name] ~= nil then
+		Count = Count + world.entityCurrency(playerID,ItemToCurrencyTbl[item.name]);
+	end
+	return Count;
+end
+
+function ConsumeFromPlayer(playerID,item,count)
+	count = count or item.count;
+	if ItemToCurrencyTbl[item.name] ~= nil then
+		world.sendEntityMessage(playerID,"ConsumeCurrency",ItemToCurrencyTbl[item.name],count);
+	else
+		world.sendEntityMessage(playerID,"ConsumeItem",{name = item.name,count = count,parameters = item.parameters},false,true);
+	end
+end
+
+--Table Layout
+--[[
+{
+	Needed = {
+		Amount,
+		Multiplier
+	}
+	Ingredients = [
+		--Recursive--
+	],
+	Output
+}
+]]
+--[[function CheckForCraftability(item,optionalRecipe,playerID)
+	local Recipes;
+	if optionalRecipe ~= nil then
+		Recipes = {optionalRecipe};
+	else
+		Recipes = root.recipesForItem(item.name);
+	end
+	if #Recipes == nil then
+		return nil;
+	end
+	local Final = {
+		Valid = true
+	};
+	local ValidRecipes = {};
+	for _,recipe in ipairs(Recipes) do
+		local NewRecipe = {
+			Ingredients = {}
+		};
+		for _,ingredient in ipairs(recipe.input) do
+			local IngredientResult = CheckForItem(ingredient,true,nil,playerID,ItemToCurrencyTbl[ingredient.name] ~= nil);
+			if IngredientResult.Valid == false then
+				goto Continue;
+			end
+			NewRecipe.Ingredients[#NewRecipe.Ingredients + 1] = IngredientResult;
+		end
+
+		::Continue::
+	end
+end--]]
+
+--Table Layout
+--[[
+{
+	Item,
+	Valid,
+	Error,
+	TotalFound,
+	Player = {
+		Found,
+		ID
+	},
+	Network = {
+		Found
+	}
+	Craft = {
+		Needed = {
+			Amount,
+			Leftovers,
+			Multiplier
+		}
+		Ingredients = [
+			--Recursive--
+		],
+		Output
+	}
+
+}--]]
+CheckForItem = function(item,useFound,usedRecipe,playerID,noCraft)
+	local Final = {
+		Item = item,
+		Valid = true,
+		Error = nil
+	}
+	local LeftToFind = item.count;
 	if useFound == nil then
+		useFound = true;
+	end
+	if useFound == true then
+		if playerID ~= nil then
+			Final.Player = {
+				Found = FindOnPlayer(playerID,item),
+				ID = playerID;
+			}
+			if Final.Player.Found > LeftToFind then
+				Final.Player.Found = LeftToFind;
+				LeftToFind = 0;
+			else
+				LeftToFind = LeftToFind - Final.Player.Found;
+			end
+		end
+		if LeftToFind ~= 0 then
+			Final.Network = {
+				Found = FindAmountInNetwork(item);
+			}
+			if Final.Network.Found > LeftToFind then
+				Final.Network.Found = LeftToFind;
+				LeftToFind = 0;
+			else
+				LeftToFind = LeftToFind - Final.Network.Found;
+			end
+		end
+	end
+	if LeftToFind == 0 then
+		sb.logInfo("AAA");
+		return Final;
+	end
+	if noCraft == nil then
+		noCraft = false;
+	end
+
+	if noCraft == false then
+		local Recipes;
+		if usedRecipe ~= nil then
+			Recipes = {usedRecipe};
+		else
+			Recipes = root.recipesForItem(item.name);
+		end
+		if #Recipes == 0 then
+			Final.Valid = false;
+			Final.Error = "Didn't find enough of " .. item.name;
+			return Final;
+		end
+		local ValidRecipes = {};
+		local RecipeErrors = {};
+		for _,recipe in ipairs(Recipes) do
+			local NewRecipe = {
+				Ingredients = {},
+				Needed = {},
+				Output = recipe.output
+			};
+			local Multiplier = math.ceil(LeftToFind / recipe.output.count);
+			local AmountToCraft = Multiplier * recipe.output.count;
+			local Leftovers = AmountToCraft - LeftToFind;
+			NewRecipe.Needed.Amount = AmountToCraft;
+			NewRecipe.Needed.Leftovers = Leftovers;
+			NewRecipe.Needed.Multiplier = Multiplier;
+			for _,ingredient in ipairs(recipe.input) do
+				local IngData = CheckForItem({name = ingredient.name,count = ingredient.count * Multiplier,parameters = ingredient.parameters},true,nil,playerID,false);
+				if IngData.Valid == false then
+					local Error = IngData.Error;
+					if type(Error) == "table" then
+						for _,error in ipairs(Error) do
+							RecipeErrors[#RecipeErrors + 1] = error;
+						end
+					else
+						RecipeErrors[#RecipeErrors + 1] = IngData.Error;
+					end
+					goto Continue;
+				end
+				NewRecipe.Ingredients[#NewRecipe.Ingredients + 1] = {
+					Item = ingredient,
+					Data = IngData
+				}
+			end
+			ValidRecipes[#ValidRecipes + 1] = NewRecipe;
+			::Continue::
+		end
+		if #ValidRecipes == 0 then
+			Final.Valid = false;
+			if #RecipeErrors == 0 then
+				Final.Error = "No Valid Recipes for " .. item.name;
+			else
+				Final.Error = RecipeErrors;
+			end
+			sb.logInfo("EEE");
+			return Final;
+		else
+			sb.logInfo("DDD");
+			Final.Craft = ValidRecipes[1];
+			return Final;
+		end
+	else
+		Final.Valid = false;
+		Final.Error = "Didn't find enough of " .. item.name .. " , ";
+		sb.logInfo("BBB");
+		return Final;
+	end
+	sb.logInfo("CCC");
+	--[[if useFound == nil then
 		useFound = true;
 	end
 	if noCraft == nil then
@@ -651,7 +896,7 @@ CheckForItem = function(item,useFound,usedRecipe,playerID,noCraft,totalMode)
 		sb.logInfo("RB  Bad -- There are no recipes for this item at all for use for " .. sb.print(item.name));
 		Result.Valid = false;
 		return Result;
-	end
+	end--]]
 end
 
 GetExactItem = function(id)
