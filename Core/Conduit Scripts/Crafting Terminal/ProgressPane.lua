@@ -57,6 +57,22 @@ local NumberToString;
 local GetDecimalPlace;
 local MakeObjectFromData;
 
+function deepcopyAsync(orig)
+	coroutine.yield();
+    local orig_type = type(orig)
+    local copy
+    if orig_type == 'table' then
+        copy = {}
+        for orig_key, orig_value in next, orig, nil do
+            copy[deepcopyAsync(orig_key)] = deepcopyAsync(orig_value)
+        end
+        --setmetatable(copy, deepcopy(getmetatable(orig)))
+    else -- number, string, boolean, etc
+        copy = orig
+    end
+    return copy
+end
+
 --Initializes the Progress Pane
 function ProgressPane.Initialize()
 	--sb.logInfo("Test = " .. sb.print(config.getParameter("gui")));
@@ -64,7 +80,7 @@ function ProgressPane.Initialize()
 	if SourceID == nil then
 		SourceID = pane.sourceEntity();
 	end
-	RWindow.Initialize();
+	--RWindow.Initialize();
 	DisplaySettings.SlotImageSize = root.imageSize(DisplaySettings.SlotImage);
 	DisplaySettings.SlotImageRect = {0,0,DisplaySettings.SlotImageSize[1],DisplaySettings.SlotImageSize[2]};
 	PlayerID = pane.sourceEntity();
@@ -88,12 +104,14 @@ function ProgressPane.Initialize()
 			else
 				--Receiving potential updates for the table
 				if Promise:result() ~= false then
+					local CraftListCopy = deepcopyAsync(CraftingList);
 					local Changes;
 					Changes,ChangesUUID = table.unpack(Promise:result());
 					--local Changes,ChangesUUID = table.unpack(Promise:result());
 					for _,change in ipairs(Changes) do
-						local TopTable = CraftingList;
-						sb.logInfo("PathTOValue = " .. sb.print(change));
+						local TopTable = CraftListCopy;
+						--sb.logInfo("PathTOValue = " .. sb.print(change));
+						sb.logInfo("Change = " .. sb.printJson(change,1));
 						if change.Operation == nil then
 							for i=1,#change.PathToValue - 1 do
 								if TopTable[change.PathToValue[i]] == nil then
@@ -122,7 +140,9 @@ function ProgressPane.Initialize()
 								table.remove(TopTable,change.NewValue);
 							end
 						end
+						coroutine.yield();
 					end
+					CraftingList = CraftListCopy;
 					CraftListUpdated();
 				end
 			end
@@ -172,9 +192,9 @@ CraftListUpdated = function()
 		if CraftingDisplays[uuid] == nil then
 			CraftingDisplays[uuid] = ProgressPane.CreateNewDisplay();
 			CraftingDisplays[uuid].SetTitle("Crafting");
-			CraftingDisplays[uuid].AddObject(MakeObjectFromData(CraftingDisplays[uuid],data.FinalItem,data),data.FinalItem.name);
+			CraftingDisplays[uuid].AddObject(MakeObjectFromData(CraftingDisplays[uuid],data.Item,data),data.Item.name);
 		else
-			UpdateObjectData(CraftingDisplays[uuid],CraftingDisplays[uuid].GetObject(data.FinalItem.name),data.FinalItem,data);
+			UpdateObjectData(CraftingDisplays[uuid],CraftingDisplays[uuid].GetObject(data.Item.name),data.Item,data);
 		end
 		local Display = CraftingDisplays[uuid];
 	end
@@ -192,15 +212,8 @@ end
 
 MakeObjectFromData = function(Display,Item,Data)
 	local Object = ProgressPane.CreateDisplayObject();
-	--[[Object.SetItem(Item);
-	Object.SetItemCount(Data);
-	if Data.Valid == false then
-		Object.SetColor(DisplaySettings.ChildrenErrorColor);
-	else
-		Object.SetColor(DisplaySettings.ChildrenColor);
-	end--]]
-	if Data.Recipe ~= nil then
-		for _,ingredient in ipairs(Data.Recipe.Ingredients) do
+	if Data.Craft ~= nil then
+		for _,ingredient in ipairs(Data.Craft.Ingredients) do
 			Object.AddObject(MakeObjectFromData(Display,ingredient.Item,ingredient.Data),ingredient.Item.name);
 		end
 	end
@@ -209,23 +222,20 @@ MakeObjectFromData = function(Display,Item,Data)
 end
 
 UpdateObjectData = function(Display,Object,Item,Data)
+	--sb.logInfo("Updating = " .. sb.print(Item));
+	Object.SetItem(Item);
+	Object.SetItemCount(Data.Required);
 	if Data.Valid == false then
 		Object.SetColor(DisplaySettings.ChildrenErrorColor);
 	else
 		Object.SetColor(DisplaySettings.ChildrenColor);
 	end
-	Object.SetItem(Item);
-	Object.SetItemCount(Data.TotalNeeded);
-	if Data.Recipe ~= nil then
-		for _,ingredient in ipairs(Data.Recipe.Ingredients) do
+	if Data.Craft ~= nil then
+		for _,ingredient in ipairs(Data.Craft.Ingredients) do
 			--Object.AddObject(MakeObjectFromData(Display,ingredient.Item,ingredient.Data,ingredient.Item.name));
 			UpdateObjectData(Display,Object.GetObject(ingredient.Item.name),ingredient.Item,ingredient.Data);
 		end
 	end
-	--if Data.Valid == false then
-		--If couldn't find enough
-
-	--end
 end
 
 --Progress canvas click callback
@@ -628,6 +638,15 @@ function ProgressPane.CreateDisplayObject()
 			end
 		else
 			error("This is not a valid Object");
+		end
+	end
+	
+	Object.Delete = function()
+		if Meta.Owner ~= nil then
+			Meta.Owner.RemoveObject(Object);
+		end
+		for i=1,#Children do
+			Children[i].Delete();
 		end
 	end
 

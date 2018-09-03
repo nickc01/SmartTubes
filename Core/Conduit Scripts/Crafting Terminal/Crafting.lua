@@ -6,6 +6,7 @@ Crafting = {};
 local Crafting = Crafting;
 
 --Variables
+local SourcePosition;
 local Data = {};
 local LearntItems = {};
 local LearntCrafters = {};
@@ -19,6 +20,49 @@ local CraftListChanges = {};
 local CraftListBatch = {};
 local CurrencyToItemTbl = {};
 local ItemToCurrencyTbl = {};
+local LeftoversBuffer = {};
+
+--Meta Tables
+local IngredientTableMeta = {
+	__index = function(tbl,k)
+		--[[for item,data in pairs(tbl) do
+			if root.itemDescriptorsMatch(item,k,true) then
+				return data;
+			end
+		end
+		return 0;--]]
+		if rawget(tbl,"__Values") == nil then
+			rawset(tbl,"__Values",{});
+		end
+		local Values = rawget(tbl,"__Values");
+		for item,count in pairs(Values) do
+			if root.itemDescriptorsMatch(item,k,true) then
+				return count;
+			end
+		end
+		return 0;
+	end,
+	__newindex = function(tbl,k,v)
+		if rawget(tbl,"__Values") == nil then
+			rawset(tbl,"__Values",{});
+		end
+		local Values = rawget(tbl,"__Values");
+		for item,count in pairs(Values) do
+			if root.itemDescriptorsMatch(item,k,true) then
+				Values[item] = v;
+				return nil;
+			end
+		end
+		Values[k] = v;
+		--rawset(tbl,k,);
+		--[[local ExistingCount = tbl[k];
+		for item,data in pairs(tbl) do
+			if root.itemDescriptorsMatch(item,k,true) then
+				
+			end
+		end--]]
+	end
+};
 
 --Functions
 local PostInit;
@@ -37,6 +81,7 @@ local CurrencyToItem;
 
 --Initializes the Crafting Terminal
 function Crafting.Initialize()
+	--TESTFUNC(2);
 	local Currencies = root.assetJson("/currencies.config");
 	for currency,info in pairs(Currencies) do
 		CurrencyToItemTbl[currency] = info.representativeItem;
@@ -51,6 +96,7 @@ function Crafting.Initialize()
 		UUID = sb.makeUuid(),
 		TimeStamp = os.clock();
 	}
+	SourcePosition = entity.position();
 	SetMessages();
 	Server.SetDefinitionTable(Data);
 	Server.DefineSyncedValues("Items","LearntItems",LearntItems);
@@ -114,17 +160,17 @@ SetMessages = function()
 				local Changes = {};
 				local CurrentIndex = #CraftListChanges;
 				--sb.logInfo("H");
-				sb.logInfo("CurrentIndex = " .. sb.print(CurrentIndex));
-				sb.logInfo("CraftListChanges = " .. sb.print(CraftListChanges));
-				sb.logInfo("CraftListChanges INdexed = " .. sb.print(CraftListChanges[CurrentIndex]));
+				--sb.logInfo("CurrentIndex = " .. sb.print(CurrentIndex));
+				--sb.logInfo("CraftListChanges = " .. sb.print(CraftListChanges));
+				--sb.logInfo("CraftListChanges INdexed = " .. sb.print(CraftListChanges[CurrentIndex]));
 				while(CurrentIndex > 0 and CraftListChanges[CurrentIndex].UUID ~= uuid) do
 					--Changes[#Changes + 1] = CraftListChanges[CurrentIndex];
 					table.insert(Changes,1,CraftListChanges[CurrentIndex]);
 					CurrentIndex = CurrentIndex - 1;
-					sb.logInfo("CurrentIndex2 = " .. sb.print(CurrentIndex));
-					sb.logInfo("CraftListChanges2 = " .. sb.print(CraftListChanges));
-					sb.logInfo("CraftListChanges INdexed2 = " .. sb.print(CraftListChanges[CurrentIndex]));
-					sb.logInfo("CurrentIndex Bool = " .. sb.print(CurrentIndex > 0));
+					--sb.logInfo("CurrentIndex2 = " .. sb.print(CurrentIndex));
+					--sb.logInfo("CraftListChanges2 = " .. sb.print(CraftListChanges));
+					--sb.logInfo("CraftListChanges INdexed2 = " .. sb.print(CraftListChanges[CurrentIndex]));
+					--sb.logInfo("CurrentIndex Bool = " .. sb.print(CurrentIndex > 0));
 					--sb.logInfo("CraftList Bool = " .. sb.print(CraftListChanges[CurrentIndex]))
 
 					--sb.logInfo("CurrentIndex = " .. sb.print(CurrentIndex));
@@ -154,8 +200,22 @@ PostInit = function()
 	Server.AddAsyncCoroutine(function()
 		while(true) do
 			NetworkUpdate(true);
-			--AddChange((CraftingList.Test or 0) + 1,"Test");
-			--sb.logInfo("Test = " .. sb.print(CraftingList.Test));
+			for CraftID,Data in pairs(CraftingList) do
+				--[[if Data ~= nil then
+					sb.logInfo("DATA = " .. sb.printJson(Data,1));
+				else
+					sb.logInfo("DATA = nil");
+				end--]]
+				local CraftedAmount = CraftItem(Data,false,nil,true,{CraftID});
+				if CraftedAmount > 0 then
+					--sb.logInfo("CraftingAmount FINAL = " .. sb.print(CraftedAmount));
+					world.spawnItem({name = Data.Item.name,count = CraftedAmount,parameters = Data.Item.parameters},SourcePosition);
+				elseif CraftedAmount == -4 then
+					AddChange("__nil__",CraftID);
+				end
+				coroutine.yield();
+			end
+			coroutine.yield();
 		end
 	end);
 end
@@ -246,57 +306,180 @@ end
 
 --Will Attempt to craft the item, and will return info about why or why not
 function Crafting.CraftItem(item,useFound,recipe,playerID,noCraft)
-	sb.logInfo("CRAFTING");
+	--sb.logInfo("CRAFTING");
 	local Data = CheckForItem(item,useFound,recipe,playerID,noCraft);
 	--if Data.Valid == true then
-		sb.logInfo("CRAFTDATA = " .. sb.printJson(Data,1));
+		--sb.logInfo("CRAFTDATA = " .. sb.printJson(Data,1));
 		--Data.ID = sb.makeUuid();
 		local CraftID = sb.makeUuid();
-		Data.FinalItem = item;
-		sb.logInfo("VALID CRAFT");
+		--Data.FinalItem = item;
+		--sb.logInfo("VALID CRAFT");
 		--sb.logInfo("Size of CraftingList = " .. sb.print(#CraftingList));
 		--AddChangeOperation("Insert",{#CraftingList},Data);
 		AddChange(Data,CraftID);
 		local OnCancel = function()
-
+			AddChange("__nil__",CraftID);
 		end
-		Server.AddAsyncCoroutine(function()
-			CraftItem(Data.FinalItem,Data,CraftID);
-		end,OnCancel);
+		--sb.logInfo("Required Insertion Conduits = " .. sb.print(Data.Required));
+		--[[Server.AddAsyncCoroutine(function()
+			while(true) do
+				sb.logInfo("TEST");
+				local CraftedAmount = CraftItem(Data,false,nil,true,{CraftID});
+				if CraftedAmount > 0 then
+					--sb.logInfo("CraftingAmount FINAL = " .. sb.print(CraftedAmount));
+					world.spawnItem({name = Data.Item.name,count = CraftedAmount,parameters = Data.Item.parameters},SourcePosition);
+				elseif CraftedAmount == -4 then
+					Server.CancelCoroutine();
+				end
+				coroutine.yield();
+			end
+		end,OnCancel);--]]
 	--end
 	return Data;
 end
 
 --Attempts to craft the item and returns the amount crafted
-CraftItem = function(item,data,...)
+--Returns -3 on fail
+--Returns -4 when there's no more of the item required
+--Otherwise, returns how much of the item has been crafted
+CraftItem = function(Data,useFound,amount,consumeItem,pathTable,ingredientTable)
+	--[[if Data.Done == nil then
+		AddChange(false,...,"Done");
+	end--]]
+	--local Params = {...};
+	--sb.logInfo("PARAMS = " .. sb.print(Params));
+	--sb.logInfo("Requirements for " .. sb.print(Data.Item) .. " = " .. sb.print(Data.Required));
+	--coroutine.yield();
+	if Data.Required <= 0 then
+		--sb.logInfo("Invalid Return 1");
+		return -4;
+	end
+	if consumeItem == nil then
+		consumeItem = true;
+	end
+	if amount == nil then
+		amount = 1;
+	end
+	--Attempt to use any leftovers in the system
+	local Leftovers = PullFromLeftovers(Data.Item);
+	if Leftovers > amount then
+		AddToLeftovers(Data.Item,Leftovers - amount);
+		--sb.logInfo("Valid Return 2");
+		return amount;
+	elseif Leftovers == amount then
+		--sb.logInfo("Valid Return 3");
+		return amount;
+	else
+		amount = amount - Leftovers;
+	end
+	if useFound == true then
+		if Data.Player ~= nil then
+			--sb.logInfo("Finding = " .. sb.print(Data.Item));
+			--sb.logInfo("FindAmount = " .. sb.print(amount));
+			if FindOnPlayerAsync(Data.Player.ID,Data.Item) >= amount then
+				--sb.logInfo("consumeItem = " .. sb.print(consumeItem));
+				if consumeItem == true and ConsumeFromPlayerAsync(Data.Player.ID,Data.Item,amount) == true then
+					--sb.logInfo("PLAYER HAS " .. sb.print(Data.Item.name));
+					--sb.logInfo("Consumed Amount = " .. sb.print(amount));
+					--sb.logInfo("REQUIRED BEFORE 3 = " .. sb.print(Data.Required) .. " for " .. sb.print(Data.Item.name));
+					AddChangeTable(Data.Required - amount - Leftovers,DupeTable(pathTable,"Required"));
+					--sb.logInfo("REQUIRED AFTER 3 = " .. sb.print(Data.Required) .. " for " .. sb.print(Data.Item.name));
+				end
+				AddChangeTable(true,DupeTable(pathTable,"Valid"));
+				--[[if Data.Required <= 0 then
+					return -1;
+				else
 
-	--if data.Valid == false then
---[[		sb.logInfo("Complete Data BEFORE = " .. sb.printJson(data,1));
-		local TotalToGet = item.count;
-		if data.FoundAmount ~= nil then
-			if data.FoundOnPlayer ~= nil then
-				AddChange(data.TotalNeeded - data.FoundOnPlayer,...,"TotalNeeded");
-				--Take all the items out of the player
-				world.sendEntityMessage(data.PlayerID,"ConsumeItem",{name = item.name,count = data.FoundOnPlayer,parameters = item.parameters},true,true);
-				AddChange(0,...,"FoundOnPlayer");
+					return -2;
+				end--]]
+				--sb.logInfo("Valid Return 1");
+				return amount + Leftovers;
+		--[[	else
+				if Data.Craft == nil then
+					AddChangeTable(false,DupeTable(pathTable,"Valid"));
+				end--]]
 			end
-			AddChange(data.TotalNeeded - data.FoundAmount,...,"TotalNeeded");
-			for stringConduit,conduitData in pairs(data.ConduitSources) do
-				for stringContainer,amount in pairs(conduitData.Containers) do
-					world.containerConsume(tonumber(stringContainer),{name = item.name,count = amount,parameters = item.parameters});
+		end
+		if Data.Network ~= nil then
+			if FindAmountInNetwork(Data.Item) >= amount then
+				if ConsumeOutOfNetwork(Data.Item,amount) == true then
+					if consumeItem == true then
+						--sb.logInfo("REQUIRED BEFORE 2 = " .. sb.print(Data.Required) .. " for " .. sb.print(Data.Item.name));
+						AddChangeTable(Data.Required - amount - Leftovers,DupeTable(pathTable,"Required"));
+						--sb.logInfo("REQUIRED AFTER 2 = " .. sb.print(Data.Required) .. " for " .. sb.print(Data.Item.name));
+						AddChangeTable(true,DupeTable(pathTable,"Valid"));
+					end
+					--[[if Data.Required <= 0 then
+						return -1;
+					else
+						return -2;
+					end--]]
+					--sb.logInfo("Valid Return 4");
+					return amount + Leftovers;
+				--else
+					--[[if Data.Craft == nil then
+						AddChangeTable(false,DupeTable(pathTable,"Valid"));
+					end--]]
+				end
+			--else
+				--[[if Data.Craft == nil then
+					AddChangeTable(false,DupeTable(pathTable,"Valid"));
+				end--]]
+			end
+		end
+	end
+	if Data.Craft ~= nil then
+		--sb.logInfo("CRAFTING = " .. sb.print(Data.Item));
+		local AmountToCraft = math.ceil(amount / Data.Craft.Output.count) * Data.Craft.Output.count;
+		--sb.logInfo("AmountToCraft = " .. sb.print(AmountToCraft));
+		local CraftMultiplier = AmountToCraft / Data.Craft.Output.count;
+		--sb.logInfo("CraftMultiplier = " .. sb.print(CraftMultiplier));
+		local AllIngredientsValid = true;
+		--[[if ingredientTable == nil then
+			sb.logInfo("_______________Making New Table");
+		else
+			sb.logInfo("AAAAAAAAAAAAAAAUsing Existing Table");
+		end--]]
+		local IngredientTable = ingredientTable or setmetatable({},IngredientTableMeta);
+		for index,ingredient in ipairs(Data.Craft.Ingredients) do
+			local AmountRequired = ((ingredient.Item.count) * CraftMultiplier) + IngredientTable[ingredient.Item] or 0;
+			--sb.logInfo("IngredientTable for " .. sb.print(ingredient.Item.name) .. " = " .. sb.print(IngredientTable[ingredient.Item]));
+			--sb.logInfo("Whole Table = " .. sb.print(IngredientTable));
+			coroutine.yield();
+			local CraftedAmount = CraftItem(ingredient.Data,true,AmountRequired,false,DupeTable(pathTable,"Craft","Ingredients",index,"Data"),IngredientTable);
+			if CraftedAmount <= 0 then
+				AllIngredientsValid = false;
+			end
+			IngredientTable[ingredient.Item] = IngredientTable[ingredient.Item] + AmountRequired;
+		end
+		if AllIngredientsValid == false then
+			AddChangeTable(false,DupeTable(pathTable,"Valid"));
+			--sb.logInfo("Invalid Return 2");
+			return -3;
+		end
+		--sb.logInfo("ConsumeItem = " .. sb.print(consumeItem));
+		if consumeItem == true then
+			for index,ingredient in ipairs(Data.Craft.Ingredients) do
+				local AmountRequired = (ingredient.Item.count) * CraftMultiplier;
+				coroutine.yield();
+				local CraftedAmount = CraftItem(ingredient.Data,true,AmountRequired,true,DupeTable(pathTable,"Craft","Ingredients",index,"Data"));
+				if CraftedAmount > AmountRequired then
+					AddToLeftovers(ingredient.Item,CraftedAmount - AmountRequired);
 				end
 			end
-			AddChange(0,...,"FoundAmount");
-			AddChange("__nil__",...,"ConduitSources");
-			--Take All the Items out of the Conduits
+			--sb.logInfo("REQUIRED BEFORE 1 = " .. sb.print(Data.Required) .. " for " .. sb.print(Data.Item.name));
+			AddChangeTable(Data.Required - AmountToCraft - Leftovers,DupeTable(pathTable,"Required"));
+			--sb.logInfo("REQUIRED AFTER 1 = " .. sb.print(Data.Required) .. " for " .. sb.print(Data.Item.name));
+			--sb.logInfo("Successfully crafted " .. sb.print(AmountToCraft + Leftovers) .. " " .. sb.print(Data.Item.name));
 		end
-		if data.Craftable ~= nil then
-			for _,info in ipairs(data.Recipe.Ingredients) do
-				CraftItem(info.Item,info.Data,...,"Recipe","Ingredients","Data");
-			end
-		end
-		sb.logInfo("Complete Data = " .. sb.printJson(data,1));--]]
-	--end
+		AddChangeTable(true,DupeTable(pathTable,"Valid"));
+		--sb.logInfo("Able to Craft " .. sb.print(AmountToCraft + Leftovers) .. " " .. sb.print(Data.Item.name));
+		--sb.logInfo("Valid Return 5");
+		return AmountToCraft + Leftovers;
+	end
+	AddChangeTable(false,DupeTable(pathTable,"Valid"));
+	--sb.logInfo("Invalid Return 3");
+	return -3;
 end
 
 --[[FullItemSearch = function(item,playerID,dontConsume)
@@ -447,6 +630,37 @@ function ConsumeFromPlayer(playerID,item,count)
 	end
 end
 
+function FindOnPlayerAsync(playerID,item)
+	local Promise;
+	if ItemToCurrencyTbl[item.name] ~= nil then
+		Promise = world.sendEntityMessage(playerID,"AmountOfCurrency",ItemToCurrencyTbl[item.name]);
+	else
+		Promise = world.sendEntityMessage(playerID,"AmountOfItem",{name = item.name,count = 1,parameters = item.parameters});
+	end
+	return WaitFor(Promise);
+	--[[local Count = world.entityHasCountOfItem(playerID,{name = item.name,count = 1,parameters = item.parameters},true) or 0;
+	if ItemToCurrencyTbl[item.name] ~= nil then
+		Count = Count + world.entityCurrency(playerID,ItemToCurrencyTbl[item.name]);
+	end
+	return Count;--]]
+end
+
+function ConsumeFromPlayerAsync(playerID,item,count)
+	count = count or item.count;
+	local Promise;
+	if ItemToCurrencyTbl[item.name] ~= nil then
+		Promise = world.sendEntityMessage(playerID,"ConsumeCurrency",ItemToCurrencyTbl[item.name],count);
+	else
+		Promise = world.sendEntityMessage(playerID,"ConsumeItem",{name = item.name,count = count,parameters = item.parameters},false,true);
+	end
+	local Value = WaitFor(Promise);
+	if type(Value) == "boolean" then
+		return Value;
+	else
+		return Value ~= nil;
+	end
+end
+
 --Table Layout
 --[[
 {
@@ -496,7 +710,7 @@ end--]]
 	Item,
 	Valid,
 	Error,
-	TotalFound,
+	Total,
 	Player = {
 		Found,
 		ID
@@ -517,11 +731,13 @@ end--]]
 	}
 
 }--]]
-CheckForItem = function(item,useFound,usedRecipe,playerID,noCraft)
+CheckForItem = function(item,useFound,usedRecipe,playerID,noCraft,ingredientTable)
 	local Final = {
 		Item = item,
 		Valid = true,
-		Error = nil
+		Total = 0,
+		Error = nil,
+		Required = item.count
 	}
 	local LeftToFind = item.count;
 	if useFound == nil then
@@ -539,6 +755,7 @@ CheckForItem = function(item,useFound,usedRecipe,playerID,noCraft)
 			else
 				LeftToFind = LeftToFind - Final.Player.Found;
 			end
+			Final.Total = Final.Total + Final.Player.Found;
 		end
 		if LeftToFind ~= 0 then
 			Final.Network = {
@@ -550,10 +767,11 @@ CheckForItem = function(item,useFound,usedRecipe,playerID,noCraft)
 			else
 				LeftToFind = LeftToFind - Final.Network.Found;
 			end
+			Final.Total = Final.Total + Final.Network.Found;
 		end
 	end
 	if LeftToFind == 0 then
-		sb.logInfo("AAA");
+		--sb.logInfo("AAA");
 		return Final;
 	end
 	if noCraft == nil then
@@ -570,12 +788,18 @@ CheckForItem = function(item,useFound,usedRecipe,playerID,noCraft)
 		if #Recipes == 0 then
 			Final.Valid = false;
 			Final.Error = "Didn't find enough of " .. item.name;
+			Final.ErrorCode = 3;
+			--Final.Total = nil;
 			return Final;
 		end
 		local ValidRecipes = {};
-		local RecipeErrors = {};
+		local InvalidRecipes = {};
+		--local RecipeErrors = {};
 		for _,recipe in ipairs(Recipes) do
+			sb.logInfo("Recipe = " .. sb.print(recipe));
 			local NewRecipe = {
+				Valid = true,
+				Error = nil,
 				Ingredients = {},
 				Needed = {},
 				Output = recipe.output
@@ -586,48 +810,81 @@ CheckForItem = function(item,useFound,usedRecipe,playerID,noCraft)
 			NewRecipe.Needed.Amount = AmountToCraft;
 			NewRecipe.Needed.Leftovers = Leftovers;
 			NewRecipe.Needed.Multiplier = Multiplier;
+			local RecipeErrors = {};
+			local RecipeErrorCodes = {};
+			local IngredientTable = ingredientTable or setmetatable({},IngredientTableMeta);
+			local AddedIngredients = {};
 			for _,ingredient in ipairs(recipe.input) do
-				local IngData = CheckForItem({name = ingredient.name,count = ingredient.count * Multiplier,parameters = ingredient.parameters},true,nil,playerID,false);
-				if IngData.Valid == false then
+				local IngData = CheckForItem({name = ingredient.name,count = (ingredient.count * Multiplier) + IngredientTable[ingredient],parameters = ingredient.parameters},true,nil,playerID,false,IngredientTable);
+				--IngData.Required = ingredient.count * Multiplier;
+				if NewRecipe.Valid == true and IngData.Valid == false then
 					local Error = IngData.Error;
 					if type(Error) == "table" then
 						for _,error in ipairs(Error) do
 							RecipeErrors[#RecipeErrors + 1] = error;
 						end
+						for _,errorCode in ipairs(IngData.ErrorCode) do
+							RecipeErrorCodes[#RecipeErrorCodes + 1] = errorCode;
+						end
 					else
 						RecipeErrors[#RecipeErrors + 1] = IngData.Error;
+						RecipeErrorCodes[#RecipeErrorCodes + 1] = IngData.ErrorCode;
 					end
-					goto Continue;
+					InvalidRecipes[#InvalidRecipes + 1] = NewRecipe;
+					for _,addedIngredient in ipairs(AddedIngredients) do
+						IngredientTable[addedIngredient] = IngredientTable[addedIngredient] - addedIngredient.count;
+					end
+					NewRecipe.Valid = false;
+					NewRecipe.Error = RecipeErrors;
+					NewRecipe.ErrorCode = RecipeErrorCodes;
+					--goto Continue;
+				end
+				if NewRecipe.Valid == true then
+					IngredientTable[ingredient] = IngredientTable[ingredient] + (ingredient.count * Multiplier)
+					AddedIngredients[#AddedIngredients + 1] = {name = ingredient.name,count = ingredient.count * Multiplier,parameters = ingredient.parameters};
+				end
+				local FinalIngData = CheckForItem({name = ingredient.name,count = (ingredient.count * Multiplier),parameters = ingredient.parameters},true,nil,playerID,false,IngredientTable);
+				if IngData.Valid == false then
+					FinalIngData.Valid = false;
+					FinalIngData.Error = IngData.Error;
 				end
 				NewRecipe.Ingredients[#NewRecipe.Ingredients + 1] = {
 					Item = ingredient,
-					Data = IngData
+					Data = FinalIngData
 				}
 			end
-			ValidRecipes[#ValidRecipes + 1] = NewRecipe;
-			::Continue::
+			if NewRecipe.Valid == true then
+				ValidRecipes[#ValidRecipes + 1] = NewRecipe;
+			end
+			--::Continue::
 		end
 		if #ValidRecipes == 0 then
 			Final.Valid = false;
-			if #RecipeErrors == 0 then
+			--[[if #RecipeErrors == 0 then
 				Final.Error = "No Valid Recipes for " .. item.name;
 			else
 				Final.Error = RecipeErrors;
-			end
-			sb.logInfo("EEE");
+			end--]]
+			Final.Error = "Didn't find enough ingredients for " .. item.name;
+			Final.ErrorCode = 1;
+			Final.Craft = InvalidRecipes[1];
+			--sb.logInfo("EEE");
+			--Final.Total = nil;
 			return Final;
 		else
-			sb.logInfo("DDD");
+			--sb.logInfo("DDD");
 			Final.Craft = ValidRecipes[1];
+			Final.Total = Final.Total + Final.Craft.Needed.Amount - Final.Craft.Needed.Leftovers;
 			return Final;
 		end
 	else
 		Final.Valid = false;
 		Final.Error = "Didn't find enough of " .. item.name .. " , ";
-		sb.logInfo("BBB");
+		Final.ErrorCode = 2;
+		--sb.logInfo("BBB");
 		return Final;
 	end
-	sb.logInfo("CCC");
+	--sb.logInfo("CCC");
 	--[[if useFound == nil then
 		useFound = true;
 	end
@@ -1000,6 +1257,7 @@ end
 --Adds a single change the list changes list
 AddChange = function(newValue,...)
 	local List = {...};
+	--sb.logInfo("Path To The Value = " .. sb.print(List));
 	CraftListChanges[#CraftListChanges + 1] = {
 		UUID = sb.makeUuid(),
 		TimeStamp = os.clock(),
@@ -1011,14 +1269,62 @@ AddChange = function(newValue,...)
 		if TopTable[List[i]] == nil then
 			TopTable[List[i]] = {};
 		end
-		local Value = TopTable[List[i]];
+		TopTable = TopTable[List[i]];
+		--TopTable[List[i]] = Value;
+		--[[local Value = TopTable[List[i] ];
 		if Value == "__nil__" then
 			Value = nil;
 		end
-		TopTable = Value;
+		TopTable = Value;--]]
 	end
-	sb.logInfo("------------Added Change = " .. sb.print(CraftListChanges[#CraftListChanges]));
-	TopTable[List[#List]] = newValue;
+	local Value = newValue;
+	if Value == "__nil__" then
+		Value = nil;
+	end
+	if TopTable[List[#List]] == Value then
+		table.remove(CraftListChanges,#CraftListChanges);
+	else
+		--sb.logInfo("------------Added Change = " .. sb.print(CraftListChanges[#CraftListChanges]));
+		--sb.logInfo("Previous Value = " .. sb.print(TopTable[List[#List]]));
+		--sb.logInfo("New Value = " .. sb.print(Value));
+		TopTable[List[#List]] = Value;
+	end
+end
+
+AddChangeTable = function(newValue,tbl)
+	local List = tbl;
+	--sb.logInfo("Path To The Value = " .. sb.print(List));
+	CraftListChanges[#CraftListChanges + 1] = {
+		UUID = sb.makeUuid(),
+		TimeStamp = os.clock(),
+		NewValue = newValue,
+		PathToValue = List;
+	}
+	local TopTable = CraftingList;
+	for i=1,#List - 1 do
+		if TopTable[List[i]] == nil then
+			TopTable[List[i]] = {};
+		end
+		TopTable = TopTable[List[i]];
+		--TopTable[List[i]] = Value;
+		--[[local Value = TopTable[List[i] ];
+		if Value == "__nil__" then
+			Value = nil;
+		end
+		TopTable = Value;--]]
+	end
+	local Value = newValue;
+	if Value == "__nil__" then
+		Value = nil;
+	end
+	if TopTable[List[#List]] == Value then
+		table.remove(CraftListChanges,#CraftListChanges);
+	else
+		--sb.logInfo("------------Added Change = " .. sb.print(CraftListChanges[#CraftListChanges]));
+		--sb.logInfo("Previous Value = " .. sb.print(TopTable[List[#List]]));
+		--sb.logInfo("New Value = " .. sb.print(Value));
+		TopTable[List[#List]] = Value;
+	end
 end
 
 --Can be called multiple times to add multiple changes at once. they can added all at once when AddChangeFlush() is called
@@ -1094,4 +1400,38 @@ end
 
 CurrencyToItem = function(name,count)
 	return {name = CurrencyList[name].representativeItem,count = count};
+end
+
+function AddToLeftovers(item,count)
+	count = count or item.count;
+	for bufferItem,amount in pairs(LeftoversBuffer) do
+		if root.itemDescriptorsMatch(bufferItem,item,true) then
+			amount = amount + count;
+			return nil;
+		end
+	end
+	LeftoversBuffer[{name = item.name,parameters = item.parameters}] = count;
+end
+
+function PullFromLeftovers(item)
+	for bufferItem,amount in pairs(LeftoversBuffer) do
+		if root.itemDescriptorsMatch(bufferItem,item,true) then
+			LeftoversBuffer[bufferItem] = nil;
+			return amount;
+		end
+	end
+	return 0;
+end
+
+function DupeTable(tbl,...)
+	--sb.logInfo("OLDTABLE = " .. sb.print(tbl));
+	local NewTable = {};
+	for i=1,#tbl do
+		NewTable[i] = tbl[i];
+	end
+	for i=1,select("#",...) do
+		NewTable[#NewTable + 1] = select(i,...);
+	end
+	--sb.logInfo("NEWTABLE = " .. sb.print(NewTable));
+	return NewTable;
 end

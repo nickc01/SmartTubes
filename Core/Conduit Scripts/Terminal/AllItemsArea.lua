@@ -99,13 +99,6 @@ local Depatternize;
 --Initializes the All Items Area
 function AllItems.Initialize()
     if Initialized == true then return nil end;
-    --TEST
-    --local Test = coroutine.create(function(path)
-    --    sb.logInfo("Path = " .. sb.print(path));
-     --   Result = root.assetJson(path);
-    --end);
-    --coroutine.resume("Blocks/Conduits/Item Conduit/ItemTest.object");
-    --sb.logInfo("Result = " .. sb.print(Result));
     FPS = 1 / script.updateDt();
     SourceID = pane.sourceEntity();
     Initialized = true;
@@ -150,25 +143,11 @@ end
 
 --Adds any bound elements
 AddAllBoundElements = function()
-    BindElement("allItemsInventoryArea");
-    BindElement("allItemsLoadingCircle");
-    BindElement("allItemsSearchBox");
-    BindElement("allItemsSettingsArea");
-    BindElement("allItemsOpenerArrow");
-    BindElement("allItemsSearchIcon");
-    BindElement("allItemsSelectedItemSlot");
-    BindElement("allItemsSelectedItemBackground");
-    BindElement("allItemsSelectedItemAmountBox");
-    BindElement("allItemsExtractButton");
-    BindElement("allItemsExtractableCheckbox");
-    widget.setVisible("allItemsLoadingCircle",false);
-    widget.setVisible("allItemsSettingsArea",false);
-    widget.setVisible("allItemsSearchIcon",false);
-    widget.setVisible("allItemsSearchBox",false);
-    widget.setVisible("allItemsSelectedItemSlot",false);
-    widget.setVisible("allItemsSelectedItemBackground",false);
-    widget.setVisible("allItemsExtractButton",false);
-    widget.setVisible("allItemsExtractableCheckbox",false);
+    for widgetName,widgetData in pairs(config.getParameter("gui")) do
+        if widgetData.AreaBound == true then
+            BindElement(widgetName);
+        end
+    end
 end
 
 --Binds an element to move with the All Items Canvas
@@ -176,7 +155,7 @@ BindElement = function(elementName)
     --BoundElements[#BoundElements + 1] = elementName;
     local RelativePosition = widget.getPosition(elementName);
     widget.setPosition(elementName,{AllItemsDefaultPosition[1] + RelativePosition[1],AllItemsDefaultPosition[2] + RelativePosition[2]});
-    widget.setVisible(elementName,true);
+    --widget.setVisible(elementName,true);
     BoundElements[#BoundElements + 1] = {Name = elementName,RelativePosition = RelativePosition};
 end
 
@@ -202,20 +181,7 @@ local Counter = 0;
 
 --The Update Loop for the All Items Area
 Update = function(dt)
-   --[[ Counter = Counter + dt;
-   -- sb.logInfo("Counter = " .. sb.print(Counter));
-    if Counter > 5 and Counter < 6 then
-        Counter = 6;
-       -- sb.logInfo("Setting");
-        InventoryItems[500] = nil;
-    end--]]
-  --[[  for i=1,5 do
-        InventoryItems[#InventoryItems + 1] = {name = "perfectlygenericitem",count = (#InventoryItems % 1000) + 1};
-    end--]]
-    --InventoryItems[500] = {name = "perfectlygenericitem",count = 1};
-    --local CurrentPosition = widget.getPosition("allItemsCanvas");
     Position = {(GlideDestination[1] - Position[1]) / GlideSpeed + Position[1],(GlideDestination[2] - Position[2]) / GlideSpeed + Position[2]};
-   -- sb.logInfo("Position = " .. sb.print(Position));
     widget.setPosition("allItemsCanvas",Position);
     for i=1,#BoundElements do
         local Element = BoundElements[i];
@@ -243,12 +209,7 @@ end
 --Called when the slot is clicked on
 __SlotClick__ = function(name,data)
     if Loading == false then
-       -- sb.logInfo("Clicked on slot = " .. sb.print(data));
-       -- sb.logInfo("Item in Slot = " .. sb.print(InventoryItems.GetItem(tonumber(data))))
-       -- sb.logInfo("Item in buffer = " .. sb.print(Buffer.GetFromBuffer(InventoryItems.GetItem(tonumber(data)),"DefaultExtractable")));
-        --SetSelectedItem(InventoryItems.GetItemWithSort(tonumber(data)));
         local ItemInSlot = InventoryItems.GetItem(tonumber(data));
-        --sb.logInfo("Item In Slot = " .. sb.print(ItemInSlot));
         local BufferItem = Buffer.GetFromBuffer(ItemInSlot,"DefaultExtractable");
         if BufferItem == nil then
             if ItemInSlot ~= nil then
@@ -277,14 +238,6 @@ end
 
 --Called when the Enable Variable is changed
 OnEnable = function(enabled)
-    if enabled == true then
-        
-    else
-       --[[ if MainLoadingRoutine ~= nil then
-            UICore.CancelCoroutine(MainLoadingRoutine);
-            MainLoadingRoutine = nil;
-        end--]]
-    end
     widget.setVisible("allItemsSettingsArea",enabled);
     widget.setVisible("allItemsSearchIcon",enabled);
     widget.setVisible("allItemsSearchBox",enabled);
@@ -347,10 +300,6 @@ NumberToString = function(num)
         if Number < 1 then
             Final = Final + (GetDecimalPlace(Number,2) / 100);
         end
-        --local Tenth = GetDecimalPlace(Number,1);
-        --local Hundreth = GetDecimalPlace(Number,2);
-        --local Final = Number + (Tenth / 10) + (Hundreth / 100);
-       -- sb.logInfo("FINAL NUMBER M = " .. sb.print(Final));
         return tostring(Final) .. "M";
     --Thousand
     elseif num >= 1000 then
@@ -362,10 +311,6 @@ NumberToString = function(num)
         if Number < 1 then
             Final = Final + (GetDecimalPlace(Number,2) / 100);
         end
-        --local Tenth = GetDecimalPlace(Number,1);
-        --local Hundreth = GetDecimalPlace(Number,2);
-        --local Final = Number + (Tenth / 10) + (Hundreth / 100);
-        --sb.logInfo("FINAL NUMBER K = " .. sb.print(Final));
         return tostring(Final) .. "K";
         --Leave Alone
     else
@@ -383,18 +328,8 @@ function InventoryItems.SetItem(item,slot,forceSyncronous)
         while(SettingInventoryItems == true) do
             coroutine.yield();
         end
-    end
-    --sb.logInfo("Setting 3");    
+    end   
     SettingInventoryItems = true;
-    --sb.logInfo("Value In = " .. sb.print(rawget(InternalInventoryItems,slot)));
-    --sb.logInfo("Value Out = " .. sb.print(item));
-   -- sb.logInfo("Type In = " .. sb.print(type(rawget(InternalInventoryItems,slot))));
-   -- sb.logInfo("Type Out = " .. sb.print(type(item)));
-   --[[ if type(rawget(InternalInventoryItems,slot)) == type(item) then
-        --sb.logInfo("Short Circuit");
-        SettingInventoryItems = false;
-        return nil;
-    end--]]
     local RowNumber = math.ceil(slot / SlotsPerRow);
     local SlotAtRow = ((slot - 1) % SlotsPerRow) + 1;
     if RowNumber > #SlotRows then
@@ -457,16 +392,8 @@ end
 
 --Gets the item at the slot
 function InventoryItems.GetItem(slot)
-    --return rawget(InternalInventoryItems,slot);
-   -- sb.logInfo("Internal Inventory Items = " .. sb.print(InternalInventoryItems));
-   --sb.logInfo("Internal Inventory Items = " .. sb.print(#InternalInventoryItems));
     return InternalInventoryItems[slot];
 end
-
---Gets the item with the sorting and searching applied
---function InventoryItems.GetItemWithSort(slot)
-    --return ApplySearch(InternalInventoryItems)[slot];
---end
 
 --Refreshes the specified slot only
 function InventoryItems.RefreshSlot(slot)
@@ -606,12 +533,6 @@ function InventoryItems.SetAllSlots(tbl,topDown,forceSyncronous)
                 else
                     Previous = 0;
                 end
-                --If the slot is 
-                --[[if Previous == nil or (Previous.count ~= Value.count) then
-
-                end--]]
-            -- sb.logInfo("Previous = " .. sb.print(Previous));
-            -- sb.logInfo("Value = " .. sb.print(Value));
                 if Previous == 0 or (Value ~= nil and (root.itemDescriptorsMatch(Value,Previous,true) == false or Previous.count ~= Value.count)) or (Value == nil and Value ~= Previous) then
                     if Value == nil then
                         if Hide then                
@@ -699,11 +620,6 @@ function InventoryItems.SetAllSlots(tbl,topDown,forceSyncronous)
                         if (GlobalSlot > 200 or not Enabled) and GlobalSlot % 2 == 0 and forceSyncronous ~= true and coroutine.running() ~= nil then
                             coroutine.yield();
                         end
-                        --[[if GlobalSlot > 100 then
-                            if forceSyncronous ~= true and coroutine.running() ~= nil then
-                                coroutine.yield();
-                            end
-                        end--]]
                     end
                 end
                 if forceSyncronous ~= true and coroutine.running() ~= nil then
@@ -841,11 +757,6 @@ end
 
 --Called when the all Items Area Search Box is updated
 __allItemsSearchBoxUpdated = function()
-    --[[if Loading then
-        widget.setText("allItemsSearchBox","");
-    else
-        SetSearchKeyword(widget.getText("allItemsSearchBox"));
-    end--]]
     local Text = widget.getText("allItemsSearchBox");
     SetSearchKeyword(widget.getText("allItemsSearchBox"));
 end
@@ -853,8 +764,6 @@ end
 --Starts Up the Routine that displays all the items
 StartUpAllItemsArea = function()
     MainLoadingRoutine = UICore.AddAsyncCoroutine(function()
-        --Set the Values to thier default state
-        --sb.logInfo("Above ID is Main Loading Routine");
         InventoryItemsRefreshable = false;
         InventoryItems.EnableLoading();
         InventoryItems.Clear();
@@ -881,15 +790,9 @@ StartUpAllItemsArea = function()
         InventoryItemsRefreshable = true;
         local RefreshDone = false;
         UniversalRefreshRoutine = UICore.AddAsyncCoroutine(function()
-            --sb.logInfo("Search Started");
-            --sb.logInfo("Internal Inventory Items = " .. sb.print(InternalInventoryItems));
-           -- sb.logInfo("Refresh Started 2");
             InventoryItems.SetAllSlots(Buffer.GetBufferList(),true);
             UICore.CancelCoroutine(UniversalRefreshRoutine);
         end,function()
-            --sb.logInfo("Search Canceled");
-            --SettingInventoryItems = false;
-            --sb.logInfo("Refresh Done 2");
             RefreshDone = true;
             UniversalRefreshRoutine = nil;
         end);

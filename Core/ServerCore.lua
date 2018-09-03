@@ -137,6 +137,7 @@ end
 
 --Cancels a coroutine
 function Server.CancelCoroutine(ID)
+	ID = ID or ExecutingCoroutine;
 	local Data = CoroutineCalls[ID];
 	if Data ~= nil then
 		if Data.OnCancel ~= nil then

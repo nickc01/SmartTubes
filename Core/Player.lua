@@ -43,6 +43,15 @@ function init()
 	message.setHandler("ConsumeCurrency",function(_,_,currencyName,amount)
 		return player.consumeCurrency(currencyName,amount);
 	end);
+	message.setHandler("AmountOfItem",function(_,_,item,exact)
+		if exact == nil then
+			exact = true;
+		end
+		return player.hasCountOfItem(item,exact);
+	end);
+	message.setHandler("AmountOfCurrency",function(_,_,currencyName)
+		return player.currency(currencyName);
+	end);
 end
 
 --function TestFunction()

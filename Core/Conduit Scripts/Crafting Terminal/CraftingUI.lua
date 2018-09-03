@@ -200,10 +200,10 @@ end
 function CraftingUI.SetSelectedItem(item)
 	SelectedItem = item;
 	if SelectedItem ~= nil then
-		sb.logInfo("LearntCrafters = " .. sb.printJson(Data.GetLearntCrafters() or {},1));
+		--sb.logInfo("LearntCrafters = " .. sb.printJson(Data.GetLearntCrafters() or {},1));
 		widget.setItemSlotItem("craftAreaDisplaySlot",item);
 		local Recipes = root.recipesForItem(item.name);
-		sb.logInfo("Recipes = " .. sb.printJson(Recipes,1));
+		--sb.logInfo("Recipes = " .. sb.printJson(Recipes,1));
 		if #Recipes == 0 then
 			SelectedRecipeIndex = 0;
 			EnableCraftingArea(false);
@@ -243,8 +243,8 @@ UpdateRecipeArea = function(recipe)
 	widget.clearListItems(RequirementsItemList);
 	for _,input in ipairs(recipe.input) do
 		local TotalCount = input.count * RecipeMultiplier;
-		sb.logInfo("TotalCount = " .. sb.print(TotalCount));
-		sb.logInfo("input = " .. sb.print(input));
+		--sb.logInfo("TotalCount = " .. sb.print(TotalCount));
+		--sb.logInfo("input = " .. sb.print(input));
 		for number in SplitNumberIter(TotalCount,9999) do
 			sb.logInfo("number = " .. sb.print(number));
 			local RowID = widget.addListItem(RequirementsItemList);
@@ -254,9 +254,9 @@ UpdateRecipeArea = function(recipe)
 	end
 	for currency,amount in pairs(recipe.currencyInputs) do
 		local Name = CurrencyToItem(currency);
-		sb.logInfo("currency = " .. sb.print(currency));
+		--sb.logInfo("currency = " .. sb.print(currency));
 		if Name ~= nil then
-			sb.logInfo("Name = " .. sb.print(Name));
+			--sb.logInfo("Name = " .. sb.print(Name));
 			local TotalCount = amount * RecipeMultiplier;
 			for number in SplitNumberIter(TotalCount,9999) do
 				local RowID = widget.addListItem(RequirementsItemList);
@@ -400,17 +400,17 @@ end
 --Called when the craft button is press
 function CraftPress()
 	--TODO
-	sb.logInfo("Press");
-	sb.logInfo("SelectedItem = " .. sb.print(SelectedItem));
+	--sb.logInfo("Press");
+	--sb.logInfo("SelectedItem = " .. sb.print(SelectedItem));
 	if SelectedItem ~= nil and SelectedRecipeIndex ~= 0 then
 		sb.logInfo("P2");
 		
 		UICore.CallMessageOnce(SourceID,"CraftItem",function(Data)
-			if Data ~= nil then
+			--[[if Data ~= nil then
 				sb.logInfo("RECIEVED DATA = " .. sb.printJson(Data,1));
 			else
 				sb.logInfo("RECIEVED DATA = nil");
-			end
+			end--]]
 		end,{name = SelectedItem.name,count = SelectedItem.count * RecipeMultiplier,parameters = SelectedItem.parameters},false,SelectedRecipes[SelectedRecipeIndex],player.id());
 	end
 end
