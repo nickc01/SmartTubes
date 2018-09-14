@@ -113,6 +113,7 @@ local ConnectionPointIter;
 function ConduitCore.Initialize()
 	--sb.logInfo("Spawning new Object = " .. sb.print(entity.id()));
 	if Initialized == true then return nil else Initialized = true end;
+	sb.logInfo("INITIALIZING CONDUIT CORE = " .. sb.print(entity.id()));
 	--sb.logInfo("INIT of conduit = " .. sb.print(entity.id()));
 	if entity == nil then
 		local OldInit = init;
@@ -686,6 +687,9 @@ end
 --Gets the Current Connections for the Passed In Connection Type, returns false if the First Update Hasn't been completed
 function ConduitCore.GetConnections(ConnectionType)
 	--sb.logInfo("FIRST UPDATE = " .. sb.print(FirstUpdateComplete));
+	--[[if FirstUpdateComplete ~= true then
+		sb.logInfo(sb.print(entity.id()) .. " IS NOT LOADED");
+	end--]]
 	if FirstUpdateComplete and ConnectionTypes[ConnectionType] ~= nil and ConnectionTypes[ConnectionType].Enabled == true then
 		return ConnectionTypes[ConnectionType].Connections;
 	end
@@ -876,7 +880,7 @@ end
 --Similar to ConduitCore.GetConnections but also includes the ExtraPathFunctions
 function ConduitCore.GetConnectionsWithExtra(connectionType)
 	if ExtraPathFunctions[connectionType] == nil then
-		return ConduitCore.GetConduitConnections(connectionType);
+		return ConduitCore.GetConnections(connectionType);
 	else
 		local Final = {};
 		local Connections = ConduitCore.GetConnections(connectionType);

@@ -2,7 +2,11 @@
   "input" : [
     { "item" : "durasteelbar", "count" : 7 },
 	{ "item" : "siliconboard", "count" : 200 },
-	{ "item" : "conduitcasing", "count" : 5 }
+	{ "item" : "conduitcasing", "count" : 5 },
+    { "item" : "conduitcasing", "count" : 5 },
+    { "item" : "conduitcasing", "count" : 5 },
+    { "item" : "conduitcasing", "count" : 5 },
+    { "item" : "conduitcasing", "count" : 5 }
   ],
   "output" : {
     "item" : "conduitbender",

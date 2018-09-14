@@ -1,0 +1,47 @@
+{
+  "objectName": "craftingcontroller",
+  "colonyTags": [],
+  "printable": false,
+  "rarity": "Common",
+  "description": "Allows for SmartTubes autocrafting",
+  "shortdescription": "Crafting Controller",
+  "race": "generic",
+  "category": "station",
+  "price": 45,
+  "inventoryIcon": "Icon/Icon.png",
+  "health": 3.0,
+  "orientations": [
+    {
+      "imageLayers": [ { "image": "Crafting Controller.png:default" } ],
+      "imagePosition": [ 0, 0 ],
+      "animationPosition": [ 0, 0 ],
+      "spaces": [
+        [ 0, 0 ],
+        [ 0, 1 ],
+        [ 0, 2 ],
+        [ 1, 0 ],
+        [ 1, 1 ],
+        [ 1, 2 ],
+        [ 2, 0 ],
+        [ 2, 1 ],
+        [ 2, 2 ]
+      ],
+      "frames": 1,
+      "spaceScan": 0.1,
+      "animationCycle": 1.0,
+      "direction": "right"
+
+    }
+  ],
+  "interactAction": "ScriptPane",
+  "interactData": "/Blocks/Crafting Controller/UI/UI Config.config",
+  "conduitType": "craftingterminal",
+  "animation": "/Animations/Conduit Terminal.animation",
+  "animationParts": {
+    "terminalspritebg": "Crafting Controller.png",
+    "terminalspritefg": "Crafting Controller Lit.png"
+  },
+  "scriptDelta": 1,
+  "scripts": [ "Script.lua" ]
+
+}

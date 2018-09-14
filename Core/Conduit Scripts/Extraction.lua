@@ -1,6 +1,7 @@
 require("/Core/ConduitCore.lua");
 require("/Core/ServerCore.lua");
 require("/Core/ContainerHelper.lua");
+require("/Core/Async.lua");
 --Declaration
 
 --Public Table
@@ -55,6 +56,27 @@ local SpeedUpdate;
 local StackUpdate;
 local ColorUpdate;
 local SetDelta;
+
+--[[function TESTASYNCLOOP(receivedValue)
+	--return function()
+		sb.logInfo("Remote2 = " .. sb.print(__RemoteCoroutines));
+		sb.logInfo("Received Value = " .. sb.print(receivedValue));
+		sb.logInfo("Test1");
+		Async.TestValue = 985;
+		local ID = Async.AddInjection(function()
+			sb.logInfo("TEST HAS BEEN CANCELED");
+		end);
+		sb.logInfo("Async There = " .. sb.print(Async.TestValue));
+		for i=1,20 do
+			for j=1,120 do
+				sb.logInfo(sb.print(j));
+				coroutine.yield();
+			end
+		end
+		Async.RemoveInjection(ID);
+		return "This is a test Value!!!!!!";
+	--end
+end--]]
 
 --Initializes the Extraction Conduit
 function Extraction.Initialize()

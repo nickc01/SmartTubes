@@ -91,23 +91,6 @@ function Server.AddAsyncCoroutine(Coroutine,onCancel)
 		Injections = {}
 	}
 	CoroutineCalls[ID] = Table;
-	--[[local Value,Error = coroutine.resume(Coroutine,0);
-	if Value == false then
-		if pcall(function()
-			sb.logError(Error or "");
-		end) then
-
-		else
-			error(Error);
-		end
-	elseif Value ~= nil then
-		local Type = type(Value);
-		if Type == "string" then
-			sb.logInfo(Value);
-		elseif Type == "function" then
-			Value();
-		end
-	end--]]
 	return ID;
 end
 
