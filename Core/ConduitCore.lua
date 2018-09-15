@@ -1,3 +1,4 @@
+require("/Core/ColorCore.lua");
 --Declaration
 if ConduitCore ~= nil then return nil end;
 --Public Table
@@ -50,6 +51,7 @@ local DroppingPosition;
 local LocalRegionRect;
 local DefaultAnimated = true;
 local UsingNetworkForType = {};
+local IsInsta = false;
 local IndexToStringMeta = {
 	__index = function(tbl,k)
 		if type(k) == "number" then
@@ -83,6 +85,9 @@ local SaveSettings = {
 	DropPosition = nil,
 	Color = nil
 };
+local Colors = {};
+local Brightness = 100;
+local Fade = 0;
 
 --Functions
 local PostInit;
@@ -92,6 +97,7 @@ local NetworkChange;
 local UpdateOtherConnections;
 local IsInTable;
 local UpdateSprite;
+local SetInstaColor;
 local DefaultTraversalFunction = function(Traversal,StartPosition,PreviousID,Speed)
 	local EndPosition = entity.position();
 	local Time = 0;
@@ -108,6 +114,8 @@ local TraversalFunction = DefaultTraversalFunction;
 local ValuesToTable;
 local InitWithSavedParams;
 local ConnectionPointIter;
+local NumberToHex;
+local GetHexDigit;
 
 --Initializes the Conduit
 function ConduitCore.Initialize()
@@ -128,7 +136,9 @@ function ConduitCore.Initialize()
 	SourceID = entity.id();
 	SourcePosition = entity.position();
 	LocalRegionRect = {SourcePosition[1] - 2,SourcePosition[2] - 2,SourcePosition[1] + 2,SourcePosition[2] + 2};
-	DefaultAnimated = config.getParameter("animation") == "/Animations/Cable.animation";
+	DefaultAnimated = config.getParameter("animation") == "/Animations/Cable.animation" or config.getParameter("animation") == "/Animations/Cable With Insta.animation";
+	IsInsta = config.getParameter("animation") == "/Animations/Cable With Insta.animation";
+	SetInstaColor({0,255,128,255});
 	if config.getParameter("__HasSavedParameters") == true then
 		object.setConfigParameter("__HasSavedParameters",nil);
 		InitWithSavedParams(config.getParameter("__SavedValueNames"));
@@ -308,6 +318,7 @@ end
 --Updates itself and it's connections and returns whether the connections have changed or not
 function ConduitCore.Update()
 	--if FirstUpdateComplete == false then return nil end;
+
 	if not (ForceUpdate or FirstUpdateComplete) then return nil end;
 	if ConduitCore.UpdateSelf() then
 		UpdateOtherConnections();
@@ -730,7 +741,8 @@ end
 
 UpdateSprite = function()
 	if not IsOccluded and DefaultAnimated then
-		object.setProcessingDirectives("");
+		--object.setProcessingDirectives("");
+		animator.resetTransformationGroup("cableTrans");
 		if Connections[3] ~= 0 and Connections[4] ~= 0 and Connections[1] == 0 and Connections[2] == 0 then
 			animator.setAnimationState("cable","horizontal");
 		elseif Connections[3] == 0 and Connections[4] == 0 and Connections[1] ~= 0 and Connections[2] ~= 0 then
@@ -739,21 +751,26 @@ UpdateSprite = function()
 			animator.setAnimationState("cable","corner");
 		elseif Connections[3] ~= 0 and Connections[4] == 0 and Connections[1] ~= 0 and Connections[2] == 0 then
 			animator.setAnimationState("cable","corner");
-			object.setProcessingDirectives("?flipy");
+			--object.setProcessingDirectives("?flipy");
+			animator.rotateTransformationGroup("cableTrans",-math.pi / 2,{1.5,1.5});
 		elseif Connections[3] == 0 and Connections[4] ~= 0 and Connections[1] ~= 0 and Connections[2] == 0 then
 			animator.setAnimationState("cable","corner");
-			object.setProcessingDirectives("?flipxy");
+			--object.setProcessingDirectives("?flipxy");
+			animator.rotateTransformationGroup("cableTrans",math.pi,{1.5,1.5});
 		elseif Connections[3] == 0 and Connections[4] ~= 0 and Connections[1] == 0 and Connections[2] ~= 0 then
 			animator.setAnimationState("cable","corner");
-			object.setProcessingDirectives("?flipx");
+			--object.setProcessingDirectives("?flipx");
+			animator.rotateTransformationGroup("cableTrans",math.pi / 2,{1.5,1.5});
 		elseif Connections[3] ~= 0 and Connections[4] ~= 0 and Connections[1] == 0 and Connections[2] ~= 0 then
 			animator.setAnimationState("cable","triplehorizontal");
 		elseif Connections[3] ~= 0 and Connections[4] == 0 and Connections[1] ~= 0 and Connections[2] ~= 0 then
 			animator.setAnimationState("cable","triplevertical");
-			object.setProcessingDirectives("?flipx");
+			--object.setProcessingDirectives("?flipx");
+			animator.rotateTransformationGroup("cableTrans",math.pi,{1.5,1.5});
 		elseif Connections[3] ~= 0 and Connections[4] ~= 0 and Connections[1] ~= 0 and Connections[2] == 0 then
 			animator.setAnimationState("cable","triplehorizontal");
-			object.setProcessingDirectives("?flipy");
+			--object.setProcessingDirectives("?flipy");
+			animator.rotateTransformationGroup("cableTrans",math.pi,{1.5,1.5});
 		elseif Connections[3] == 0 and Connections[4] ~= 0 and Connections[1] ~= 0 and Connections[2] ~= 0 then
 			animator.setAnimationState("cable","triplevertical");
 		elseif Connections[3] ~= 0 and Connections[4] ~= 0 and Connections[1] ~= 0 and Connections[2] ~= 0 then
@@ -764,10 +781,12 @@ UpdateSprite = function()
 			animator.setAnimationState("cable","right");
 		elseif Connections[3] == 0 and Connections[4] ~= 0 and Connections[1] == 0 and Connections[2] == 0 then
 			animator.setAnimationState("cable","right");
-			object.setProcessingDirectives("?flipx");
+			--object.setProcessingDirectives("?flipx");
+			animator.rotateTransformationGroup("cableTrans",math.pi,{1.5,1.5});
 		elseif Connections[3] == 0 and Connections[4] == 0 and Connections[1] ~= 0 and Connections[2] == 0 then
 			animator.setAnimationState("cable","up");
-			object.setProcessingDirectives("?flipy");
+			--object.setProcessingDirectives("?flipy");
+			animator.rotateTransformationGroup("cableTrans",math.pi,{1.5,1.5});
 		elseif Connections[3] == 0 and Connections[4] == 0 and Connections[1] == 0 and Connections[2] ~= 0 then
 			animator.setAnimationState("cable","up");
 		end
@@ -1146,6 +1165,45 @@ function ConduitCore.GetUI()
 		return {Type = Type,Interaction = Interaction};
 	end
 	return nil;
+end
+
+SetInstaColor = function(color)
+	--brightness = brightness * 100;
+	if IsInsta then
+		local Hue,Sat,Value = ColorCore.RGBToHSV(color[1],color[2],color[3]);
+		local Brightness = -(1 - Value) * 100;
+		Sat = -(1 - Sat) * 100;
+		animator.setGlobalTag("hue",tostring(Hue));
+		animator.setGlobalTag("sat",tostring(Sat));
+		--sb.logInfo("Brightness = " .. sb.print(Brightness));
+		animator.setGlobalTag("brightness",tostring(Brightness));
+		animator.setGlobalTag("transparency",NumberToHex(color[4]));
+	end
+end
+
+NumberToHex = function(number)
+	local Digits = {};
+	local Division = math.floor(number / 16);
+	local Remainder = number % 16;
+	return GetHexDigit(Division) .. GetHexDigit(Remainder);
+end
+
+GetHexDigit = function(num)
+	if num <= 9 then
+		return tostring(num);
+	elseif num == 10 then
+		return "A";
+	elseif num == 11 then
+		return "B";
+	elseif num == 12 then
+		return "C";
+	elseif num == 13 then
+		return "D";
+	elseif num == 14 then
+		return "E";
+	elseif num == 15 then
+		return "F";
+	end
 end
 
 

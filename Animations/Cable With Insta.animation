@@ -1,5 +1,11 @@
 {
 "mode" : "stop",
+"globalTagDefaults" : {
+  "hue" : "0",
+  "sat": "0",
+  "brightness" : "0",
+  "transparency": "00"
+},
 "variants" : 1,
 "frameNumber" : 1,
 "animationLoops" : false,
@@ -7,6 +13,38 @@
 "animatedParts" : {
     "stateTypes" : {
       "cable" : {
+        "default" : "none",
+        "states" : {
+		  "none" : {
+            "frames" : 1
+          },
+		  "up" : {
+		    "frames" : 1
+          },
+		  "right" : {
+            "frames" : 1
+          },
+		  "corner" : {
+            "frames" : 1
+          },
+		  "triplehorizontal" : {
+            "frames" : 1
+          },
+		  "triplevertical" : {
+            "frames" : 1
+          },
+		  "vertical" : {
+            "frames" : 1
+          },
+		  "horizontal" : {
+            "frames" : 1
+          },
+		  "full" : {
+            "frames" : 1
+          }
+        }
+      },
+      "insta" : {
         "default" : "none",
         "states" : {
 		  "none" : {
@@ -94,14 +132,69 @@
             }
           }
         }
+      },
+      "instant" : {
+        "properties" : {
+      "centered" : false,
+      "transformationGroups" : ["instantTrans"]
+    },
+    "partStates" : {
+      "insta" : {
+        "right" : {
+          "properties" : {
+            "image" : "<partImage>:<color>.right"
+          }
+        },
+  "up" : {
+          "properties" : {
+            "image" : "<partImage>:<color>.up"
+          }
+        },
+  "none" : {
+          "properties" : {
+            "image" : "<partImage>:<color>.none?hueshift=<hue>?saturation=<sat>?brightness=<brightness>?multiply=FFFFFF<transparency>"
+          }
+        },
+  "corner" : {
+          "properties" : {
+            "image" : "<partImage>:<color>.corner"
+          }
+        },
+  "triplehorizontal" : {
+          "properties" : {
+            "image" : "<partImage>:<color>.triplehorizontal"
+          }
+        },
+  "triplevertical" : {
+          "properties" : {
+            "image" : "<partImage>:<color>.triplevertical"
+          }
+        },
+  "vertical" : {
+          "properties" : {
+            "image" : "<partImage>:<color>.vertical"
+          }
+        },
+  "horizontal" : {
+          "properties" : {
+            "image" : "<partImage>:<color>.horizontal"
+          }
+        },
+  "full" : {
+          "properties" : {
+            "image" : "<partImage>:<color>.full"
+          }
+        }
       }
+    }
+  }
     }
 },
 "transformationGroups" : {
   "cableTrans" : {
     "interpolated" : false
   },
-  "instaTrans" : {
+  "instantTrans" : {
     "interpolated" : false
   }
 }

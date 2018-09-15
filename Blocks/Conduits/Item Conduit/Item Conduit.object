@@ -22,9 +22,10 @@
 
     }
   ],
-  "animation": "/Animations/Cable.animation",
+  "animation": "/Animations/Cable With Insta.animation",
   "animationParts": {
-    "cables": "Cable/Cable.png"
+    "cables": "Cable/Cable.png",
+    "instant": "Cable/Cable Instant.png"
   },
   "conduitType": "item",
   "scriptDelta": 2,

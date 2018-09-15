@@ -11,17 +11,19 @@ local ColorCore = ColorCore;
 --Converts RGB to HSV
 function ColorCore.RGBToHSV(R,G,B)
 	local DR,DG,DB = R / 255,G / 255,B / 255;
-	local CMax,CMin = math.max(DR,DG,DB),math.min(DR,DG,DB);
+	local CMax = math.max(DR,DG,DB);
+	local CMin = math.min(DR,DG,DB);
+	--local CMax,CMin = ;
 	local Delta = CMax - CMin;
 	local Hue;
 	if Delta == 0 then
 		Hue = 0;
 	elseif CMax == DR then
-		Delta = 60 * ((DG - DB) / Delta) % 6;
+		Hue = 60 * (((DG - DB) / Delta) % 6);
 	elseif CMax == DG then
-		Delta = 60 * ((DB - DR) / Delta) + 2;
+		Hue = 60 * (((DB - DR) / Delta) + 2);
 	elseif CMax == DB then
-		Delta = 60 * ((DR - DG) / Delta) + 4;
+		Hue = 60 * (((DR - DG) / Delta) + 4);
 	end
 	local Sat;
 	if CMax == 0 then
@@ -53,5 +55,5 @@ function ColorCore.HSVToRGB(H,S,V)
 	elseif 300 <= H and H < 360 then
 		DR,DG,DB = Chroma,0,X;
 	end
-	return DR * 55,DG * 255,DB * 255;
+	return DR * 255,DG * 255,DB * 255;
 end
