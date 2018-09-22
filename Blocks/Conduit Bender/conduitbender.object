@@ -2,7 +2,7 @@
   "objectName": "conduitbender",
   "colonyTags": [ "pretty" ],
   "rarity": "Common",
-  "category": "transport",
+  "category": "storagetransport",
   "price": 50,
   "description": "A Machine for making Curved Conduits",
   "shortdescription": "Conduit Bender",

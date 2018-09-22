@@ -1,0 +1,64 @@
+{
+  "mode": "stop",
+  "variants": 1,
+  "frameNumber": 1,
+  "animationLoops": false,
+  "cycle": 1,
+
+  "globalTagDefaults": {
+    "directives": ""
+  },
+
+  "animatedParts": {
+    "stateTypes": {
+      "terminalFG": {
+        "default": "main",
+        "states": {
+          "main": {
+            "frames": 1
+          }
+        }
+      },
+      "terminalBG": {
+        "default": "main",
+        "states": {
+          "main": {
+            "frames": 1
+          }
+        }
+      }
+    },
+    "parts": {
+      "terminalspritefg": {
+        "properties": {
+          "centered": false
+        },
+        "partStates": {
+          "terminalFG": {
+            "main": {
+              "properties": {
+                "image": "<partImage>:default<directives>",
+                "fullbright": true
+              }
+            }
+          }
+        }
+      },
+      "terminalspritebg": {
+        "properties": {
+          "centered": false
+        },
+        "partStates": {
+          "terminalBG": {
+            "main": {
+              "properties": {
+                "image": "<partImage>:default"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+}

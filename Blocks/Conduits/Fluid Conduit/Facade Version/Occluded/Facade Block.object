@@ -1,0 +1,35 @@
+{
+  "objectName": "fluidfacadeoccluded",
+  "colonyTags": [],
+  "printable": false,
+  "rarity": "Common",
+  "description": "Imports and Exports liquids",
+  "shortdescription": "Fluid Conduit",
+  "race": "generic",
+  "category": "storagetransport",
+  "price": 45,
+  "inventoryIcon": "/Blocks/Conduits/Fluid Conduit/Facade Version/Item/Icon.png",
+  "smashOnBreak": true,
+  "health": 3.0,
+  "orientations": [
+    {
+      "image": "/Blocks/Conduits/Fluid Conduit/Main/Main.png:<color>",
+      "imagePosition": [ -8, -8 ],
+      "animationPosition": [ -8, -8 ],
+      "frames": 1,
+      "animationCycle": 1.0,
+      "renderLayer": "Platform-10",
+      "direction": "right"
+
+    }
+  ],
+  "interactAction": "ScriptPane",
+  "interactData": "/Blocks/Conduits/Fluid Conduit/UI/UI Config.config",
+  "frameCooldown": 5,
+  "autoCloseCooldown": 3600,
+  "slotCount": 1,
+  "conduitType": "fluid",
+  "scriptDelta": 10,
+  "scripts": [ "/Core/ContainerCore.lua", "/Blocks/Conduits/Fluid Conduit/Script.lua", "/Core/CableCore.lua", "/Core/Facade/Facade.lua" ]
+
+}

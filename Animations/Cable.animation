@@ -42,7 +42,8 @@
 	"parts" : {
       "cables" : {
 	          "properties" : {
-          "centered" : false
+          "centered" : false,
+          "transformationGroups" : ["cableTrans"]
         },
         "partStates" : {
           "cable" : {
@@ -95,6 +96,13 @@
         }
       }
     }
+},
+"transformationGroups" : {
+  "cableTrans" : {
+    "interpolated" : false
+  },
+  "instaTrans" : {
+    "interpolated" : false
+  }
 }
-
 }

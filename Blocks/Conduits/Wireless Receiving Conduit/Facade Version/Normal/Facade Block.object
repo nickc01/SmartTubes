@@ -6,7 +6,7 @@
   "description": "Transfers Items",
   "shortdescription": "Wireless Receiving Conduit",
   "race": "generic",
-  "category": "transport",
+  "category": "storagetransport",
   "price": 45,
   "inventoryIcon": "/Blocks/Conduits/Wireless Receiving Conduit/Facade Version/Item/Icon.png",
   "smashOnBreak": true,
@@ -33,6 +33,6 @@
   "conduitType": "receiver",
   "scriptDelta": 1,
   "inputNodes": [ [ 0.0, 0.0 ] ],
-  "scripts": [ "/Blocks/Conduits/Wireless Receiving Conduit/Script.lua", "/Core/CableCore.lua", "/Core/Facade/Facade.lua" ]
+  "scripts": [ "/Blocks/Conduits/Wireless Receiving Conduit/Script.lua", "/Core/Facade/Facade.lua" ]
 
 }

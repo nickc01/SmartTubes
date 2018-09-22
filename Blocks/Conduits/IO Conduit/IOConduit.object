@@ -6,7 +6,7 @@
   "description": "Extracts items from and inserts into containers",
   "shortdescription": "IO Conduit",
   "race": "generic",
-  "category": "transport",
+  "category": "storagetransport",
   "price": 45,
   "inventoryIcon": "Icon/Icon.png",
   "health": 3.0,
@@ -31,6 +31,6 @@
   },
   "conduitType": "io",
   "scriptDelta": 10,
-  "scripts": [ "/Blocks/Conduits/Extraction Conduit/Script.lua", "/Blocks/Conduits/Insertion Conduit/Script.lua", "Script.lua", "/Core/CableCore.lua" ]
+  "scripts": [ "/Blocks/Conduits/Extraction Conduit/Script.lua", "/Blocks/Conduits/Insertion Conduit/Script.lua", "Script.lua" ]
 
 }

@@ -1,0 +1,25 @@
+{
+  "Map": {
+    "TextSize": [ 5, 7 ],
+    "SmallSize": [ 3, 7 ],
+    "TextOffset": [ -1, 0 ],
+    "SmallOffset": [ -1, 0 ],
+    "Image": "Elements/Text/Thin.png",
+    "WidthOfSpace": 3,
+    "BigCharacters": {
+      "1": [ 0, 0 ],
+      "2": [ 5, 0 ],
+      "3": [ 10, 0 ],
+      "4": [ 15, 0 ],
+      "5": [ 20, 0 ],
+      "6": [ 25, 0 ],
+      "7": [ 30, 0 ],
+      "8": [ 35, 0 ],
+      "9": [ 40, 0 ],
+      "0": [ 45, 0 ],
+      "%": [ 50, 0 ]
+    },
+    "SmallCharacters": {
+    }
+  }
+}

@@ -1,4 +1,3 @@
-
 local oldinit = init;
 
 function init()
@@ -7,6 +6,14 @@ function init()
 	end
 	object.setInteractive(true)
 	object.setConfigParameter("RetainingParameters",{"Speed","Stack","SelectedColor","Configs","insertID"});
+end
+
+local oldUpdate = update;
+
+function update(dt)
+	if oldUpdate ~= nil then
+		oldUpdate(dt);
+	end
 end
 
 local FinalJson = nil;
@@ -39,7 +46,9 @@ function onInteraction(args)
 		FinalJson = sb.jsonMerge(ExtractionJson,InsertionPatch);
 		FinalJson.scripts = Scripts;
 		FinalJson.scriptWidgetCallbacks = Callbacks;
-		FinalJson.gui.windowtitle.title = "IO Conduit";
+		FinalJson.gui.windowtitle.title = "";
+		--DPrint("OriginalDescription = " .. sb.print(config.getParameter("OriginalDescription")));
+		FinalJson.gui.conduitNameBox.hint = config.getParameter("OriginalDescription") or config.getParameter("shortdescription","IO Conduit");
 		FinalJson.gui.windowtitle.subtitle = "Extracts and inserts into inventories";
 	end
 	return {"ScriptPane",FinalJson};

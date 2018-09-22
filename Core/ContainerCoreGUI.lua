@@ -46,14 +46,14 @@ function ContainerCore.Update()
 		ContainerUpdatePromise = world.sendEntityMessage(SourceID,"ContainerCore.ContainerItems");
 	else
 		if ContainerUpdatePromise:finished() == true then
-			--sb.logInfo("Updating");
-			--sb.logInfo("RESULT = " .. sb.print(ContainerUpdatePromise:result()));
+			
+			
 			--[[for k,i in pairs(ContainerUpdatePromise:result()) do
-				--sb.logInfo("Setting " .. sb.print(ItemSlots[tonumber(k)]));
+				
 				widget.setItemSlotItem(ItemSlots[tonumber(k)],i);
 			end--]]
 			local UpdatedContainer = ContainerUpdatePromise:result();
-			sb.logInfo("Container = " .. sb.print(UpdatedContainer));
+		--	
 			if UpdatedContainer ~= nil then
 				for i=1,#ItemSlots do
 					widget.setItemSlotItem(ItemSlots[i],UpdatedContainer[tostring(i)]);
@@ -86,11 +86,11 @@ end--]]
 end--]]
 
 function ContainerCore.SlotCallback(slotLink)
-	sb.logInfo("Left");
+	
 	world.sendEntityMessage(SourceID,"ContainerCore.LeftClick",SlotToIndex(slotLink) - 1,player.id(),player.swapSlotItem());
 end
 
 function ContainerCore.SlotRightClickCallback(slotLink)
-	sb.logInfo("Right");
+	
 	world.sendEntityMessage(SourceID,"ContainerCore.RightClick",SlotToIndex(slotLink) - 1,player.id(),player.swapSlotItem());
 end

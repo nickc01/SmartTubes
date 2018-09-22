@@ -6,7 +6,7 @@
   "description": "Transports Items Wirelessly",
   "shortdescription": "Wireless Sending Conduit",
   "race": "generic",
-  "category": "transport",
+  "category": "storagetransport",
   "price": 45,
   "inventoryIcon": "Icon/Icon.png",
   "health": 3.0,
@@ -32,6 +32,6 @@
   "conduitType": "sender",
   "scriptDelta": 1,
   "outputNodes": [ [ 0.0, 0.0 ] ],
-  "scripts": [ "Script.lua", "/Core/CableCore.lua" ]
+  "scripts": [ "Script.lua" ]
 
 }

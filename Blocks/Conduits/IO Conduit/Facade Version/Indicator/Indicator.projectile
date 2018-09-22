@@ -2,7 +2,7 @@
   "projectileName" : "indicatorioconduit",
   "physics" : "grenadenobounce",
   "bounces" : -1,
-  "timeToLive" : 1,
+  "timeToLive" : 3,
   "image" : "Indicator.png",
   "fullbright" : true,
   "animationCycle" : 1,

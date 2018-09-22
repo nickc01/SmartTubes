@@ -6,7 +6,7 @@
   "description": "Inserts Items Into Containers",
   "shortdescription": "Insertion Conduit",
   "race": "generic",
-  "category": "transport",
+  "category": "storagetransport",
   "price": 45,
   "inventoryIcon": "/Blocks/Conduits/Insertion Conduit/Facade Version/Item/Icon.png",
   "smashOnBreak": true,
@@ -30,6 +30,6 @@
   "slotCount": 1,
   "conduitType": "insertion",
   "scriptDelta": 10,
-  "scripts": [ "/Blocks/Conduits/Insertion Conduit/Script.lua", "/Core/CableCore.lua", "/Core/Facade/Facade.lua" ]
+  "scripts": [ "/Blocks/Conduits/Insertion Conduit/Script.lua","/Core/Facade/Facade.lua" ]
 
 }

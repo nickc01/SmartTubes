@@ -6,7 +6,7 @@
   "description": "Inserts items into containers and behaves like a platform",
   "shortdescription": "Platform Insertion Conduit",
   "race": "generic",
-  "category": "transport",
+  "category": "storagetransport",
   "price": 45,
   "inventoryIcon": "Icon/Icon.png",
   "health": 3.0,
@@ -35,6 +35,6 @@
   "conduitType": "insertion",
   "insertID" : "",
   "scriptDelta": 20,
-  "scripts": ["/Blocks/Conduits/Insertion Conduit/Script.lua", "/Core/CableCore.lua"]
+  "scripts": ["/Blocks/Conduits/Insertion Conduit/Script.lua"]
 
 }

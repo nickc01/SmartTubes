@@ -3,7 +3,7 @@
   "price" : 10,
   "rarity" : "Common",
   "maxStack" : 1000,
-  "category" : "craftingMaterial",
+  "category" : "storagetransport",
   "inventoryIcon" : "speedUpgrade.png",
   "description" : "Used in Extraction Conduit Upgrade Slots.\nIncreases Extraction speed",
   "shortdescription" : "Speed Upgrade",

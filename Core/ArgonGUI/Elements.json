@@ -1,0 +1,40 @@
+{
+  "Elements": [
+    {
+      "Name": "Scrollbar",
+      "Script": "Elements/Scrollbar.lua"
+    },
+    {
+      "Name": "Mask",
+      "Script": "Elements/Mask.lua"
+    },
+    {
+      "Name": "Image",
+      "Script": "Elements/Image.lua"
+    },
+    {
+      "Name": "Anchor Point",
+      "Script": "Elements/Anchor Point.lua"
+    },
+    {
+      "Name": "List",
+      "Script": "Elements/List.lua"
+    },
+    {
+      "Name": "ListImage",
+      "Script": "Elements/ListImage.lua"
+    },
+    {
+      "Name": "Text",
+      "Script": "Elements/Text/Text.lua"
+    },
+    {
+      "Name": "Radio",
+      "Script": "Elements/Radio.lua"
+    },
+    {
+      "Name": "Button",
+      "Script": "Elements/Button.lua"
+    }
+  ]
+}

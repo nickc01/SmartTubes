@@ -65,27 +65,27 @@ function init()
 	UpdateSpeed(world.getObjectParameter(SourceID,"Speed",0));
 	UpdateSize(world.getObjectParameter(SourceID,"Size",MinSize));
 	world.sendEntityMessage(SourceID,"SetItemName",ItemName);
-	--sb.logInfo("World = " .. sb.print(world));
+	
 	--world.containerAddItems(SourceID,{name = "coalore",count = 1});
 	--world.containerPutItemsAt(SourceID,{name = "coalore",count = 1},1);
-	--[[sb.logInfo("Container Size = " .. sb.print(world.containerSize(SourceID)));
-	sb.logInfo("Container Items = " .. sb.print(world.containerItems(SourceID)));
-	sb.logInfo("Container Item At = " .. sb.print(world.containerItemAt(SourceID,0)));
-	sb.logInfo("Container Consume = " .. sb.print(world.containerConsume(SourceID,({name = "coalore",count = 1}))));
-	sb.logInfo("Container Consume At = " .. sb.print(world.containerConsumeAt(SourceID,0,1)));
-	sb.logInfo("Container Available = " .. sb.print(world.containerAvailable(SourceID,{name = "coalore",count = 1})));
-	sb.logInfo("Container Take All = " .. sb.print(world.containerTakeAll(SourceID)));
-	sb.logInfo("Container Add Items = " .. sb.print(world.containerAddItems(SourceID,{name = "coalore",count = 1})));
-	sb.logInfo("Container Size = " .. sb.print(world.containerSize(SourceID)));
-	sb.logInfo("Container Size = " .. sb.print(world.containerSize(SourceID)));
-	sb.logInfo("Container Size = " .. sb.print(world.containerSize(SourceID)));
-	sb.logInfo("Container Size = " .. sb.print(world.containerSize(SourceID)));
-	sb.logInfo("Container Size = " .. sb.print(world.containerPutItemsAt(SourceID,{name = "coalore",count = 1},1)));
-	sb.logInfo("Container Size = " .. sb.print(world.containerTakeAt(SourceID,0)));--]]
+	--[[
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	--]]
 	--world.containerSwapItemsNoCombine(SourceID,{name = "coalore",count = 10},0);
 	--world.containerItemApply(SourceID,{name = "coalore",count = 10},0);
 	--world.sendEntityMessage(SourceID,"PutItemsAt",{name = "coalore",count = 5},0);
-	--sb.logInfo("Put Items At = "  .. sb.print(ContainerPutItemsAt(SourceID,{name = "coalore",count = 1005},0)));
+	
 end
 
 function update(dt)
@@ -128,7 +128,7 @@ UpdateConduit = function(Size)
 end
 
 UpdateSize = function(value)
-	--sb.logInfo("Value = " .. sb.print(value));
+	
 	widget.setText("size",tostring(value));
 	world.sendEntityMessage(SourceID,"SetSize",value);
 	RequiredConduits = math.floor((2 * (value ^ 2)) ^ 0.5);
@@ -138,11 +138,11 @@ end
 
 function IncreaseSize()
 	local Size = world.getObjectParameter(SourceID,"Size",MinSize);
-	--sb.logInfo("Size Type = " .. sb.print(type(Size)));
+	
 	if Size < MaxSize then
-		--sb.logInfo("Size Before = " .. sb.print(Size));
+		
 		Size = Size + 1;
-		--sb.logInfo("Size After = " .. sb.print(Size));
+		
 		UpdateSize(Size);
 	end
 end

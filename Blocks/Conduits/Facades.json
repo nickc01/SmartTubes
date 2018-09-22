@@ -47,6 +47,22 @@
       "occludedBlock": "wirelesssendingfacadeoccluded",
       "indicator": "indicatorwirelesssendingconduit",
       "displayName": "Wireless Sender"
+    },
+    {
+      "conduit": "fluidconduit",
+      "item": "fluidconduitfacade",
+      "normalBlock": "fluidfacadeblock",
+      "occludedBlock": "fluidfacadeoccluded",
+      "indicator": "indicatorfluidconduit",
+      "displayName": "Fluid"
+    },
+    {
+      "conduit": "craftingconduit",
+      "item": "craftingconduitfacade",
+      "normalBlock": "craftingfacadeblock",
+      "occludedBlock": "craftingfacadeoccluded",
+      "indicator": "indicatorcraftingconduit",
+      "displayName": "Crafting"
     }
   ]
 }

@@ -1,0 +1,33 @@
+{
+  "objectName": "craftingconduit",
+  "colonyTags": [],
+  "printable": false,
+  "rarity": "Common",
+  "description": "Crafts items",
+  "shortdescription": "Crafting Conduit",
+  "race": "generic",
+  "category": "storagetransport",
+  "price": 45,
+  "inventoryIcon": "Icon/Icon.png",
+  "health": 3.0,
+  "orientations": [
+    {
+      "image": "Main/Main.png:<color>",
+      "imagePosition": [ -8, -8 ],
+      "animationPosition": [ -8, -8 ],
+      "frames": 1,
+      "animationCycle": 1.0,
+      "renderLayer": "Platform-10",
+      "direction": "right"
+
+    }
+  ],
+  "animation": "/Animations/Cable.animation",
+  "animationParts": {
+    "cables": "Cable/Cable.png"
+  },
+  "conduitType": "crafting",
+  "scriptDelta": 2,
+  "scripts": [ "Script.lua" ]
+
+}

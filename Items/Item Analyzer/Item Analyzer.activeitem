@@ -1,0 +1,21 @@
+{
+  "itemName" : "itemanalyzer",
+  "price" : 0,
+  "level" : 1,
+  "maxStack" : 1,
+  "rarity" : "Common",
+  "category" : "storagetransport",
+  "description" : "Allows you to see certain information about an item",
+  "shortdescription" : "Item Analyzer",
+  "twoHanded" : true,
+
+  "inventoryIcon" : "Icon.png",
+  "scripts" : ["Item Analyzer.lua"],
+  "animation" : "Item Analyzer.animation",
+  "animationParts" : {
+    "itemanalyzer" : "Icon.png"
+  },
+  "animationCustom" : {},
+  "fireTime" : 1.0,
+  "fireOffset" : [0.5, 0.0]
+}

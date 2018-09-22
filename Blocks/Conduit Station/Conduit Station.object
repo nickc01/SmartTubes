@@ -2,7 +2,7 @@
   "objectName": "conduitstation",
   "colonyTags": [ "pretty" ],
   "rarity": "Common",
-  "category": "transport",
+  "category": "storagetransport",
   "price": 50,
   "description": "Used for crafting Conduits",
   "shortdescription": "Conduit Station",

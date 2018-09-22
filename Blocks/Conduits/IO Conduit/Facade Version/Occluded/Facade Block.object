@@ -6,7 +6,7 @@
   "description": "Extracts and Inserts Items",
   "shortdescription": "IO Conduit",
   "race": "generic",
-  "category": "transport",
+  "category": "storagetransport",
   "price": 45,
   "inventoryIcon": "/Blocks/Conduits/IO Conduit/Facade Version/Item/Icon.png",
   "smashOnBreak": true,
@@ -28,6 +28,6 @@
   "slotCount": 1,
   "conduitType": "io",
   "scriptDelta": 10,
-  "scripts": [ "/Blocks/Conduits/Extraction Conduit/Script.lua", "/Blocks/Conduits/Insertion Conduit/Script.lua", "/Blocks/Conduits/IO Conduit/Script.lua", "/Core/CableCore.lua","/Core/Facade/Facade.lua" ]
+  "scripts": [ "/Blocks/Conduits/Extraction Conduit/Script.lua", "/Blocks/Conduits/Insertion Conduit/Script.lua", "/Blocks/Conduits/IO Conduit/Script.lua","/Core/Facade/Facade.lua" ]
 
 }

@@ -6,7 +6,7 @@
   "description": "Transfers items",
   "shortdescription": "Item Conduit",
   "race": "generic",
-  "category": "transport",
+  "category": "storagetransport",
   "price": 45,
   "inventoryIcon": "Icon/Icon.png",
   "health": 3.0,
@@ -22,12 +22,13 @@
 
     }
   ],
-  "animation": "/Animations/Cable.animation",
+  "animation": "/Animations/Cable With Insta.animation",
   "animationParts": {
-    "cables": "Cable/Cable.png"
+    "cables": "Cable/Cable.png",
+    "instant": "Cable/Cable Instant.png"
   },
   "conduitType": "item",
   "scriptDelta": 2,
-  "scripts": [ "Script.lua", "/Core/CableCore.lua" ]
+  "scripts": [ "Script.lua" ]
 
 }

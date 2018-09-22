@@ -6,7 +6,7 @@
   "description": "Transfers Items",
   "shortdescription": "Item Conduit",
   "race": "generic",
-  "category": "transport",
+  "category": "storagetransport",
   "price": 45,
   "inventoryIcon": "/Blocks/Conduits/Item Conduit/Facade Version/Item/Icon.png",
   "smashOnBreak": true,
@@ -28,6 +28,6 @@
   "slotCount": 1,
   "conduitType": "item",
   "scriptDelta": 2,
-  "scripts": [ "/Blocks/Conduits/Item Conduit/Script.lua", "/Core/CableCore.lua", "/Core/Facade/Facade.lua" ]
+  "scripts": [ "/Blocks/Conduits/Item Conduit/Script.lua", "/Core/Facade/Facade.lua" ]
 
 }

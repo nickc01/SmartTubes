@@ -195,9 +195,9 @@
   },
   {
     "op": "add",
-    "path": "/defaultBlueprints/tier1/145",
+    "path": "/defaultBlueprints/tier1/146",
     "value": {
-      "item": "objectdatatool"
+      "item": "itemanalyzer"
     }
   }
 ]

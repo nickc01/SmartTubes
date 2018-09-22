@@ -1,0 +1,10 @@
+{
+  "itemName" : "craftingblueprint",
+  "price" : 10,
+  "rarity" : "Common",
+  "category" : "storagetransport",
+  "inventoryIcon" : "/Items/Crafting Blueprint/Icon Blend.png?blendmult=/items/generic/crafting/goldore.png?blendscreen=/Items/Crafting Blueprint/Icon Transparency Filter.png",
+  "description" : "Used for making auto-crafting recipes for SmartTubes",
+  "shortdescription" : "Crafting Blueprint",
+  "itemTags" : [ "reagent" ]
+}

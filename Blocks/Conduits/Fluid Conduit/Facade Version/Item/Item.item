@@ -1,0 +1,10 @@
+{
+  "itemName" : "fluidconduitfacade",
+  "price" : 10,
+  "rarity" : "Common",
+  "category" : "storagetransport",
+  "inventoryIcon" : "Icon.png",
+  "description" : "An Fluid Conduit that can be embedded in the ground via Facade Wrench",
+  "shortdescription" : "Fluid Conduit Facade",
+  "itemTags" : [ "reagent" ]
+}

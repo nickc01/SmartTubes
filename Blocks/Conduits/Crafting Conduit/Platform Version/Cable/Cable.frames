@@ -1,0 +1,14 @@
+{
+
+  "frameGrid" : {
+    "size" : [24, 24],
+    "dimensions" : [16, 1],
+    "names" : [
+      [ "default.none","default.up","default.right","default.corner" ,"default.triplehorizontal" ,"default.triplevertical" ,"default.vertical" ,"default.horizontal" ,"default.full"  ]
+    ]
+
+  },
+  "aliases" : {
+	"default.default" : "default.none"
+  }
+}

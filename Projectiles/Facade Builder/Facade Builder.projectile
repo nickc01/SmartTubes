@@ -2,7 +2,7 @@
   "projectileName" : "facadebuilder",
   "physics" : "grenadenobounce",
   "bounces" : -1,
-  "timeToLive" : 100,
+  "timeToLive" : 3,
   "image" : "Facade Builder.png",
   "animationCycle" : 1,
   "frameNumber" : 1,

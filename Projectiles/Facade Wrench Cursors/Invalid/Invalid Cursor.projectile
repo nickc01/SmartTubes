@@ -2,7 +2,7 @@
   "projectileName": "cursorInvalid",
   "physics": "grenadenobounce",
   "bounces": -1,
-  "timeToLive": 1000,
+  "timeToLive": 5,
   "image": "Icon.png",
   "animationCycle": 1,
   "frameNumber": 1,

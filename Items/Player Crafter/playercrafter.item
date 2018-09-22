@@ -1,0 +1,11 @@
+{
+  "itemName" : "playerCrafter",
+  "price" : 10,
+  "rarity" : "Common",
+  "maxStack" : 1000,
+  "category" : "unknown",
+  "inventoryIcon" : "playerCrafter.png",
+  "description" : "This item is craftable by the player, so no crafter is required",
+  "shortdescription" : "No Crafter Required",
+  "itemTags" : [ "reagent" ]
+}

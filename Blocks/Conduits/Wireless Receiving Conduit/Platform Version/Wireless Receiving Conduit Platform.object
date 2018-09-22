@@ -6,7 +6,7 @@
   "description": "Receives Items Wirelessly and behaves like a platform",
   "shortdescription": "Wireless Receiving Platform",
   "race": "generic",
-  "category": "transport",
+  "category": "storagetransport",
   "price": 45,
   "inventoryIcon": "Icon/Icon.png",
   "health": 3.0,
@@ -33,6 +33,6 @@
   "conduitType": "receiver",
   "scriptDelta": 1,
   "inputNodes": [ [ 0.0, 0.0 ] ],
-  "scripts": [ "/Blocks/Conduits/Wireless Receiving Conduit/Script.lua", "/Core/CableCore.lua" ]
+  "scripts": [ "/Blocks/Conduits/Wireless Receiving Conduit/Script.lua" ]
 
 }

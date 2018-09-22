@@ -1,0 +1,47 @@
+{
+  "objectName": "craftingmonitor",
+  "colonyTags": [],
+  "printable": false,
+  "rarity": "Common",
+  "description": "Shows the current progress of crafting recipes",
+  "shortdescription": "Crafting Monitor",
+  "race": "generic",
+  "category": "station",
+  "price": 45,
+  "inventoryIcon": "Icon/Icon.png",
+  "health": 3.0,
+  "orientations": [
+    {
+      "imageLayers": [ { "image": "Crafting Monitor.png:default" } ],
+      "imagePosition": [ 0, 0 ],
+      "animationPosition": [ 0, 0 ],
+      "spaces": [
+        [ 0, 0 ],
+        [ 0, 1 ],
+        [ 0, 2 ],
+        [ 1, 0 ],
+        [ 1, 1 ],
+        [ 1, 2 ],
+        [ 2, 0 ],
+        [ 2, 1 ],
+        [ 2, 2 ]
+      ],
+      "frames": 1,
+      "spaceScan": 0.1,
+      "animationCycle": 1.0,
+      "direction": "right"
+
+    }
+  ],
+  "interactAction": "ScriptPane",
+  "interactData": "/Blocks/Crafting Monitor/UI/UI Config.config",
+  "conduitType": "craftingterminal",
+  "animation": "/Animations/Conduit Terminal.animation",
+  "animationParts": {
+    "terminalspritebg": "Crafting Monitor.png",
+    "terminalspritefg": "Crafting Monitor Lit.png"
+  },
+  "scriptDelta": 1,
+  "scripts": [ "Script.lua" ]
+
+}

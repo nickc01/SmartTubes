@@ -68,6 +68,14 @@ function ContainerCore.ContainerItems()
 		end
 	end
 	return NewContainer;
+	--[[return setmetatable({},{
+		__index = function(tbl,k)
+			return rawget(tbl,k) or Container[k];
+		end,
+		__newindex = function(tbl,k,v)
+			rawset(tbl,k,v);
+		end
+	});--]]
 end
 
 function ContainerCore.ContainerItemsRef()
@@ -91,7 +99,7 @@ function ContainerCore.ContainerTakeAll()
 	return ReturningValue;
 end
 
-function ContainerCore.ContainerTakeAt()
+function ContainerCore.ContainerTakeAt(slot)
 	local Item = Container[tostring(slot + 1)];
 	Container[tostring(slot + 1)] = nil;
 	return Item;
@@ -137,6 +145,8 @@ function ContainerCore.ContainerItemsCanFit(Item)
 		if Container[Index] == nil then
 			Times = Times + (math.floor(MaxStack / Item.count));
 		else
+			
+			
 			if root.itemDescriptorsMatch(Item,Container[Index],true) then
 				Times = Times + (math.floor((MaxStack - Container[Index].count) / Item.count));
 			end
@@ -150,7 +160,7 @@ function IsContainerCore()
 end
 
 function ContainerCore.ContainerAddItems(Item)
-	--sb.logInfo("Adding = " .. sb.print(Item));
+	
 	local Count = Item.count;
 	if Count == 0 then
 		return nil;
@@ -227,7 +237,7 @@ function ContainerCore.ContainerStackItems(Item)
 end
 
 function ContainerCore.ContainerPutItemsAt(Item,slot)
-	--sb.logInfo("Attempting To Put In Slot " .. sb.print(slot + 1));
+	
 	--local ItemConfig = root.itemConfig(Item);
 	--local MaxStack;
 	local Count = Item.count;
@@ -247,7 +257,7 @@ function ContainerCore.ContainerPutItemsAt(Item,slot)
 			Count = Container[Index].count + Count - MaxStack;
 			return {name = Item.name,count = Count,parameters = Item.parameters};
 		end--]]
-		--sb.logInfo("Container Slot of " .. Index .. " = " .. sb.print(Container[Index]));
+		
 		if root.itemDescriptorsMatch(Item,Container[Index],true) then
 			if Container[Index].count + Count <= MaxStack then
 				Container[Index].count = Container[Index].count + Count;
@@ -284,7 +294,7 @@ function ContainerCore.ContainerSwapItems(Item,slot)
 	if Container[Index] ~= nil and root.itemDescriptorsMatch(Item,Container[Index],true) and Container[Index].count < MaxStack then
 		if Container[Index].count + Count > MaxStack then
 			Count = Container[Index].count + Count - MaxStack;
-			Container[Index] = MaxStack;
+			Container[Index].count = MaxStack;
 			return {name = Item.name,count = Count,parameters = Item.parameters};
 		else
 			Container[Index].count = Container[Index].count + Count;
@@ -341,7 +351,7 @@ function ContainerCore.ContainerConsumeAt(Slot,Count)
 	end
 	local Item = ContainerCore.ContainerItemAtRef(Slot);
 	if Item ~= nil and Item.count >= Count then
-		--sb.logInfo("Subtracting " .. sb.print(Count));
+		
 		Item.count = Item.count - Count;
 		if Item.count == 0 then
 			SetSlotNull(Slot);
@@ -355,11 +365,17 @@ end
 function ContainerCore.LeftClick(_,_,slot,player,currentSwapItem)
 	local Index = tostring(slot + 1);
 	if currentSwapItem == nil then
+		if Container[Index] == nil then
+			return nil;
+		end
 		local Item;
 		Item,Container[Index] = Container[Index],nil;
 		world.sendEntityMessage(player,"SetSwapItem",Item);
 	else
+		
 		local Item = ContainerCore.ContainerSwapItems(currentSwapItem,slot);
+		
+		
 		world.sendEntityMessage(player,"SetSwapItem",Item);
 	end
 end
@@ -367,25 +383,23 @@ end
 function ContainerCore.RightClick(_,_,slot,player,currentSwapItem)
 	local Index = tostring(slot + 1);
 	if currentSwapItem == nil then
+		if Container[Index] == nil then
+			return nil;
+		end
 		local TakenItem = ContainerCore.ContainerTakeNumItemsAt(slot,1);
 		if TakenItem ~= nil then
 			world.sendEntityMessage(player,"SetSwapItem",TakenItem);
 		end
 	else
-		--[[local ItemConfig = root.itemConfig(currentSwapItem);
-		local MaxStack;
-		if ItemConfig == nil then
-			error("The Item is invalid");
-		else
-			MaxStack = ItemConfig.config.maxStack or 1000;
-		end--]]
-		local ItemConfig = GetConfig(Item);
-		local MaxStack = ItemConfig.maxStack or 1000;
-		if root.itemDescriptorsMatch(currentSwapItem,Container[Index],true) and currentSwapItem.count < MaxStack then
-			local TakenItem = ContainerCore.ContainerTakeNumItemsAt(slot,1);
-			if TakenItem ~= nil then
-				currentSwapItem.count = currentSwapItem.count + TakenItem.count;
-				world.sendEntityMessage(player,"SetSwapItem",currentSwapItem);
+		if Container[Index] ~= nil then
+			local ItemConfig = GetConfig(Container[Index]);
+			local MaxStack = ItemConfig.maxStack or 1000;
+			if root.itemDescriptorsMatch(currentSwapItem,Container[Index],true) and currentSwapItem.count < MaxStack then
+				local TakenItem = ContainerCore.ContainerTakeNumItemsAt(slot,1);
+				if TakenItem ~= nil then
+					currentSwapItem.count = currentSwapItem.count + TakenItem.count;
+					world.sendEntityMessage(player,"SetSwapItem",currentSwapItem);
+				end
 			end
 		end
 	end
